@@ -3,6 +3,8 @@ const SUPABASE_KEY="sb_publishable_6UjwLuM-op0-OBKWlbusTw_qmLNZVfU";
 const WA="573125214785";
 const SALE_API=SUPABASE_URL+"/functions/v1/sale-order";
 const CATALOG_PAGE_SIZE=48;
+const SUPABASE_PAGE_SIZE=1000;
+const CATALOG_MAX_REMOTE_ROWS=25000;
 const CATALOG_REQUEST_TIMEOUT=12000;
 
 const CATEGORY_LABELS={
@@ -96,9 +98,12 @@ function mixCatalog(list){
  const groups={};
  list.forEach(function(p){(groups[p.category]||(groups[p.category]=[])).push(p)});
  Object.keys(groups).forEach(function(k){groups[k]=shuffleList(groups[k])});
- const out=[],categories=Object.keys(groups);
- while(categories.some(function(k){return groups[k].length})){
-  shuffleList(categories).forEach(function(k){if(groups[k].length)out.push(groups[k].shift())});
+ const out=[],categories=Object.keys(groups),positions={};
+ categories.forEach(function(k){positions[k]=0});
+ while(categories.some(function(k){return positions[k]<groups[k].length})){
+  shuffleList(categories).forEach(function(k){
+   if(positions[k]<groups[k].length)out.push(groups[k][positions[k]++]);
+  });
  }
  return out;
 }
@@ -111,6 +116,17 @@ async function fetchJson(url,options){
   if(!response.ok)throw new Error("HTTP "+response.status);
   return await response.json();
  }finally{clearTimeout(timer)}
+}
+async function fetchSupabaseTable(table,headers){
+ const rows=[];
+ for(let offset=0;offset<CATALOG_MAX_REMOTE_ROWS;offset+=SUPABASE_PAGE_SIZE){
+  const query="?select=*&order=id.asc&limit="+SUPABASE_PAGE_SIZE+"&offset="+offset;
+  const page=await fetchJson(SUPABASE_URL+"/rest/v1/"+table+query,{headers:headers});
+  if(!Array.isArray(page))throw new Error("Respuesta inválida al cargar "+table+".");
+  rows.push.apply(rows,page);
+  if(page.length<SUPABASE_PAGE_SIZE)return rows;
+ }
+ throw new Error("El inventario supera el límite seguro de carga.");
 }
 function normalizePokemonRecord(p){
  return Object.assign({},p,{
@@ -141,9 +157,9 @@ async function loadProducts(){
  setCatalogStatus("Cargando inventario…","loading");
  const headers={apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY};
  const results=await Promise.allSettled([
-  fetchJson(SUPABASE_URL+"/rest/v1/cards?select=*&order=id.asc",{headers:headers}),
+  fetchSupabaseTable("cards",headers),
   fetchJson("data/demo-products.json?v=20260918-3"),
-  fetchJson(SUPABASE_URL+"/rest/v1/electronics_products?select=*&order=id.asc",{headers:headers}),
+  fetchSupabaseTable("electronics_products",headers),
   fetchJson("data/cards.json?v=20260918-1")
  ]);
  const remoteCards=results[0].status==="fulfilled"&&Array.isArray(results[0].value)?results[0].value:[];
