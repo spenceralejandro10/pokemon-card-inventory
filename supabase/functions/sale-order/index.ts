@@ -13,6 +13,7 @@ const cors = {
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: cors });
+const maxPayloadBytes = 25000;
 const clean = (value: unknown) => String(value ?? "").trim();
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const saleCodePattern = /^[A-Z0-9][A-Z0-9-]{5,39}$/;
@@ -40,12 +41,31 @@ Deno.serve(async (request) => {
   if (request.method !== "POST") return json({ error: "METHOD_NOT_ALLOWED" }, 405);
 
   const contentLength = Number(request.headers.get("content-length") || 0);
-  if (contentLength > 25000) return json({ error: "PAYLOAD_TOO_LARGE" }, 413);
+  if (contentLength > maxPayloadBytes) return json({ error: "PAYLOAD_TOO_LARGE" }, 413);
 
   try {
     let body: Record<string, unknown>;
     try {
-      body = await request.json();
+      const reader = request.body?.getReader();
+      const decoder = new TextDecoder();
+      let bytesRead = 0;
+      let rawBody = "";
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          bytesRead += value.byteLength;
+          if (bytesRead > maxPayloadBytes) {
+            await reader.cancel();
+            return json({ error: "PAYLOAD_TOO_LARGE" }, 413);
+          }
+          rawBody += decoder.decode(value, { stream: true });
+        }
+        rawBody += decoder.decode();
+      }
+      const parsed = JSON.parse(rawBody);
+      if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") throw new Error("Invalid body");
+      body = parsed as Record<string, unknown>;
     } catch {
       return json({ error: "INVALID_JSON", message: "La solicitud no es válida." }, 400);
     }
@@ -145,7 +165,7 @@ Deno.serve(async (request) => {
     const customerNotes = clean(body.customerNotes ?? buyer.notes);
     const consent = body.deliveryConsent === true || buyer.consent === true;
     const paymentMethod = clean(body.paymentMethod);
-    const zone = clean(body.shippingZone || "N");
+    const zone = clean(body.shippingZone);
     const topQuantity = Math.max(0, Math.min(100, Math.floor(Number(body.topLoaderQty) || 0)));
     const topPreference = clean(body.topLoaderPreference).slice(0, 60);
     const topNotes = clean(body.topLoaderNotes).slice(0, 180);
