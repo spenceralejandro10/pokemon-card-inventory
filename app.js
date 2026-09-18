@@ -25,7 +25,7 @@ const cop=function(n){return new Intl.NumberFormat("es-CO",{style:"currency",cur
 const parseCOP=function(v){return Number(String(v||"").replace(/\D/g,""))||0};
 function formatCOPInput(el){const n=parseCOP(el.value);el.value=n?new Intl.NumberFormat("es-CO").format(n):""}
 
-try{state.offerHistory=(JSON.parse(localStorage.getItem("cardnestOfferHistory")||localStorage.getItem("pokemonOfferHistory")||"[]")||[]).slice(0,5);localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory))}catch(e){}
+try{state.offerHistory=(JSON.parse(localStorage.getItem("cardnestOfferHistory")||localStorage.getItem("pokemonOfferHistory")||"[]")||[]).slice(0,3);localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory))}catch(e){}
 try{
  const saved=JSON.parse(localStorage.getItem("cardnestFavorites")||localStorage.getItem("pokemonFavorites")||"[]");
  saved.forEach(function(id){state.favorites.set(id,null)});
@@ -330,7 +330,7 @@ function cardLink(id){return location.origin+location.pathname+"?card="+encodeUR
 function renderOfferHistory(){
  const box=document.getElementById("offerHistory");if(!box)return;
  if(!state.offerHistory.length){box.innerHTML='<p class="history-empty">Todavía no has enviado ofertas.</p>';return}
- box.innerHTML=state.offerHistory.slice(0,5).map(function(o){
+ box.innerHTML=state.offerHistory.slice(0,3).map(function(o){
   return '<article class="history-card"><div class="history-head"><div><strong>'+o.id+'</strong><small>'+new Date(o.date).toLocaleString("es-CO")+' · '+o.cards.length+' referencia'+(o.cards.length===1?"":"s")+'</small></div><strong>'+cop(o.total)+' COP</strong></div>'+
    '<div class="history-cards">'+o.cards.map(function(c){return '<a href="'+cardLink(c.id)+'"><span>'+c.name+'</span><small>ID '+c.id+' · '+(c.number||"Sin número")+' · Cantidad: '+(c.qty||1)+'</small></a>'}).join("")+'</div></article>';
  }).join("");
@@ -367,7 +367,7 @@ document.getElementById("sendOffer").onclick=function(){
  });
  const record={id:ref,date:new Date().toISOString(),mode:state.offerMode,total:total,cards:products.map(function(p){return {id:p.id,name:productName(p),number:p.card_number,qty:productQty(p)}})};
  state.offerHistory.unshift(record);
- state.offerHistory=state.offerHistory.slice(0,5);
+ state.offerHistory=state.offerHistory.slice(0,3);
  localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory));
  renderOfferHistory();
  const intro="Hola, equipo CardNest. Estoy interesado en comprar los siguientes productos y quisiera confirmar disponibilidad y revisar mi propuesta.\\n\\nReferencia de oferta: "+ref+"\\nModalidad: "+(state.offerMode==="lot"?"Oferta por el lote completo":"Oferta por producto")+"\\n\\n";
@@ -794,7 +794,11 @@ function showReceipt(){
  clearInterval(receiptTimer);
  function tick(){
   const left=new Date(o.expires_at).getTime()-Date.now(),el=document.getElementById("receiptCountdown");
-  if(left<=0){el.textContent="EXPIRADO";clearInterval(receiptTimer);localStorage.removeItem("cardnestPendingOrder");return}
+  if(left<=0){
+   el.textContent="EXPIRADO";
+   const msg=document.getElementById("receiptExpiredMessage");if(msg)msg.hidden=false;
+   clearInterval(receiptTimer);localStorage.removeItem("cardnestPendingOrder");return
+  }
   const s=Math.floor(left/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;
   el.textContent=h+":"+String(m).padStart(2,"0")+":"+String(ss).padStart(2,"0");
  }
