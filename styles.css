@@ -344,3 +344,11 @@ button{font-family:inherit;font-weight:700}
 .discover-strip[hidden]{display:none!important}.discover-strip div{display:grid;gap:5px}.discover-strip small{color:#f6ca46!important;font-weight:850;letter-spacing:.1em}.discover-strip strong{color:#fff!important;font-size:21px}.discover-strip span{color:#dbe7f2!important}.discover-strip button{border:0;border-radius:999px;padding:11px 17px;background:#fff;color:#172b4d;white-space:nowrap;cursor:pointer}
 .category-coming{grid-column:1/-1;min-height:230px;display:grid;place-content:center;text-align:center;gap:8px;border:1px dashed #c9d5df;border-radius:18px;background:#fff;color:#475467}.category-coming strong{font-size:24px;color:#172b4d!important}.category-coming span{color:#667085!important}
 @media(max-width:760px){.catalog-nav{margin-inline:-2px}.catalog-tab{padding:9px 12px}.discover-strip{align-items:flex-start;flex-direction:column;padding:20px}}
+
+/* Reserve permanent breathing room below the catalog for floating purchase controls */
+#cardsGrid{padding-bottom:210px!important}
+main.container{padding-bottom:180px!important}
+@media(max-width:760px){
+ #cardsGrid{padding-bottom:190px!important}
+ main.container{padding-bottom:160px!important}
+}
