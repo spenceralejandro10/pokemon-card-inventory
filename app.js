@@ -17,7 +17,7 @@ const SHIPPING={
 };
 const state={
  products:[],favorites:new Map(),offers:{},offerMode:"individual",
- offerHistory:[],category:"all",order:null,validatedCode:null,validatedCodeTotal:0
+ offerHistory:[],category:"all",order:null,validatedCode:null,validatedCodeTotal:0,codeItems:[],codeShippingWeightKg:1
 };
 
 const normalize=function(v){return String(v==null?"":v).toLowerCase().trim()};
@@ -107,7 +107,9 @@ function render(){
   }else{
    img.hidden=true;wrap.classList.add("image-pending");wrap.setAttribute("data-label",CATEGORY_LABELS[p.category]||"Producto");
   }
-  n.querySelector(".category-badge").textContent=CATEGORY_LABELS[p.category]||"Producto";
+  const categoryTag=n.querySelector(".card-category-tag");
+  categoryTag.textContent=CATEGORY_LABELS[p.category]||"Producto";
+  categoryTag.dataset.category=p.category;
   const demo=n.querySelector(".demo-badge");demo.hidden=!p.demo;
   n.querySelector(".card-name").textContent=productName(p);
   n.querySelector(".original-name").textContent=p.name_original&&p.name_original!==p.canonical_name?p.name_original:"";
@@ -145,6 +147,13 @@ function selectCategory(cat){
  const rarityAllowed=state.category==="all"||state.category==="pokemon";
  rarityWrap.hidden=!rarityAllowed;
  if(!rarityAllowed)document.getElementById("rarityFilter").value="";
+ const search=document.getElementById("searchInput");
+ const label=CATEGORY_LABELS[state.category]||"productos";
+ search.placeholder=state.category==="all"
+  ?"Busca por nombre, número, colección o referencia"
+  :(state.category==="accessories"||state.category==="sealed"
+    ?"Busca "+label+" por nombre o referencia"
+    :"Busca "+label+" por nombre o número de carta");
  render();
  window.scrollTo({top:document.querySelector(".catalog-nav").offsetTop-20,behavior:"smooth"});
 }
@@ -191,7 +200,7 @@ function invalidateSaleCode(message){
 }
 function toggleFavorite(p){
  if(state.favorites.has(p.id))state.favorites.delete(p.id);else state.favorites.set(p.id,p);
- persistFavorites();invalidateSaleCode();updateFavorites();render();
+ persistFavorites();updateFavorites();render();
 }
 function selectedProducts(){return Array.from(state.favorites.values()).filter(Boolean)}
 function updateFavorites(){
@@ -241,7 +250,7 @@ document.getElementById("reviewFavorites").onclick=openFavorites;
 document.getElementById("closeFavorites").onclick=closeFavorites;
 document.getElementById("favoritesBackdrop").onclick=closeFavorites;
 document.getElementById("clearFavorites").onclick=function(){
- if(confirm("¿Quieres borrar todos los productos seleccionados?")){state.favorites.clear();persistFavorites();invalidateSaleCode();updateFavorites();render()}
+ if(confirm("¿Quieres borrar todos los productos seleccionados?")){state.favorites.clear();persistFavorites();updateFavorites();render()}
 };
 
 function renderFavoriteItems(){
@@ -304,34 +313,97 @@ if(quoteFavoritesBtn)quoteFavoritesBtn.onclick=function(){
 };
 document.getElementById("startShipping").onclick=function(){closeFavorites();openShipping()};
 
-function selectedUnitCount(){
- return selectedProducts().reduce(function(sum,p){return sum+productQty(p)},0);
+
+function checkoutItems(){
+ return Array.isArray(state.codeItems)?state.codeItems:[];
 }
-function protectionUnitCount(){
- return selectedProducts().reduce(function(sum,p){return sum+(CARD_CATEGORIES.has(p.category)?productQty(p):0)},0);
+function checkoutUnitCount(){
+ return checkoutItems().reduce(function(sum,p){return sum+Math.max(1,Number(p.qty||1))},0);
 }
-function estimatedShipment(){
- const protect=document.getElementById("toploaderOption")?document.getElementById("toploaderOption").checked:true;
- let grams=100;
- selectedProducts().forEach(function(p){
-  const q=productQty(p);
-  grams+=CARD_CATEGORIES.has(p.category)?q*(protect?10.5:2):q*250;
+function cardCheckoutItems(){
+ return checkoutItems().filter(function(p){return CARD_CATEGORIES.has(String(p.category||"").toLowerCase())});
+}
+function maxToploaders(){
+ return cardCheckoutItems().reduce(function(sum,p){return sum+Math.max(1,Number(p.qty||1))},0);
+}
+function renderCodeProducts(){
+ const box=document.getElementById("codeProducts");
+ const items=checkoutItems();
+ box.hidden=!items.length;
+ if(!items.length){box.innerHTML="";return}
+ box.innerHTML='<strong>Productos asociados al código</strong><div class="code-product-list">'+items.map(function(p){
+  return '<div><span>'+String(p.name||p.id)+'</span><small>'+String(p.number||p.id)+' · Cantidad: '+Math.max(1,Number(p.qty||1))+'</small></div>';
+ }).join("")+'</div>';
+}
+function topLoaderSelections(){
+ if(!document.getElementById("toploaderOption").checked)return [];
+ const mode=document.getElementById("toploaderMode").value;
+ const cards=cardCheckoutItems();
+ if(mode==="all"){
+  return cards.map(function(p){return {id:p.id,qty:Math.max(1,Number(p.qty||1))}});
+ }
+ const result=[];
+ document.querySelectorAll(".toploader-product-row").forEach(function(row){
+  const id=row.dataset.id,qty=Math.max(0,Number(row.querySelector("input").value||0));
+  if(qty>0)result.push({id:id,qty:qty});
  });
- return {grams:Math.round(grams),kg:Math.min(5,Math.max(1,Math.ceil(grams/1000))),protect:protect,protectionCost:protect?protectionUnitCount()*2000:0};
+ return result;
+}
+function topLoaderCount(){
+ return topLoaderSelections().reduce(function(sum,x){return sum+Number(x.qty||0)},0);
+}
+function renderToploaderConfigurator(){
+ const enabled=document.getElementById("toploaderOption").checked;
+ const config=document.getElementById("toploaderConfigurator");
+ config.hidden=!enabled;
+ const mode=document.getElementById("toploaderMode").value;
+ const products=document.getElementById("toploaderProducts");
+ const cards=cardCheckoutItems();
+ products.innerHTML="";
+ if(!enabled||!cards.length){
+  if(enabled&&!cards.length)products.innerHTML='<p class="toploader-empty">Este código no contiene cartas compatibles con Top Loader.</p>';
+  document.getElementById("toploaderQty").textContent="0";
+  updateQuote();return;
+ }
+ if(mode==="custom"){
+  cards.forEach(function(p){
+   const max=Math.max(1,Number(p.qty||1)),row=document.createElement("label");
+   row.className="toploader-product-row";row.dataset.id=p.id;
+   row.innerHTML='<span><strong>'+String(p.name||p.id)+'</strong><small>'+String(p.number||p.id)+'</small></span><input type="number" min="0" max="'+max+'" value="0" aria-label="Cantidad de Top Loaders para '+String(p.name||p.id).replace(/"/g,"&quot;")+'">';
+   row.querySelector("input").addEventListener("input",function(){
+    this.value=Math.min(max,Math.max(0,Number(this.value||0)));
+    document.getElementById("toploaderQty").textContent=String(topLoaderCount());
+    updateQuote();
+   });
+   products.appendChild(row);
+  });
+ }else{
+  products.innerHTML='<p class="toploader-all-note">Se agregará un Top Loader a cada carta negociada.</p>';
+ }
+ document.getElementById("toploaderQty").textContent=String(topLoaderCount());
+ updateQuote();
 }
 function updateQuote(){
- const zone=document.getElementById("shippingZone")?document.getElementById("shippingZone").value:"N";
- const s=estimatedShipment(),freight=(SHIPPING[s.kg]&&SHIPPING[s.kg][zone])||0;
- const handling=state.validatedCodeTotal?Math.round(state.validatedCodeTotal*.01):0;
- const total=freight+s.protectionCost+handling;
- const count=selectedUnitCount();
- const countEl=document.getElementById("shippingCardCount");if(countEl)countEl.textContent=count+" producto"+(count===1?"":"s")+" seleccionado"+(count===1?"":"s");
- const weightEl=document.getElementById("estimatedWeight");if(weightEl)weightEl.textContent="Peso estimado: "+s.grams+" g · tramo de tarifa "+s.kg+" kg";
- const topEl=document.getElementById("toploaderCost");if(topEl)topEl.textContent="Protección: "+cop(s.protectionCost)+" COP";
- document.getElementById("shippingCost").textContent=cop(freight)+" COP";
- document.getElementById("shippingProtection").textContent=cop(s.protectionCost)+" COP";
- document.getElementById("shippingHandling").textContent=state.validatedCodeTotal?cop(handling)+" COP":"Se calcula con el código";
- document.getElementById("shippingTotal").textContent=cop(total)+" COP";
+ const zone=document.getElementById("shippingZone")?.value||"N";
+ const hasCode=!!state.validatedCode&&checkoutItems().length>0;
+ const kg=Math.max(1,Math.min(5,Number(state.codeShippingWeightKg||1)));
+ const count=checkoutUnitCount();
+ const topQty=topLoaderCount();
+ const protection=topQty*2000;
+ const freight=hasCode?((SHIPPING[kg]&&SHIPPING[kg][zone])||0):0;
+ const handling=hasCode?Math.round(Number(state.validatedCodeTotal||0)*.01):0;
+ const total=freight+handling+protection;
+
+ const countEl=document.getElementById("shippingCardCount");
+ const weightEl=document.getElementById("estimatedWeight");
+ const topEl=document.getElementById("toploaderCost");
+ if(countEl)countEl.textContent=hasCode?(count+" producto"+(count===1?"":"s")+" ligados al código"):"Valida el código para cargar el pedido";
+ if(weightEl)weightEl.textContent=hasCode?("Tarifa Coordinadora · tramo "+kg+" kg"):"Tarifa Coordinadora pendiente";
+ if(topEl)topEl.textContent="Top Loaders: "+cop(protection)+" COP";
+ document.getElementById("shippingCost").textContent=hasCode?(cop(freight)+" COP"):"Pendiente";
+ document.getElementById("shippingHandling").textContent=hasCode?(cop(handling)+" COP"):"Pendiente";
+ document.getElementById("shippingProtection").textContent=cop(protection)+" COP";
+ document.getElementById("shippingTotal").textContent=hasCode?(cop(total)+" COP"):"Pendiente";
 }
 function openShipping(){
  document.getElementById("shippingModal").classList.add("open");
@@ -347,9 +419,10 @@ function closeShipping(){
 document.getElementById("shippingFab").onclick=openShipping;
 document.getElementById("closeShipping").onclick=closeShipping;
 document.getElementById("shippingBackdrop").onclick=closeShipping;
-["shippingZone","toploaderOption","shippingPaymentMethod"].forEach(function(id){
- const el=document.getElementById(id);if(el)el.addEventListener("input",updateQuote);
-});
+document.getElementById("shippingZone").addEventListener("input",updateQuote);
+document.getElementById("shippingPaymentMethod").addEventListener("input",updateQuote);
+document.getElementById("toploaderOption").addEventListener("change",renderToploaderConfigurator);
+document.getElementById("toploaderMode").addEventListener("change",renderToploaderConfigurator);
 
 document.getElementById("fillTestCheckout").onclick=async function(){
  const btn=this;btn.disabled=true;btn.textContent="Preparando prueba...";
@@ -363,25 +436,28 @@ document.getElementById("fillTestCheckout").onclick=async function(){
  document.getElementById("destReference").value="Datos temporales para prueba";
  document.getElementById("shippingZone").value="N";
  document.getElementById("shippingPaymentMethod").value="Nequi";
+ document.getElementById("toploaderOption").checked=false;
  let found=null;
  try{
   for(let i=1;i<=30;i++){
    const code="CN-TEST-"+String(i).padStart(3,"0");
    const data=await saleApi({action:"validate",code:code});
-   if(data.valid){found={code:code,total:Number(data.agreed_total||0)};break}
+   if(data.valid){found={code:code,data:data};break}
   }
   if(found){
    document.getElementById("saleCode").value=found.code;
-   state.validatedCode=found.code;state.validatedCodeTotal=found.total;
-   setCodeStatus("success","Modo prueba listo. Código "+found.code+" validado por "+cop(found.total)+" COP.");
+   applyValidatedCode(found.code,found.data,"Modo prueba listo.");
   }else{
+   clearValidatedCode();
    document.getElementById("saleCode").value="";
-   state.validatedCode=null;state.validatedCodeTotal=0;
    setCodeStatus("error","Los códigos temporales de prueba ya fueron utilizados.");
   }
-  updateQuote();
- }catch(e){setCodeStatus("error","No fue posible preparar el modo de prueba.")}
- finally{btn.disabled=false;btn.textContent="⚡ Llenar datos temporales para probar"}
+ }catch(e){
+  clearValidatedCode();
+  setCodeStatus("error","No fue posible preparar el modo de prueba.");
+ }finally{
+  btn.disabled=false;btn.textContent="⚡ Llenar datos temporales para probar";
+ }
 };
 
 function restrictInputs(){
@@ -394,16 +470,44 @@ function restrictInputs(){
 restrictInputs();
 
 async function saleApi(payload){
- const res=await fetch(SALE_API,{method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE_KEY},body:JSON.stringify(payload)});
+ const res=await fetch(SALE_API,{
+  method:"POST",
+  headers:{"Content-Type":"application/json",apikey:SUPABASE_KEY},
+  body:JSON.stringify(payload)
+ });
  const data=await res.json().catch(function(){return {}});
  if(!res.ok&&payload.action!=="validate")throw new Error(data.message||"No se pudo completar la operación.");
  return data;
 }
 function setCodeStatus(type,message){
- const box=document.getElementById("saleCodeStatus");box.className="code-status "+type;box.textContent=message;
+ const box=document.getElementById("saleCodeStatus");
+ box.className="code-status "+(type||"");
+ box.textContent=message;
+}
+function clearValidatedCode(){
+ state.validatedCode=null;
+ state.validatedCodeTotal=0;
+ state.codeItems=[];
+ state.codeShippingWeightKg=1;
+ renderCodeProducts();
+ renderToploaderConfigurator();
+ updateQuote();
+}
+function applyValidatedCode(code,data,prefix){
+ state.validatedCode=code;
+ state.validatedCodeTotal=Number(data.agreed_total||0);
+ state.codeItems=Array.isArray(data.items)?data.items:[];
+ state.codeShippingWeightKg=Math.max(1,Math.min(5,Number(data.shipping_weight_kg||1)));
+ setCodeStatus("success",(prefix?prefix+" ":"")+"Código "+code+" validado. "+state.codeItems.length+" referencia"+(state.codeItems.length===1?"":"s")+" asociada"+(state.codeItems.length===1?"":"s")+".");
+ renderCodeProducts();
+ renderToploaderConfigurator();
+ updateQuote();
 }
 document.getElementById("saleCode").addEventListener("input",function(){
- if(state.validatedCode&&this.value.trim().toUpperCase()!==state.validatedCode){state.validatedCode=null;state.validatedCodeTotal=0;setCodeStatus("","El código cambió. Debes validarlo nuevamente.");updateQuote()}
+ if(state.validatedCode&&this.value.trim().toUpperCase()!==state.validatedCode){
+  clearValidatedCode();
+  setCodeStatus("","El código cambió. Debes validarlo nuevamente.");
+ }
 });
 document.getElementById("validateSaleCode").onclick=async function(){
  const code=document.getElementById("saleCode").value.trim().toUpperCase();
@@ -411,16 +515,13 @@ document.getElementById("validateSaleCode").onclick=async function(){
  const btn=this;btn.disabled=true;btn.textContent="Validando...";
  try{
   const data=await saleApi({action:"validate",code:code});
-  if(data.valid){
-   state.validatedCode=code;state.validatedCodeTotal=Number(data.agreed_total||0);
-   setCodeStatus("success","Código válido. Negociación aprobada por "+cop(state.validatedCodeTotal)+" COP.");
-   updateQuote();
-  }else{
-   state.validatedCode=null;state.validatedCodeTotal=0;
-   setCodeStatus("error",data.message||"Código inválido, vencido o ya utilizado.");updateQuote();
-  }
- }catch(e){setCodeStatus("error","No fue posible validar el código. Intenta nuevamente.")}
- finally{btn.disabled=false;btn.textContent="Validar código"}
+  if(data.valid)applyValidatedCode(code,data,"");
+  else{clearValidatedCode();setCodeStatus("error",data.message||"Código inválido, vencido o ya utilizado.")}
+ }catch(e){
+  clearValidatedCode();setCodeStatus("error","No fue posible validar el código. Intenta nuevamente.");
+ }finally{
+  btn.disabled=false;btn.textContent="Validar código";
+ }
 };
 
 function buyerData(){
@@ -445,53 +546,97 @@ function validateBuyer(b){
  return true;
 }
 document.getElementById("createOrder").onclick=async function(){
- if(!selectedProducts().length){alert("Primero selecciona los productos que vas a comprar.");return}
  const code=document.getElementById("saleCode").value.trim().toUpperCase();
- if(!code||state.validatedCode!==code){
-  alert("Para generar el pedido primero debes negociar tus productos con el analista por WhatsApp. Cuando la negociación sea aprobada, el analista te dará un código de venta. Ese código valida la compra y nos permite hacer seguimiento a los productos que acordaste.");
+ if(!code||state.validatedCode!==code||!checkoutItems().length){
+  alert("Para generar el pedido necesitas el código entregado por el analista. Ese código ya contiene los productos que fueron negociados por WhatsApp; no necesitas seleccionarlos nuevamente en la página.");
   document.getElementById("saleCode").focus();return;
  }
  const b=buyerData();if(!validateBuyer(b))return;
  const paymentMethod=document.getElementById("shippingPaymentMethod").value;
  if(!paymentMethod){alert("Selecciona el medio con el que pagarás el envío.");return}
- const btn=this;btn.disabled=true;btn.textContent="Generando pedido...";
+
+ const btn=this;btn.disabled=true;btn.textContent="Generando pedido y PDF...";
  try{
-  const items=selectedProducts().map(function(p){return {id:p.id,name:productName(p),number:p.card_number||"",category:p.category,qty:productQty(p)}});
-  const data=await saleApi({action:"create_order",code:code,buyer:b,items:items,protect:document.getElementById("toploaderOption").checked,shippingZone:document.getElementById("shippingZone").value,paymentMethod:paymentMethod});
-  state.order=Object.assign({},data.order,{sale_code:code,buyer:b,items:items});
+  const data=await saleApi({
+   action:"create_order",
+   code:code,
+   buyer:b,
+   toploaderSelections:topLoaderSelections(),
+   shippingZone:document.getElementById("shippingZone").value,
+   paymentMethod:paymentMethod
+  });
+  state.order=Object.assign({},data.order,{buyer:b});
   localStorage.setItem("cardnestPendingOrder",JSON.stringify(state.order));
-  showReceipt();downloadOrderPDF();
-  state.validatedCode=null;
+  showReceipt();
+  downloadOrderPDF();
+  clearValidatedCode();
  }catch(e){
   alert(e.message||"No fue posible generar el pedido.");
- }finally{btn.disabled=false;btn.textContent="Generar pedido y PDF"}
+ }finally{
+  btn.disabled=false;btn.textContent="Generar pedido y descargar PDF";
+ }
 };
 
 function buildPdf(){
  if(!state.order||!window.jspdf)return null;
  const jsPDF=window.jspdf.jsPDF,d=new jsPDF(),o=state.order;let y=18;
+ function ensureSpace(h){if(y+h>278){d.addPage();y=18}}
  function line(label,value){
-  d.setFont("helvetica","bold");d.text(label,14,y);d.setFont("helvetica","normal");
-  const parts=d.splitTextToSize(String(value||"—"),125);d.text(parts,65,y);y+=Math.max(7,parts.length*5.5);
-  if(y>275){d.addPage();y=18}
+  ensureSpace(12);
+  d.setFont("helvetica","bold");d.text(label,14,y);
+  d.setFont("helvetica","normal");
+  const parts=d.splitTextToSize(String(value||"—"),125);
+  d.text(parts,65,y);y+=Math.max(7,parts.length*5.5);
  }
- d.setFontSize(19);d.text("CardNest - Pedido",14,y);y+=10;d.setFontSize(10);
- line("Referencia:",o.id);line("Codigo venta:",o.sale_code);line("Valido hasta:",new Date(o.expires_at).toLocaleString("es-CO"));
- line("Nombre:",o.buyer.name);line("Celular:",o.buyer.phone);line("Documento:",o.buyer.document||"No informado");
- line("Departamento:",o.buyer.department);line("Ciudad:",o.buyer.city);line("Direccion:",o.buyer.address);
- line("Barrio / sector:",o.buyer.neighborhood||"No informado");line("Indicaciones:",o.buyer.reference||"No informado");
- line("Productos acordados:",cop(o.agreed_product_total)+" COP");
- line("Envio:",cop(o.shipping_price)+" COP");line("Manejo:",cop(o.handling_price)+" COP");line("Proteccion:",cop(o.protection_price)+" COP");
- line("Total envio:",cop(o.shipping_total)+" COP");line("Medio pago:",o.payment_method);line("Destino pago:",o.payment_destination);
- y+=3;d.setFont("helvetica","bold");d.text("Productos",14,y);y+=7;d.setFont("helvetica","normal");
- o.items.forEach(function(item,i){d.text((i+1)+". "+item.name+" | "+(item.number||item.id)+" | Cantidad: "+item.qty,14,y);y+=6;if(y>274){d.addPage();y=18}});
- y+=5;d.setFont("helvetica","bold");d.text("Importante",14,y);y+=6;d.setFont("helvetica","normal");
- const warning=o.payment_demo?"Los datos de pago mostrados en este documento son temporales de demostracion. NO REALICES PAGOS REALES hasta que CardNest publique datos verificados. ":"";
- d.text(d.splitTextToSize(warning+"El pedido y la referencia vencen cuatro horas despues de su creacion. Envia el comprobante por WhatsApp indicando la referencia del pedido.",180),14,y);
+ d.setFontSize(19);d.text("CardNest - Pedido de envio",14,y);y+=10;
+ d.setFontSize(10);
+ line("Pedido:",o.id);
+ line("Codigo venta:",o.sale_code);
+ line("Valido hasta:",new Date(o.expires_at).toLocaleString("es-CO"));
+ line("Nombre:",o.buyer.name);
+ line("Celular:",o.buyer.phone);
+ line("Documento:",o.buyer.document||"No informado");
+ line("Departamento:",o.buyer.department);
+ line("Ciudad:",o.buyer.city);
+ line("Direccion:",o.buyer.address);
+ line("Barrio / sector:",o.buyer.neighborhood||"No informado");
+ line("Indicaciones:",o.buyer.reference||"No informado");
+
+ y+=3;ensureSpace(38);
+ d.setFont("helvetica","bold");d.text("Pago del envio",14,y);y+=7;
+ d.setFont("helvetica","normal");
+ line("Flete Coordinadora:",cop(o.shipping_price)+" COP");
+ line("Manejo 1%:",cop(o.handling_price)+" COP");
+ line("Top Loaders:",cop(o.protection_price)+" COP");
+ line("TOTAL A PAGAR:",cop(o.shipping_total)+" COP");
+ line("Medio de pago:",o.payment_method);
+ line("Datos de pago:",o.payment_destination);
+
+ y+=3;ensureSpace(20);
+ d.setFont("helvetica","bold");d.text("Productos asociados al codigo",14,y);y+=7;
+ d.setFont("helvetica","normal");
+ (o.items||[]).forEach(function(item,i){
+  ensureSpace(9);
+  const top=item.toploader_qty?(" | Top Loader: "+item.toploader_qty):"";
+  d.text((i+1)+". "+item.name+" | "+(item.number||item.id)+" | Cantidad: "+item.qty+top,14,y);y+=6;
+ });
+
+ y+=5;ensureSpace(30);
+ d.setFont("helvetica","bold");d.text("Estado del pedido",14,y);y+=7;
+ d.setFont("helvetica","normal");
+ const warning=o.payment_demo
+  ?"MODO PRUEBA: los datos bancarios mostrados son temporales. NO REALICES PAGOS REALES. "
+  :"";
+ const msg=warning+"Este documento corresponde al pago del envio, no al valor negociado de los productos. Una vez CardNest confirme la recepcion del pago del envio, el pedido pasa a alistamiento y preparacion para despacho. Conserva el codigo de venta para seguimiento.";
+ d.text(d.splitTextToSize(msg,180),14,y);
  return d;
 }
-function downloadOrderPDF(){const d=buildPdf();if(d)d.save("CardNest-pedido-"+state.order.id+".pdf")}
+function downloadOrderPDF(){
+ const d=buildPdf();
+ if(d)d.save("CardNest-envio-"+state.order.sale_code+".pdf");
+}
 document.getElementById("downloadReceipt").onclick=downloadOrderPDF;
+
 let receiptTimer=null;
 function showReceipt(){
  const o=state.order;if(!o)return;
@@ -507,13 +652,18 @@ function showReceipt(){
  }
  tick();receiptTimer=setInterval(tick,1000);
  const a=document.getElementById("shippingWhatsapp");
- a.href="https://wa.me/"+WA+"?text="+encodeURIComponent("Hola. Envío el comprobante del pedido "+o.id+" asociado al código "+o.sale_code+". Nombre: "+o.buyer.name+". Ciudad: "+o.buyer.city+". Adjunto el comprobante de pago y el PDF del pedido.");
+ a.href="https://wa.me/"+WA+"?text="+encodeURIComponent(
+  "Hola. Envío el comprobante del pago del envío para el código "+o.sale_code+
+  " (pedido "+o.id+"). Nombre: "+o.buyer.name+". Ciudad: "+o.buyer.city+
+  ". Total del envío: "+cop(o.shipping_total)+" COP. Adjunto el comprobante y el PDF."
+ );
 }
 try{
  const saved=JSON.parse(localStorage.getItem("cardnestPendingOrder")||"null");
- if(saved&&new Date(saved.expires_at).getTime()>Date.now()){state.order=saved;setTimeout(showReceipt,0)}
+ if(saved&&new Date(saved.expires_at).getTime()>Date.now()){
+  state.order=saved;setTimeout(showReceipt,0);
+ }
 }catch(e){}
-
 function openImageViewer(src,p){
  const v=document.getElementById("imageViewer");if(!src||!v)return;
  document.getElementById("viewerImage").src=src;
