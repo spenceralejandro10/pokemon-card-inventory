@@ -28,7 +28,8 @@ function render(){
  if(!cards.length){grid.innerHTML='<div class="empty">No se encontraron cartas.</div>';return}
  cards.forEach(c=>{
   const n=tpl.content.cloneNode(true),img=n.querySelector(".card-image");
-  img.src=c.image_path?`${SUPABASE_URL}/storage/v1/object/public/card-images/${c.image_path}`:"";
+  const driveId=(c.source_image_url||"").match(/\/d\/([^/]+)/)?.[1];
+  img.src=c.image_path?`${SUPABASE_URL}/storage/v1/object/public/card-images/${c.image_path}`:(driveId?`https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`:"");
   img.alt=`${c.canonical_name||c.name_original||"Carta"} ${c.card_number||""}`;
   n.querySelector(".card-name").textContent=c.canonical_name||c.name_original||"Pendiente de identificar";
   n.querySelector(".original-name").textContent=c.name_original&&c.name_original!==c.canonical_name?c.name_original:"";
