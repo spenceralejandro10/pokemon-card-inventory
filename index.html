@@ -39,12 +39,15 @@
 <div id="shippingBackdrop" class="modal-backdrop" hidden></div>
 <aside id="shippingModal" class="shipping-modal" aria-hidden="true">
  <button id="closeShipping" class="modal-close" type="button">×</button>
- <h2>Envío seguro contra entrega</h2>
+ <h2>Programa tu envío</h2>
+ <div class="order-step">1. Acuerda las cartas → 2. Paga el envío → 3. Envía comprobante → 4. Despachamos</div>
  <p class="modal-lead"><strong>Tú no adelantas el dinero de las cartas.</strong> Primero pagas únicamente el transporte para autorizar el despacho. El valor de las cartas y el manejo se cobran al momento de la entrega.</p>
 <div class="benefit-grid"><div><b>Para ti</b><span>No arriesgas el valor de la compra antes de que el pedido sea despachado.</span></div><div><b>Para nosotros</b><span>El envío ya está cubierto si cambias de opinión o el paquete debe regresar.</span></div></div>
  <div class="trust-box"><strong>Compra con más tranquilidad</strong><br>No adelantas el valor de las cartas. El pago anticipado corresponde únicamente al transporte.</div>
  <h3>Calcula tu envío desde Bogotá</h3>
  <div class="shipping-form">
+  <input id="buyerName" placeholder="Nombre completo">
+  <input id="buyerPhone" inputmode="tel" placeholder="Teléfono">
   <input id="destCity" placeholder="Ciudad o municipio de destino">
   <div class="shipping-choice"><label><input id="toploaderOption" type="checkbox" checked> Proteger cada carta con Top Loader <strong>+$2.000 c/u</strong></label><small>Sin Top Loader no se cobra este adicional. La carta se calcula en ~2 g; con Top Loader usamos ~10,5 g por carta como estimación logística.</small></div>
   <div class="shipping-summary"><span id="shippingCardCount">0 cartas seleccionadas</span><span id="estimatedWeight">Peso estimado: empaque mínimo 1 kg</span><span id="toploaderCost">Top Loaders: $0</span></div>
@@ -55,7 +58,14 @@
  <div class="why-box"><h3>¿Por qué funciona para ambas partes?</h3><p><strong>Comprador:</strong> no paga las cartas por adelantado y recibe un envío con valor declarado. Coordinadora indica que el valor declarado es obligatorio y sirve como base de cobertura ante pérdida o daño.</p><p><strong>Vendedor:</strong> no asume el costo logístico de un despacho que el comprador decida no recibir.</p></div>
 <div class="dispatch-box"><h3>Despacho y entrega</h3><p><strong>Pedidos confirmados antes de las 12:00 m.:</strong> los preparamos para despacho el mismo día.</p><p><strong>Después de las 12:00 m.:</strong> se programan para el siguiente día hábil; cuando la operación lo permita, intentaremos despacharlos ese mismo día.</p><p>El tiempo de transporte empieza una vez Coordinadora recibe el paquete. Coordinadora informa los tiempos <strong>en días hábiles según origen y destino</strong> y advierte que pueden variar por vías, clima u otras condiciones logísticas.</p></div>
 <p class="conditions">Al continuar confirmas que entiendes que <strong>el envío se paga obligatoriamente antes del despacho</strong>. El valor de las cartas se recauda contra entrega. El 1% mostrado corresponde al manejo que Coordinadora publica sobre el valor declarado.</p>
- <a id="shippingWhatsapp" class="whatsapp-btn" target="_blank" rel="noopener">Continuar por WhatsApp</a>
+ <button id="createOrder" class="whatsapp-btn" type="button">Generar pedido y referencia de pago</button>
+<div id="orderReceipt" class="order-receipt" hidden>
+ <h3>Referencia de pago</h3><div class="receipt-id" id="receiptId"></div>
+ <p>Esta referencia vence en <strong id="receiptCountdown">4:00:00</strong>.</p>
+ <p><strong>Paga únicamente el envío antes del despacho.</strong> Después envía por WhatsApp la foto del comprobante junto con esta referencia.</p>
+ <div class="payment-methods">Nequi · Bre-B / llave bancaria · Bancolombia · Daviplata</div>
+ <a id="shippingWhatsapp" class="whatsapp-btn" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
+</div>
 </aside>
 
   <template id="cardTemplate">
@@ -84,7 +94,18 @@
   </template>
 
   <button id="favoritesFab" class="favorites-fab" type="button">♡ <span id="favoriteCount">0</span> seleccionadas</button>
-<div id="favoritesBar" class="favorites-bar" hidden><span><strong id="favoriteCountBar">0</strong> cartas seleccionadas</span><button id="quoteFavorites" type="button">Cotizar por WhatsApp</button><button id="clearFavorites" type="button">Limpiar</button></div>
-  <script src="app.js"></script>
+<div id="favoritesBar" class="favorites-bar" hidden><span><strong id="favoriteCountBar">0</strong> cartas seleccionadas</span><button id="reviewFavorites" type="button">Ver y proponer precio</button><button id="clearFavorites" type="button">Limpiar</button></div>
+<div id="favoritesBackdrop" class="modal-backdrop" hidden></div>
+<aside id="favoritesModal" class="shipping-modal favorites-modal" aria-hidden="true">
+ <button id="closeFavorites" class="modal-close" type="button">×</button>
+ <h2>Mis cartas seleccionadas</h2>
+ <p class="modal-lead">Revisa tu selección y propón un precio. Puedes ofrecer por cada carta o por todo el lote.</p>
+ <div id="favoriteItems" class="favorite-items"></div>
+ <label class="lot-offer">Oferta por todas las cartas <input id="lotOffer" type="number" min="0" step="1000" placeholder="$ Total del lote"></label>
+ <div class="offer-total">Oferta propuesta: <strong id="offerTotal">$0</strong></div>
+ <button id="sendOffer" class="whatsapp-btn" type="button">Enviar propuesta por WhatsApp</button>
+ <button id="startShipping" class="secondary-action" type="button">Ya acordé el precio · Programar envío</button>
+</aside>
+<script src="app.js"></script>
 </body>
 </html>
