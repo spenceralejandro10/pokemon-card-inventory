@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pokémon Card Inventory</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Pokémon Card Inventory</h1>
+      <p>Busca por nombre, número, idioma, set o rareza.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="search-panel">
+      <input id="searchInput" type="search" placeholder="Ej: Pikachu, 062/193, Japanese, AR">
+      <select id="languageFilter">
+        <option value="">Todos los idiomas</option>
+        <option value="English">English</option>
+        <option value="Spanish">Spanish</option>
+        <option value="Japanese">Japanese</option>
+        <option value="Chinese">Chinese</option>
+      </select>
+      <select id="rarityFilter">
+        <option value="">Todas las rarezas</option>
+      </select>
+    </section>
+
+    <section class="stats">
+      <span id="countLabel">0 cartas</span>
+    </section>
+
+    <section id="cardsGrid" class="cards-grid"></section>
+  </main>
+
+  <template id="cardTemplate">
+    <article class="card">
+      <div class="card-image-wrap">
+        <img class="card-image" alt="">
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2 class="card-name"></h2>
+          <span class="language-badge"></span>
+        </div>
+        <p class="original-name"></p>
+        <dl class="meta">
+          <div><dt>ID</dt><dd class="card-id"></dd></div>
+          <div><dt>Número</dt><dd class="card-number"></dd></div>
+          <div><dt>Set</dt><dd class="card-set"></dd></div>
+          <div><dt>HP</dt><dd class="card-hp"></dd></div>
+          <div><dt>Rareza</dt><dd class="card-rarity"></dd></div>
+          <div><dt>Estado</dt><dd class="card-status"></dd></div>
+        </dl>
+        <a class="drive-link" target="_blank" rel="noopener">Abrir imagen original</a>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
