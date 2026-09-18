@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CardNest</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-6">
+  <link rel="stylesheet" href="styles.css?v=20260918-7">
 </head>
 <body>
   <header class="topbar" id="pageTop">
     <button id="brandHome" class="brand-home" type="button" aria-label="Volver al inicio">
-      <span>CardNest</span>
-      <small>Cartas, coleccionables y accesorios</small>
+      <strong>CardNest</strong>
+      <span>Cartas, coleccionables y accesorios</span>
     </button>
   </header>
 
@@ -65,11 +65,18 @@
 <aside id="shippingModal" class="shipping-modal shipping-checkout" aria-hidden="true">
 <button id="closeShipping" class="modal-close" type="button">×</button>
 <h2>Finaliza tu compra</h2>
-<p class="modal-lead">Primero acuerda el precio por WhatsApp con el analista. Al aprobar la compra, el analista te entregará un código de venta para generar el pedido.</p>
+<p class="modal-lead">El precio de los productos ya fue acordado por WhatsApp. En esta etapa solo completas el envío, la protección opcional y el pago del transporte.</p>
 <button id="fillTestCheckout" class="test-fill-btn" type="button">⚡ Llenar datos temporales para probar</button>
 
+<section class="shipping-section sale-code-section">
+ <div class="section-heading"><span>1</span><div><strong>Código de venta del analista</strong><small>El código identifica automáticamente los productos negociados. No necesitas volver a seleccionarlos.</small></div></div>
+ <div class="code-validator"><input id="saleCode" maxlength="40" autocomplete="off" placeholder="Ej. CN-XXXX-0000"><button id="validateSaleCode" type="button">Validar código</button></div>
+ <div id="saleCodeStatus" class="code-status" aria-live="polite">Aún no has validado un código.</div>
+ <div id="codeProducts" class="code-products" hidden></div>
+</section>
+
 <section class="shipping-section">
- <div class="section-heading"><span>1</span><div><strong>Datos para la entrega</strong><small>Usamos estos datos únicamente para preparar el envío.</small></div></div>
+ <div class="section-heading"><span>2</span><div><strong>Datos para la entrega</strong><small>Estos datos se incluyen en el pedido para preparar y despachar el envío.</small></div></div>
  <div class="shipping-form">
   <label>Nombre completo *<input id="buyerName" autocomplete="name" maxlength="80" placeholder="Ej. Juan Pérez"></label>
   <label>Celular *<input id="buyerPhone" inputmode="numeric" autocomplete="tel" maxlength="15" placeholder="Solo números"></label>
@@ -83,54 +90,67 @@
 </section>
 
 <section class="shipping-section">
- <div class="section-heading"><span>2</span><div><strong>Protección de los productos</strong><small>Opcional para cartas individuales.</small></div></div>
- <label class="protection-toggle"><input id="toploaderOption" type="checkbox" checked><span><strong>Agregar Top Loader</strong><small>+$2.000 COP por carta seleccionada.</small></span></label>
+ <div class="section-heading"><span>3</span><div><strong>Top Loaders opcionales</strong><small>Elige cuántos quieres agregar y a cuáles cartas aplicarlos. Cada Top Loader cuesta $2.000 COP.</small></div></div>
+ <label class="protection-toggle"><input id="toploaderOption" type="checkbox"><span><strong>Agregar Top Loader</strong><small>Actívalo solo si deseas protección adicional.</small></span></label>
+ <div id="toploaderConfigurator" class="toploader-configurator" hidden>
+   <div class="toploader-toolbar">
+     <label>Aplicar a
+       <select id="toploaderMode">
+         <option value="all">Todas las cartas negociadas</option>
+         <option value="custom">Elegir productos</option>
+       </select>
+     </label>
+     <div class="toploader-total"><span>Cantidad</span><strong id="toploaderQty">0</strong></div>
+   </div>
+   <div id="toploaderProducts" class="toploader-products"></div>
+ </div>
 </section>
 
 <section class="shipping-section">
- <div class="section-heading"><span>3</span><div><strong>Cotizar envío</strong><small>El valor definitivo se confirma al generar el pedido.</small></div></div>
+ <div class="section-heading"><span>4</span><div><strong>Pago del envío</strong><small>El cobro de esta etapa corresponde al transporte Coordinadora, manejo y Top Loaders opcionales. No incluye el valor negociado de los productos.</small></div></div>
  <div class="shipping-form compact">
   <label>Zona de envío<select id="shippingZone"><option value="N">Nacional / capitales principales</option><option value="L">Local</option><option value="R">Regional</option><option value="Z">Zonal</option><option value="O">Otros destinos</option><option value="E">Destino especial</option></select></label>
   <label>Medio para pagar el envío<select id="shippingPaymentMethod"><option value="">Selecciona...</option><option>Nequi</option><option>Bre-B / llave bancaria</option><option>Bancolombia</option><option>Daviplata</option></select></label>
  </div>
- <div class="shipping-summary"><span id="shippingCardCount">0 productos seleccionados</span><span id="estimatedWeight">Peso estimado</span><span id="toploaderCost">Protección: $0 COP</span></div>
- <div class="quote-box"><div>Flete estimado <strong id="shippingCost">$0 COP</strong></div><div>Manejo estimado <strong id="shippingHandling">Se calcula con el código</strong></div><div>Protección <strong id="shippingProtection">$0 COP</strong></div><div class="quote-total">Total estimado de envío <strong id="shippingTotal">$0 COP</strong></div></div>
+ <div class="shipping-summary"><span id="shippingCardCount">Valida el código para cargar el pedido</span><span id="estimatedWeight">Tarifa Coordinadora pendiente</span><span id="toploaderCost">Top Loaders: $0 COP</span></div>
+ <div class="quote-box">
+   <div>Flete Coordinadora <strong id="shippingCost">Pendiente</strong></div>
+   <div>Manejo (1% valor declarado) <strong id="shippingHandling">Pendiente</strong></div>
+   <div>Top Loaders <strong id="shippingProtection">$0 COP</strong></div>
+   <div class="quote-total">Total a pagar ahora <strong id="shippingTotal">Pendiente</strong></div>
+ </div>
 </section>
 
-<section class="shipping-section sale-code-section">
- <div class="section-heading"><span>4</span><div><strong>Código de venta del analista</strong><small>Este código confirma que la negociación fue aprobada y permite generar el pedido.</small></div></div>
- <div class="code-validator"><input id="saleCode" maxlength="40" autocomplete="off" placeholder="Ej. CN-XXXX-0000"><button id="validateSaleCode" type="button">Validar código</button></div>
- <div id="saleCodeStatus" class="code-status" aria-live="polite">Aún no has validado un código.</div>
-</section>
-
-<button id="createOrder" class="whatsapp-btn checkout-primary" type="button">Generar pedido y PDF</button>
+<button id="createOrder" class="whatsapp-btn checkout-primary" type="button">Generar pedido y descargar PDF</button>
 
 <div id="orderReceipt" class="order-receipt receipt-simple" hidden>
- <small>PEDIDO VALIDADO</small>
+ <small>PEDIDO GENERADO</small>
  <h3>Código de venta</h3>
  <div class="receipt-id" id="receiptId"></div>
- <p class="price-hold">Este código mantiene las condiciones acordadas durante <strong>4 horas</strong>.</p>
+ <p class="price-hold">Las condiciones del pedido se mantienen durante <strong>4 horas</strong>.</p>
  <div class="countdown-card"><span>Tiempo restante</span><strong id="receiptCountdown">4:00:00</strong></div>
+ <p class="receipt-next-step">Realiza únicamente el pago del envío y envía el comprobante por WhatsApp. Cuando el analista confirme la recepción, CardNest procede a alistar los productos asociados a este código.</p>
  <p class="demo-payment-warning" id="demoPaymentWarning" hidden>Modo de prueba: los datos de pago del PDF son temporales. No realices pagos reales.</p>
- <button id="downloadReceipt" class="secondary-action" type="button">Descargar PDF del pedido</button>
+ <button id="downloadReceipt" class="secondary-action" type="button">Descargar PDF nuevamente</button>
  <a id="shippingWhatsapp" class="whatsapp-btn" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
 </div>
 
 <div class="checkout-info">
- <details class="ship-accordion"><summary>¿Cómo funciona?</summary><div class="accordion-body"><p>Seleccionas productos, envías tu propuesta por WhatsApp, acuerdas el precio con el analista y recibes un código de venta. Con ese código completas los datos, generas el pedido y recibes una referencia con vigencia de cuatro horas.</p></div></details>
- <details class="ship-accordion"><summary>Ventajas del pago contra entrega</summary><div class="accordion-body"><p>El valor acordado de los productos se gestiona según la modalidad contra entrega definida para el pedido. El envío se paga antes del despacho.</p></div></details>
- <details class="ship-accordion"><summary>Tiempos de despacho y entrega</summary><div class="accordion-body"><p>Una vez confirmado el pago del envío, el pedido entra a preparación. Los tiempos definitivos dependen del destino y de la transportadora.</p></div></details>
- <details class="ship-accordion"><summary>Pago del envío</summary><div class="accordion-body"><p>Al generar el pedido verás la referencia, el medio seleccionado y los datos de pago. Después envía el comprobante por WhatsApp indicando la referencia del pedido.</p></div></details>
+ <details class="ship-accordion"><summary>¿Cómo funciona?</summary><div class="accordion-body"><p>Después de negociar por WhatsApp, el analista genera un código ligado a los productos acordados. Tú validas el código, completas los datos de entrega, eliges protección opcional y pagas únicamente el envío.</p></div></details>
+ <details class="ship-accordion"><summary>¿Qué se paga en esta etapa?</summary><div class="accordion-body"><p>Únicamente el transporte, el costo de manejo de la transportadora y los Top Loaders opcionales. El valor de los productos corresponde al acuerdo previo realizado con el analista.</p></div></details>
+ <details class="ship-accordion"><summary>Después del comprobante</summary><div class="accordion-body"><p>El analista identifica el pedido mediante el código de venta, verifica el comprobante del envío y, cuando confirma el pago, CardNest procede a alistar los productos para despacho.</p></div></details>
+ <details class="ship-accordion"><summary>Tarifa de Coordinadora</summary><div class="accordion-body"><p>La tarifa depende de la zona, el tramo de peso configurado para el pedido y el valor declarado. El costo de manejo corresponde al 1% del valor declarado.</p></div></details>
 </div>
 </aside>
 
   <template id="cardTemplate">
     <article class="card">
-      <div class="card-image-wrap">
-        <img class="card-image" alt="">
-      </div>
+      <div class="card-image-wrap"><img class="card-image" alt=""></div>
       <div class="card-body">
-        <div class="card-title-row"><div><span class="category-badge"></span><h2 class="card-name"></h2></div><div class="card-badges"><span class="demo-badge" hidden>DEMO</span><span class="language-badge"></span><span class="stock-badge"></span></div></div>
+        <div class="card-title-row">
+          <div><h2 class="card-name"></h2></div>
+          <div class="card-badges"><span class="demo-badge" hidden>DEMO</span><span class="language-badge"></span><span class="stock-badge"></span></div>
+        </div>
         <p class="original-name"></p>
         <dl class="meta">
           <div><dt>ID</dt><dd class="card-id"></dd></div>
@@ -140,8 +160,10 @@
           <div><dt>Rareza / Tipo</dt><dd class="card-rarity"></dd></div>
           <div><dt>Estado</dt><dd class="card-status"></dd></div>
         </dl>
-        <button class="favorite-btn" type="button">♡ Me interesa</button>
-        
+        <div class="card-actions">
+          <button class="favorite-btn" type="button">♡ Me interesa</button>
+          <span class="card-category-tag"></span>
+        </div>
       </div>
     </article>
   </template>
@@ -168,6 +190,6 @@
     <div class="viewer-content"><img id="viewerImage" alt=""><div id="viewerCaption"></div></div>
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="app.js?v=20260918-6"></script>
+<script src="app.js?v=20260918-7"></script>
 </body>
 </html>
