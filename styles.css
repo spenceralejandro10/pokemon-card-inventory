@@ -115,3 +115,27 @@ a.original-link,.image-link,.open-original,[href*="drive.google.com"][class*="or
  .cart-viewer-thumbs img{width:70px!important;height:94px!important;min-width:70px!important}
  .thumb-nav{height:72px!important}
 }
+
+/* Professional light theme */
+:root{color-scheme:light}
+html,body{background:#f4f6f8!important;color:#17212b!important}
+body{background:linear-gradient(180deg,#ffffff 0,#f5f7f9 38%,#eef2f5 100%)!important}
+header,.site-header{background:rgba(255,255,255,.96)!important;border-color:#dce3e8!important;color:#17212b!important}
+main{color:#17212b}
+.search-panel,.filters,.card,.pokemon-card,.catalog-card,.favorites-panel,.shipping-modal,.offers-modal,.offer-modal,.modal-panel,.quote-box,.shipping-choice,.shipping-summary,.order-receipt{
+ background:#fff!important;color:#17212b!important;border-color:#d9e1e7!important;box-shadow:0 8px 24px rgba(31,45,61,.07)!important
+}
+.card h2,.card h3,.pokemon-card h2,.pokemon-card h3,.catalog-card h2,.catalog-card h3{color:#152433!important}
+.card small,.pokemon-card small,.catalog-card small,.muted{color:#667684!important}
+.card-row,.meta-row,.card dl div{border-color:#e5eaee!important}
+input,select,textarea{background:#fff!important;color:#17212b!important;border:1px solid #cfd8df!important}
+input::placeholder,textarea::placeholder{color:#8795a1!important}
+.ship-accordion,.info-drop{background:#f8fafb!important;border-color:#d8e1e7!important}
+.ship-accordion>summary,.info-drop>summary{color:#21313e!important}
+.ship-accordion .accordion-body,.info-drop>div{color:#566774!important}
+.cart-viewer-btn,.favorites-bar{background:rgba(255,255,255,.97)!important;color:#17212b!important;border:1px solid #d4dde4!important;box-shadow:0 10px 30px rgba(26,40,54,.14)!important}
+.thumb-nav{background:#f1f5f7!important;color:#263845!important;border-color:#cbd7df!important}
+.thumb-nav:hover{background:#e6edf2!important}
+.secondary-action{background:#fff!important;color:#1b2c39!important;border-color:#cbd6de!important}
+.image-viewer{background:rgba(13,20,27,.88)!important}
+.brand-hero.brand-hero-image-only{border-color:#d8e0e6!important;box-shadow:0 12px 32px rgba(31,45,61,.10)!important}
