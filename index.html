@@ -102,7 +102,9 @@
     </article>
   </template>
 
-  <div id="favoritesPreview" class="favorites-preview" hidden></div>
+  <button id="cartViewerBtn" class="cart-viewer-btn" type="button" hidden><span>♡</span><strong id="cartViewerCount">0</strong><small>Ver cartas</small></button>
+<div id="cartViewerBackdrop" class="cart-viewer-backdrop" hidden></div>
+<aside id="cartViewer" class="cart-viewer" aria-hidden="true"><div class="cart-viewer-head"><div><strong>Cartas guardadas</strong><small id="cartViewerSubtitle"></small></div><button id="closeCartViewer" type="button">×</button></div><div id="cartViewerGrid" class="cart-viewer-grid"></div></aside>
 <div id="favoritesBar" class="favorites-bar" hidden><span><strong id="favoriteCountBar">0</strong> cartas seleccionadas</span><button id="reviewFavorites" type="button">Ver y proponer precio</button><button id="clearFavorites" type="button">Limpiar</button></div>
 <div id="favoritesBackdrop" class="modal-backdrop" hidden></div>
 <aside id="favoritesModal" class="shipping-modal favorites-modal" aria-hidden="true">
