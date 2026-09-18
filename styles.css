@@ -909,3 +909,113 @@ main.container{background:transparent!important}
  .offer-controls{grid-template-columns:84px minmax(0,1fr)!important}
  .money-input input{min-width:0!important}
 }
+
+
+/* ===== Analyst-code checkout + category action tags ===== */
+.brand-home{
+ display:flex!important;align-items:baseline!important;gap:9px!important;
+ padding:9px 0!important;border:0!important;background:transparent!important;
+ cursor:pointer!important;text-align:left!important
+}
+.brand-home strong{
+ color:#172433!important;font-size:22px!important;font-weight:900!important;
+ letter-spacing:-.03em!important
+}
+.brand-home span{
+ color:#667684!important;font-size:12px!important;font-weight:650!important;
+ letter-spacing:0!important
+}
+
+.card-actions{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;
+ align-items:center;margin-top:12px
+}
+.card-actions .favorite-btn{
+ width:100%!important;margin:0!important;min-height:42px!important;
+ border-radius:9px!important
+}
+.card-category-tag{
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:36px;max-width:112px;padding:6px 9px;border-radius:9px;
+ font-size:10px;font-weight:900;line-height:1.1;text-align:center;
+ border:1px solid transparent;white-space:normal
+}
+.card-category-tag[data-category="pokemon"]{background:#fff3bf;color:#725200;border-color:#ead36f}
+.card-category-tag[data-category="yugioh"]{background:#f1eafa;color:#5d3783;border-color:#d8c5ed}
+.card-category-tag[data-category="digimon"]{background:#e4f5fb;color:#14627e;border-color:#b8dfed}
+.card-category-tag[data-category="dragonball"]{background:#fff0df;color:#8a4700;border-color:#efca9e}
+.card-category-tag[data-category="naruto"]{background:#ffeded;color:#8c3030;border-color:#efc1c1}
+.card-category-tag[data-category="accessories"]{background:#e8f6f1;color:#17654b;border-color:#bce0d2}
+.card-category-tag[data-category="sealed"]{background:#e9eef7;color:#344d76;border-color:#c8d4e8}
+
+/* Negotiated products bound to analyst code */
+.code-products{
+ margin-top:11px;padding:11px 12px;border-radius:10px;
+ background:#eef3f6;border:1px solid #d4dee6
+}
+.code-products>strong{
+ display:block;margin-bottom:7px;color:#172433!important;font-size:12px!important
+}
+.code-product-list{display:grid;gap:6px}
+.code-product-list>div{
+ display:flex;justify-content:space-between;gap:12px;align-items:center;
+ padding:7px 9px;border-radius:8px;background:#fff;border:1px solid #dde5eb
+}
+.code-product-list span{color:#1c2b37!important;font-size:12px!important;font-weight:750}
+.code-product-list small{color:#677785!important;font-size:10px!important;text-align:right}
+
+/* Top Loader selector */
+.toploader-configurator{
+ margin-top:11px;padding:12px;border:1px solid #d5dfe6;
+ border-radius:11px;background:#f4f7f9
+}
+.toploader-configurator[hidden]{display:none!important}
+.toploader-toolbar{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end
+}
+.toploader-toolbar label{
+ display:grid;gap:6px;color:#455563!important;font-size:11px!important;font-weight:800!important
+}
+.toploader-toolbar select{
+ min-height:42px;padding:9px 10px;border:1px solid #b9c6cf;border-radius:9px;
+ background:#fff;color:#172433;font-weight:700
+}
+.toploader-total{
+ min-width:82px;padding:7px 11px;border-radius:9px;background:#183a52;
+ display:grid;text-align:center;gap:1px
+}
+.toploader-total span{color:#cfe0eb!important;font-size:9px!important;font-weight:700}
+.toploader-total strong{color:#fff!important;font-size:18px!important}
+.toploader-products{display:grid;gap:7px;margin-top:10px}
+.toploader-product-row{
+ display:grid!important;grid-template-columns:minmax(0,1fr) 78px;gap:10px;
+ align-items:center;padding:9px 10px;border-radius:9px;background:#fff;border:1px solid #dce4ea
+}
+.toploader-product-row span{display:grid;gap:2px}
+.toploader-product-row strong{color:#172433!important;font-size:12px!important}
+.toploader-product-row small{color:#6b7a87!important;font-size:10px!important}
+.toploader-product-row input{
+ width:100%;min-height:40px;padding:8px;border:1px solid #b7c4ce;border-radius:8px;
+ background:#fff;color:#172433;font-weight:800;text-align:center
+}
+.toploader-all-note,.toploader-empty{
+ margin:0!important;padding:9px 10px;border-radius:8px;background:#fff;
+ color:#5c6c79!important;font-size:11px!important;border:1px solid #dfe6eb
+}
+
+/* Shipping quote now clearly excludes negotiated product value */
+.shipping-checkout .quote-box .quote-total strong{color:#0f5c43!important}
+.receipt-next-step{
+ margin:12px 0!important;padding:10px 11px!important;border-radius:9px!important;
+ background:#eaf5ef!important;color:#315c48!important;font-size:12px!important;line-height:1.45!important
+}
+
+@media(max-width:620px){
+ .brand-home{align-items:flex-start!important;flex-direction:column!important;gap:0!important}
+ .card-actions{grid-template-columns:1fr!important}
+ .card-category-tag{max-width:none;width:max-content}
+ .toploader-toolbar{grid-template-columns:1fr!important}
+ .toploader-total{width:100%}
+ .code-product-list>div{align-items:flex-start;flex-direction:column;gap:3px}
+ .code-product-list small{text-align:left}
+}
