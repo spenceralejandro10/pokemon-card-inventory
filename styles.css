@@ -92,3 +92,26 @@ a.original-link,.image-link,.open-original,[href*="drive.google.com"][class*="or
  .cart-viewer-thumbs{max-width:66vw!important}
  .cart-viewer-thumbs img{width:46px!important;height:64px!important}
 }
+
+/* Definitive lightbox click layer */
+.image-viewer{isolation:isolate}
+.viewer-backdrop{position:absolute;inset:0;z-index:0;cursor:zoom-out}
+.viewer-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;pointer-events:auto}
+.image-viewer #closeImageViewer{z-index:4}
+.image-viewer #viewerCaption{position:relative;z-index:2}
+
+/* Persistent selected-card filmstrip, double-size thumbnails */
+.cart-viewer-btn{
+ position:fixed!important;left:18px!important;bottom:18px!important;top:auto!important;
+ z-index:900!important;min-height:142px!important;max-width:min(980px,78vw)!important;
+ padding:10px 12px!important;transform:none!important;visibility:visible!important;
+}
+.cart-viewer-thumbs{max-width:min(790px,65vw)!important;height:122px!important;gap:8px!important;overflow-x:auto!important;overflow-y:hidden!important}
+.cart-viewer-thumbs img{width:92px!important;height:122px!important;min-width:92px!important;object-fit:cover!important}
+.thumb-nav{height:92px!important;width:34px!important;flex-basis:34px!important}
+@media(max-width:760px){
+ .cart-viewer-btn{left:8px!important;bottom:78px!important;min-height:112px!important;max-width:96vw!important}
+ .cart-viewer-thumbs{height:94px!important;max-width:72vw!important}
+ .cart-viewer-thumbs img{width:70px!important;height:94px!important;min-width:70px!important}
+ .thumb-nav{height:72px!important}
+}
