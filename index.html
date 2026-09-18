@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CardNest</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-16">
+  <link rel="stylesheet" href="styles.css?v=20260918-17">
 </head>
 <body>
   <header class="topbar" id="pageTop">
@@ -47,13 +47,13 @@
   <button id="exploreElectronics" type="button">Explorar electrónica</button>
 </section>
 <section class="search-panel">
-  <input id="searchInput" type="search" placeholder="Busca por nombre, número, colección o referencia">
-  <select id="languageFilter">
+  <input id="searchInput" type="search" autocomplete="off" spellcheck="false" aria-label="Buscar productos" placeholder="Busca por nombre, número, colección o referencia">
+  <select id="languageFilter" aria-label="Filtrar por idioma">
     <option value="">Todos los idiomas</option>
     <option value="English">English</option><option value="Spanish">Spanish</option><option value="Japanese">Japanese</option><option value="Chinese">Chinese</option>
   </select>
   <div id="rarityFilterWrap" class="filter-field">
-    <select id="rarityFilter">
+    <select id="rarityFilter" aria-label="Filtrar por rareza o tipo">
       <option value="">Rareza / tipo</option>
       <option value="fullart">Arte completo</option>
       <option value="holo">Holo / Brillo</option>
@@ -61,14 +61,23 @@
       <option value="general">General</option>
     </select>
   </div>
+  <select id="sortFilter" aria-label="Ordenar productos">
+    <option value="featured">Orden: destacados</option>
+    <option value="name">Nombre A–Z</option>
+    <option value="category">Categoría</option>
+    <option value="id">ID / referencia</option>
+  </select>
   <button id="resetFilters" class="reset-filters" type="button">Restablecer filtros</button>
 </section>
 
     <section class="stats">
-      <span id="countLabel">0 cartas</span>
+      <span id="countLabel">Cargando catálogo…</span>
     </section>
 
+    <div id="catalogStatus" class="catalog-status" role="status" aria-live="polite" hidden></div>
+
     <section id="cardsGrid" class="cards-grid"></section>
+    <div class="catalog-pagination"><button id="loadMore" type="button" hidden>Cargar más productos</button></div>
 </main>
 <button id="shippingFab" class="shipping-fab" type="button">🚚 <span>Programa tu envío<br><small>Paga los productos al recibir</small></span></button>
 <div id="shippingBackdrop" class="modal-backdrop" hidden></div>
@@ -235,6 +244,6 @@
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="app.js?v=20260918-16"></script>
+<script src="app.js?v=20260918-17"></script>
 </body>
 </html>

@@ -2,6 +2,8 @@ const SUPABASE_URL="https://cnivcnexsqobipvqxero.supabase.co";
 const SUPABASE_KEY="sb_publishable_6UjwLuM-op0-OBKWlbusTw_qmLNZVfU";
 const WA="573125214785";
 const SALE_API=SUPABASE_URL+"/functions/v1/sale-order";
+const CATALOG_PAGE_SIZE=48;
+const CATALOG_REQUEST_TIMEOUT=12000;
 
 const CATEGORY_LABELS={
  all:"Todos",pokemon:"Pokémon",yugioh:"Yu-Gi-Oh!",digimon:"Digimon",
@@ -17,18 +19,24 @@ const SHIPPING={
 };
 const state={
  products:[],favorites:new Map(),offers:{},offerMode:"individual",
- offerHistory:[],category:"all",order:null,validatedCode:null,codeHandlingPrice:0,codeShippingWeightKg:1
+ offerHistory:[],category:"all",sort:"featured",visibleLimit:CATALOG_PAGE_SIZE,
+ order:null,validatedCode:null,codeHandlingPrice:0,codeShippingWeightKg:1
 };
 
-const normalize=function(v){return String(v==null?"":v).toLowerCase().trim()};
+const normalize=function(v){
+ return String(v==null?"":v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+};
 const cop=function(n){return new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(Number(n)||0)};
 const parseCOP=function(v){return Number(String(v||"").replace(/\D/g,""))||0};
 function formatCOPInput(el){const n=parseCOP(el.value);el.value=n?new Intl.NumberFormat("es-CO").format(n):""}
+function productKey(p){return String(p.category||"product")+"::"+String(p.id)}
+function productOffer(p){return state.offers[productKey(p)]||{}}
 
 try{state.offerHistory=(JSON.parse(localStorage.getItem("cardnestOfferHistory")||localStorage.getItem("pokemonOfferHistory")||"[]")||[]).slice(0,3);localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory))}catch(e){}
+let savedFavoriteRefs=[];
 try{
  const saved=JSON.parse(localStorage.getItem("cardnestFavorites")||localStorage.getItem("pokemonFavorites")||"[]");
- saved.forEach(function(id){state.favorites.set(id,null)});
+ if(Array.isArray(saved))savedFavoriteRefs=saved;
 }catch(e){}
 
 function rarityGroup(p){
@@ -40,12 +48,22 @@ function rarityGroup(p){
  return "general";
 }
 function imageUrl(p){
- const driveId=String(p.source_image_url||"").match(/\/d\/([^/]+)/);
+ const source=String(p.source_image_url||p.image_url||"");
+ const driveId=source.match(/\/d\/([^/]+)/)||source.match(/[?&]id=([^&]+)/);
  if(p.image_path)return SUPABASE_URL+"/storage/v1/object/public/card-images/"+p.image_path;
- return driveId?"https://drive.google.com/thumbnail?id="+driveId[1]+"&sz=w1000":"";
+ if(driveId)return "https://drive.google.com/thumbnail?id="+driveId[1]+"&sz=w1000";
+ return /^https?:\/\//i.test(source)?source:"";
 }
 function productName(p){return p.canonical_name||p.name_original||"Producto"}
-function productQty(p){return Math.max(1,Number((state.offers[p.id]||{}).qty||1))}
+function productQty(p){return Math.max(1,Number(productOffer(p).qty||1))}
+function productStatus(p){
+ if(p.demo)return "Inventario de ejemplo";
+ if(p.sale_status==="sold_out"||Number(p.stock_quantity)<=0)return "No disponible";
+ if(p.condition||p.card_condition)return p.condition||p.card_condition;
+ if(p.validation_status==="verified")return "Datos verificados";
+ if(p.validation_status)return "Pendiente de verificación";
+ return "Información por verificar";
+}
 function shuffleList(list){
  const a=list.slice();
  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
@@ -62,18 +80,57 @@ function mixCatalog(list){
  return out;
 }
 
-async function loadProducts(){
- const results=await Promise.all([
-  fetch(SUPABASE_URL+"/rest/v1/cards?select=*&order=id.asc",{headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY}}),
-  fetch("data/demo-products.json?v=20260918-3"),
-  fetch(SUPABASE_URL+"/rest/v1/electronics_products?select=*&order=id.asc",{headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY}})
- ]);
- if(!results[0].ok)throw new Error(await results[0].text());
- const pokemon=(await results[0].json()).map(function(p){
-  return Object.assign({},p,{category:"pokemon",category_label:"Pokémon",rarity_group:rarityGroup(p),demo:false});
+async function fetchJson(url,options){
+ const controller=new AbortController();
+ const timer=setTimeout(function(){controller.abort()},CATALOG_REQUEST_TIMEOUT);
+ try{
+  const response=await fetch(url,Object.assign({},options||{},{signal:controller.signal}));
+  if(!response.ok)throw new Error("HTTP "+response.status);
+  return await response.json();
+ }finally{clearTimeout(timer)}
+}
+function normalizePokemonRecord(p){
+ return Object.assign({},p,{
+  category:"pokemon",category_label:"Pokémon",
+  card_number:p.card_number||p.number||"",
+  stock_quantity:p.stock_quantity==null?1:Number(p.stock_quantity),
+  sale_status:p.sale_status||"available",
+  rarity_group:rarityGroup(p),demo:false
  });
- const demo=results[1].ok?await results[1].json():[];
- const electronics=results[2].ok?(await results[2].json()).map(function(p){
+}
+function setCatalogStatus(message,type){
+ const box=document.getElementById("catalogStatus");
+ if(!box)return;
+ box.hidden=!message;
+ box.textContent=message||"";
+ box.className="catalog-status "+(type||"");
+}
+function restoreFavorites(){
+ const byKey=new Map(state.products.map(function(p){return [productKey(p),p]}));
+ savedFavoriteRefs.forEach(function(ref){
+  let found=byKey.get(String(ref));
+  if(!found)found=state.products.find(function(p){return String(p.id)===String(ref)});
+  if(found)state.favorites.set(productKey(found),found);
+ });
+ savedFavoriteRefs=[];
+}
+async function loadProducts(){
+ setCatalogStatus("Cargando inventario…","loading");
+ const headers={apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY};
+ const results=await Promise.allSettled([
+  fetchJson(SUPABASE_URL+"/rest/v1/cards?select=*&order=id.asc",{headers:headers}),
+  fetchJson("data/demo-products.json?v=20260918-3"),
+  fetchJson(SUPABASE_URL+"/rest/v1/electronics_products?select=*&order=id.asc",{headers:headers}),
+  fetchJson("data/cards.json?v=20260918-1")
+ ]);
+ const remoteCards=results[0].status==="fulfilled"&&Array.isArray(results[0].value)?results[0].value:[];
+ const localCards=results[3].status==="fulfilled"&&Array.isArray(results[3].value)?results[3].value:[];
+ const pokemonSource=remoteCards.length?remoteCards:localCards;
+ if(!pokemonSource.length)throw new Error("No fue posible cargar el inventario principal.");
+ const pokemon=pokemonSource.map(normalizePokemonRecord);
+ const demo=results[1].status==="fulfilled"&&Array.isArray(results[1].value)?results[1].value:[];
+ const electronicsRaw=results[2].status==="fulfilled"&&Array.isArray(results[2].value)?results[2].value:[];
+ const electronics=electronicsRaw.map(function(p){
   return {
    id:p.id,category:"electronics",category_label:"Electrónica",
    canonical_name:p.name,name_original:p.product_type||"",
@@ -87,32 +144,56 @@ async function loadProducts(){
    electronics_specs:p.short_specs,electronics_compatibility:p.compatibility,
    electronics_power:p.power_info,electronics_color:p.color,electronics_condition:p.condition
   };
- }):[];
+ });
  state.products=mixCatalog(pokemon.concat(demo,electronics));
- for(const id of Array.from(state.favorites.keys())){
-  const found=state.products.find(function(p){return p.id===id});
-  if(found)state.favorites.set(id,found);else state.favorites.delete(id);
- }
+ restoreFavorites();
  persistFavorites();
+ const partial=[];
+ if(!remoteCards.length&&localCards.length)partial.push("inventario Pokémon local");
+ if(results[1].status!=="fulfilled")partial.push("categorías de demostración");
+ if(results[2].status!=="fulfilled")partial.push("electrónica");
+ setCatalogStatus(partial.length?"Catálogo parcial: no fue posible actualizar "+partial.join(" y ")+".":"",partial.length?"warning":"");
  render();
  updateFavorites();
  updateQuote();
 }
 function matches(p,q,language,rarity){
  const hay=[p.id,p.canonical_name,p.name_original,p.card_number,p.set_name,p.set_code,p.language,p.rarity_detected,p.rarity_verified,p.variant,p.category_label,p.electronics_brand,p.electronics_model,p.electronics_type,p.electronics_specs,p.electronics_compatibility,p.electronics_power,p.electronics_color].map(normalize).join(" ");
- return (!q||hay.includes(normalize(q)))&&(!language||p.language===language)&&(!rarity||(p.category==="pokemon"&&rarityGroup(p)===rarity));
+ const terms=normalize(q).split(/\s+/).filter(Boolean);
+ return terms.every(function(term){return hay.includes(term)})&&(!language||p.language===language)&&(!rarity||(p.category==="pokemon"&&rarityGroup(p)===rarity));
+}
+function sortProducts(list){
+ const mode=document.getElementById("sortFilter").value;
+ if(mode==="featured")return list;
+ const sorted=list.slice();
+ sorted.sort(function(a,b){
+  if(mode==="name")return productName(a).localeCompare(productName(b),"es",{sensitivity:"base",numeric:true});
+  if(mode==="category")return String(CATEGORY_LABELS[a.category]||a.category).localeCompare(String(CATEGORY_LABELS[b.category]||b.category),"es",{sensitivity:"base"})||productName(a).localeCompare(productName(b),"es",{sensitivity:"base"});
+  return String(a.id).localeCompare(String(b.id),"es",{numeric:true,sensitivity:"base"});
+ });
+ return sorted;
 }
 function render(){
  const grid=document.getElementById("cardsGrid"),tpl=document.getElementById("cardTemplate");
  const q=document.getElementById("searchInput").value;
  const language=document.getElementById("languageFilter").value;
  const rarity=document.getElementById("rarityFilter").value;
- const list=state.products.filter(function(p){
+ const filtered=state.products.filter(function(p){
   return (state.category==="all"||p.category===state.category)&&matches(p,q,language,rarity);
  });
+ const ordered=sortProducts(filtered),list=ordered.slice(0,state.visibleLimit);
  grid.innerHTML="";
- document.getElementById("countLabel").textContent=list.length+" producto"+(list.length===1?"":"s");
- if(!list.length){grid.innerHTML='<div class="empty">No hay productos que coincidan con estos filtros.</div>';return}
+ document.getElementById("countLabel").textContent=filtered.length
+  ?"Mostrando "+list.length+" de "+filtered.length+" producto"+(filtered.length===1?"":"s")
+  :"0 productos";
+ const loadMore=document.getElementById("loadMore");
+ loadMore.hidden=list.length>=filtered.length;
+ if(!loadMore.hidden)loadMore.textContent="Cargar "+Math.min(CATALOG_PAGE_SIZE,filtered.length-list.length)+" productos más";
+ if(!list.length){
+  grid.innerHTML='<div class="empty"><strong>No encontramos coincidencias.</strong><span>Prueba otro nombre, número o restablece los filtros.</span><button type="button" data-reset-empty>Restablecer filtros</button></div>';
+  grid.querySelector("[data-reset-empty]").onclick=resetFilters;
+  return;
+ }
  list.forEach(function(p){
   const n=tpl.content.cloneNode(true),card=n.querySelector(".card"),wrap=n.querySelector(".card-image-wrap"),img=n.querySelector(".card-image");
   const src=imageUrl(p);
@@ -144,22 +225,25 @@ function render(){
    n.querySelector(".card-set").closest("div").querySelector("dt").textContent="Marca / modelo";
    n.querySelector(".card-rarity").closest("div").querySelector("dt").textContent="Características";
    n.querySelector(".card-rarity").textContent=p.electronics_specs||p.variant||"Información pendiente";
-   n.querySelector(".card-status").textContent=p.electronics_condition||"Nuevo / demo";
+   n.querySelector(".card-status").textContent=p.electronics_condition||productStatus(p);
    n.querySelector(".original-name").textContent=[p.electronics_type,p.electronics_brand].filter(Boolean).join(" · ");
   }
   const hpRow=n.querySelector(".card-hp-row");
   if(p.hp==null||p.hp===""){hpRow.hidden=true}else n.querySelector(".card-hp").textContent=p.hp;
   if(p.category!=="electronics"){
    n.querySelector(".card-rarity").textContent=p.rarity_verified||p.rarity_detected||"General";
-   n.querySelector(".card-status").textContent=p.demo?"Inventario de ejemplo":"Sin uso · protegida";
+   n.querySelector(".card-status").textContent=productStatus(p);
   }
-  const fav=n.querySelector(".favorite-btn"),selected=state.favorites.has(p.id);
+  const fav=n.querySelector(".favorite-btn"),selected=state.favorites.has(productKey(p));
   if(sold){fav.disabled=true;fav.textContent="No disponible"}else{fav.textContent=selected?"♥ Seleccionado":"♡ Me interesa";fav.classList.toggle("selected",selected)}
   if(!sold)fav.onclick=function(){toggleFavorite(p)};
   grid.appendChild(n);
  });
 }
-["searchInput","languageFilter","rarityFilter"].forEach(function(id){document.getElementById(id).addEventListener("input",render)});
+["searchInput","languageFilter","rarityFilter","sortFilter"].forEach(function(id){
+ document.getElementById(id).addEventListener("input",function(){state.visibleLimit=CATALOG_PAGE_SIZE;render()});
+});
+document.getElementById("loadMore").onclick=function(){state.visibleLimit+=CATALOG_PAGE_SIZE;render()};
 document.querySelectorAll(".catalog-tab").forEach(function(btn){
  btn.addEventListener("click",function(){selectCategory(btn.dataset.category)});
 });
@@ -168,6 +252,7 @@ document.querySelectorAll("[data-go-category]").forEach(function(btn){
 });
 function selectCategory(cat){
  state.category=cat||"all";
+ state.visibleLimit=CATALOG_PAGE_SIZE;
  document.querySelectorAll(".catalog-tab").forEach(function(b){b.classList.toggle("active",b.dataset.category===state.category)});
  document.getElementById("discoverStrip").hidden=state.category!=="all";
  const rarityWrap=document.getElementById("rarityFilterWrap");
@@ -199,12 +284,22 @@ function goHome(){
  document.getElementById("searchInput").value="";
  document.getElementById("languageFilter").value="";
  document.getElementById("rarityFilter").value="";
+ document.getElementById("sortFilter").value="featured";
  selectCategory("all");
  window.scrollTo({top:0,behavior:"smooth"});
 }
+function resetFilters(){
+ document.getElementById("searchInput").value="";
+ document.getElementById("languageFilter").value="";
+ document.getElementById("rarityFilter").value="";
+ document.getElementById("sortFilter").value="featured";
+ state.visibleLimit=CATALOG_PAGE_SIZE;
+ render();
+ document.querySelector(".search-panel").scrollIntoView({behavior:"smooth",block:"start"});
+}
 document.getElementById("brandHome").onclick=goHome;
 document.getElementById("heroHome").onclick=goHome;
-document.getElementById("resetFilters").onclick=goHome;
+document.getElementById("resetFilters").onclick=resetFilters;
 const exploreElectronics=document.getElementById("exploreElectronics");
 if(exploreElectronics)exploreElectronics.onclick=function(){selectCategory("electronics")};
 
@@ -228,15 +323,9 @@ function persistFavorites(){
  localStorage.setItem("cardnestFavorites",JSON.stringify(ids));
  localStorage.setItem("pokemonFavorites",JSON.stringify(ids));
 }
-function invalidateSaleCode(message){
- if(!state.validatedCode)return;
- state.validatedCode=null;state.validatedCodeTotal=0;
- const box=document.getElementById("saleCodeStatus");
- if(box){box.className="code-status";box.textContent=message||"La selección cambió. Valida de nuevo el código del analista."}
- updateQuote();
-}
 function toggleFavorite(p){
- if(state.favorites.has(p.id))state.favorites.delete(p.id);else state.favorites.set(p.id,p);
+ const key=productKey(p);
+ if(state.favorites.has(key))state.favorites.delete(key);else state.favorites.set(key,p);
  persistFavorites();updateFavorites();render();
 }
 function selectedProducts(){return Array.from(state.favorites.values()).filter(Boolean)}
@@ -295,7 +384,7 @@ const MIN_OFFER_PER_UNIT=3000;
 const MAX_OFFER_TOTAL=10000000;
 function offerUnitsTotal(){
  return selectedProducts().reduce(function(sum,p){
-  return sum+Math.max(1,Number((state.offers[p.id]||{}).qty||1));
+  return sum+Math.max(1,Number(productOffer(p).qty||1));
  },0);
 }
 function setOfferInputState(input,valid,message){
@@ -310,7 +399,7 @@ function renderFavoriteItems(){
  const box=document.getElementById("favoriteItems");box.innerHTML="";
  selectedProducts().forEach(function(p){
   const row=document.createElement("div");row.className="favorite-item";
-  const max=Math.max(1,Number(p.stock_quantity||1)),o=state.offers[p.id]||{},disabled=state.offerMode==="lot"?"disabled":"";
+  const max=Math.max(1,Number(p.stock_quantity||1)),key=productKey(p),o=productOffer(p),disabled=state.offerMode==="lot"?"disabled":"";
   row.innerHTML='<div class="favorite-product-info"><strong>'+productName(p)+'</strong><small>ID '+p.id+' · '+(p.card_number||"Sin referencia")+'</small><small>Disponibles: '+max+'</small></div>'+
    '<div class="offer-controls"><label>Cantidad<input class="qty-input" type="number" min="1" max="'+max+'" value="'+(o.qty||1)+'"></label>'+
    '<label>Oferta por unidad <b>COP</b><div class="money-input"><span>$</span><input class="price-input" inputmode="numeric" maxlength="10" placeholder="Mín. 3.000" '+disabled+' value="'+(o.price?new Intl.NumberFormat("es-CO").format(o.price):"")+'"></div><small class="offer-field-help">Mínimo $3.000 COP por unidad.</small></label></div>';
@@ -318,14 +407,14 @@ function renderFavoriteItems(){
   qty.oninput=function(e){
    const q=Math.min(max,Math.max(1,Number(e.target.value||1)));
    e.target.value=q;
-   state.offers[p.id]=Object.assign({},state.offers[p.id]||{},{qty:q});
+   state.offers[key]=Object.assign({},state.offers[key]||{},{qty:q});
    updateOfferTotal();
   };
   price.oninput=function(e){
    let val=parseCOP(e.target.value);
    if(val>MAX_OFFER_TOTAL)val=MAX_OFFER_TOTAL;
    e.target.value=val?new Intl.NumberFormat("es-CO").format(val):"";
-   state.offers[p.id]=Object.assign({},state.offers[p.id]||{},{price:val});
+   state.offers[key]=Object.assign({},state.offers[key]||{},{price:val});
    setOfferInputState(e.target,!val||val>=MIN_OFFER_PER_UNIT,val&&val<MIN_OFFER_PER_UNIT?"La oferta mínima es $3.000 COP.":"Mínimo $3.000 COP por unidad.");
    updateOfferTotal();
   };
@@ -336,7 +425,7 @@ function renderFavoriteItems(){
 function updateOfferTotal(){
  const lot=parseCOP(document.getElementById("lotOffer").value);
  const sum=selectedProducts().reduce(function(a,p){
-  const o=state.offers[p.id]||{};
+  const o=productOffer(p);
   return a+Number(o.price||0)*Number(o.qty||1);
  },0);
  const total=state.offerMode==="lot"?lot:sum;
@@ -394,21 +483,21 @@ document.getElementById("sendOffer").onclick=function(){
   if(lot>MAX_OFFER_TOTAL){alert("La oferta total no puede superar "+cop(MAX_OFFER_TOTAL)+" COP.");return}
   total=lot;
  }else{
-  const invalid=products.find(function(p){return Number((state.offers[p.id]||{}).price||0)<MIN_OFFER_PER_UNIT});
+  const invalid=products.find(function(p){return Number(productOffer(p).price||0)<MIN_OFFER_PER_UNIT});
   if(invalid){
    alert('Debes asignar una oferta mínima de $3.000 COP a cada producto. Falta: '+productName(invalid)+'.');
    renderFavoriteItems();
    return;
   }
   total=products.reduce(function(a,p){
-   const o=state.offers[p.id]||{};
+   const o=productOffer(p);
    return a+Number(o.price||0)*Number(o.qty||1);
   },0);
   if(total>MAX_OFFER_TOTAL){alert("La oferta total no puede superar "+cop(MAX_OFFER_TOTAL)+" COP.");return}
  }
  const ref="OF-"+Date.now().toString(36).toUpperCase();
  const lines=products.map(function(p){
-  const o=state.offers[p.id]||{},qty=Number(o.qty||1),price=Number(o.price||0);
+  const o=productOffer(p),qty=Number(o.qty||1),price=Number(o.price||0);
   return state.offerMode==="lot"
    ?"• ID "+p.id+" | "+productName(p)+" | Cantidad: "+qty
    :"• ID "+p.id+" | "+productName(p)+" | Cantidad: "+qty+" | Oferta por unidad: "+cop(price)+" COP | Subtotal: "+cop(price*qty)+" COP";
@@ -422,11 +511,6 @@ document.getElementById("sendOffer").onclick=function(){
  const totalLine="\\nPropuesta total: "+cop(total)+" COP";
  const note="\\n\\nSi la propuesta es aprobada, por favor envíenme el código de venta para continuar con el pedido y el envío. Gracias.";
  window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(intro+lines.join("\\n")+totalLine+note),"_blank");
-};
-const quoteFavoritesBtn=document.getElementById("quoteFavorites");
-if(quoteFavoritesBtn)quoteFavoritesBtn.onclick=function(){
- const lines=selectedProducts().map(function(p){return "• "+productName(p)+" — "+(p.card_number||p.id)});
- window.open("https://wa.me/"+WA+"?text="+encodeURIComponent("Hola, quiero cotizar estos productos de CardNest:\\n"+lines.join("\\n")+"\\n\\n¿Me confirman disponibilidad?"),"_blank");
 };
 document.getElementById("startShipping").onclick=function(){closeFavorites();openShipping()};
 
@@ -573,7 +657,6 @@ function clearValidatedCode(){
  state.codeShippingWeightKg=1;
  document.getElementById("checkoutUnlocked").hidden=true;
  moveCheckoutInfoInitial();
- renderCodeProducts();
  document.getElementById("toploaderOption").checked=false;
  renderToploaderConfigurator();
  updateQuote();
@@ -588,7 +671,6 @@ function applyValidatedCode(code,data,prefix){
   return;
  }
  setCodeStatus("success",(prefix?prefix+" ":"")+"Código válido. Ya puedes completar los datos y pagar el envío.");
- renderCodeProducts();
  document.getElementById("checkoutUnlocked").hidden=false;
  document.getElementById("deliveryDetails").open=true;
  moveCheckoutInfoToEnd();
