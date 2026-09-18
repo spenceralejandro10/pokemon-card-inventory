@@ -320,3 +320,16 @@ button{font-family:inherit;font-weight:700}
  .mascot-head{font-size:50px}
  .cart-viewer-btn::before{left:56px!important}
 }
+
+/* Dock yields while browsing so it never blocks catalog cards */
+.cart-viewer-btn{transition:transform .28s ease,opacity .28s ease!important}
+.cart-viewer-btn.dock-yield{
+ transform:translateY(calc(100% + 55px))!important;
+ opacity:.18!important;
+ pointer-events:none!important;
+}
+.selected-mascot{transition:opacity .2s ease}
+.cart-viewer-btn.dock-yield .selected-mascot{opacity:0!important}
+@media(max-width:760px){
+ .cart-viewer-btn.dock-yield{transform:translateY(calc(100% + 95px))!important}
+}
