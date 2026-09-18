@@ -281,3 +281,42 @@ button{font-family:inherit;font-weight:700}
 .ship-accordion>summary{color:#182230!important;font-weight:750!important}
 .ship-accordion .accordion-body{color:#475467!important}
 .offer-total,.history-head,.history-cards,.shipping-summary{color:#263548!important}
+
+/* Animated fire-dragon mascot for selected cards dock */
+.selected-mascot{
+ position:absolute;left:-8px;bottom:calc(100% - 15px);
+ width:92px;height:92px;display:grid;place-items:center;
+ pointer-events:none;z-index:5;
+ filter:drop-shadow(0 9px 9px rgba(15,23,42,.22));
+ animation:mascotFloat 2.8s ease-in-out infinite;
+}
+.mascot-head{
+ position:relative;z-index:2;font-size:64px;line-height:1;
+ transform:rotate(-7deg);
+ filter:saturate(1.15);
+}
+.mascot-flame{
+ position:absolute;left:12px;bottom:9px;width:34px;height:34px;
+ border-radius:70% 30% 65% 35%;
+ background:linear-gradient(135deg,#ffd43b,#ff7a00 58%,#e5484d);
+ transform:rotate(35deg);
+ animation:flamePulse .7s ease-in-out infinite alternate;
+ box-shadow:0 0 18px rgba(255,122,0,.38);
+}
+.cart-viewer-btn::before{left:72px!important}
+@keyframes mascotFloat{
+ 0%,100%{transform:translateY(0) rotate(-2deg)}
+ 50%{transform:translateY(-8px) rotate(2deg)}
+}
+@keyframes flamePulse{
+ from{transform:rotate(35deg) scale(.86);opacity:.78}
+ to{transform:rotate(35deg) scale(1.12);opacity:1}
+}
+@media(prefers-reduced-motion:reduce){
+ .selected-mascot,.mascot-flame{animation:none!important}
+}
+@media(max-width:760px){
+ .selected-mascot{width:72px;height:72px;left:-4px}
+ .mascot-head{font-size:50px}
+ .cart-viewer-btn::before{left:56px!important}
+}
