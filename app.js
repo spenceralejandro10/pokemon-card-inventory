@@ -39,7 +39,7 @@ function render(){
   n.querySelector(".card-id").textContent=c.id;n.querySelector(".card-number").textContent=c.card_number||"Pendiente";
   n.querySelector(".card-set").textContent=c.set_name||c.set_code||"Pendiente";n.querySelector(".card-hp").textContent=c.hp??"—";
   n.querySelector(".card-rarity").textContent=c.rarity_verified||c.rarity_detected||"Pendiente de revisión";
-  n.querySelector(".card-status").textContent=c.validation_status;
+  n.querySelector(".card-status").textContent="Sin uso · protegida";
   const a=n.querySelector(".drive-link");a.href=c.source_image_url||"#";if(!c.source_image_url)a.style.display="none";
   const fav=n.querySelector(".favorite-btn");
   const selected=state.favorites.has(c.id); fav.classList.toggle("selected",selected); fav.textContent=selected?"♥ Seleccionada":"♡ Me interesa";
@@ -57,15 +57,20 @@ const SHIPPING={
 5:{L:16230,R:19610,N:29270,Z:41250,O:49350,E:65730}};
 const cop=n=>new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(n||0);
 const WA="573125214785";
-function updateQuote(){const zone=document.getElementById("shippingZone")?.value||"N",weight=Number(document.getElementById("packageWeight")?.value||1),declared=Math.max(0,Number(document.getElementById("declaredValue")?.value||0)),freight=SHIPPING[weight]?.[zone]||0,handling=Math.round(declared*.01);document.getElementById("shippingCost").textContent=cop(freight);document.getElementById("shippingHandling").textContent=cop(handling);document.getElementById("shippingTotal").textContent=cop(freight+handling)}
+function estimatedShipment(){
+ const count=Math.max(1,state.favorites.size),withTop=document.getElementById("toploaderOption")?.checked??true;
+ const grams=count*(withTop?10.5:2)+100;
+ return {count,withTop,grams,kg:Math.max(1,Math.ceil(grams/1000)),topCost:withTop?count*2000:0};
+}
+function updateQuote(){const zone=document.getElementById("shippingZone")?.value||"N",declared=Math.max(0,Number(document.getElementById("declaredValue")?.value||0)),s=estimatedShipment(),rateKg=Math.min(5,s.kg),freight=SHIPPING[rateKg]?.[zone]||SHIPPING[5]?.[zone]||0,handling=Math.round(declared*.01);document.getElementById("shippingCost").textContent=cop(freight);document.getElementById("shippingHandling").textContent=cop(handling);document.getElementById("shippingTotal").textContent=cop(freight+handling+s.topCost);document.getElementById("shippingCardCount").textContent=`${state.favorites.size} carta${state.favorites.size===1?"":"s"} seleccionada${state.favorites.size===1?"":"s"}`;document.getElementById("estimatedWeight").textContent=`Peso estimado: ${s.grams} g · tarifa ${rateKg} kg`;document.getElementById("toploaderCost").textContent=`Top Loaders: ${cop(s.topCost)}`}
 function openShipping(){document.getElementById("shippingModal").classList.add("open");document.getElementById("shippingBackdrop").hidden=false;document.getElementById("shippingModal").setAttribute("aria-hidden","false")}
 function closeShipping(){document.getElementById("shippingModal").classList.remove("open");document.getElementById("shippingBackdrop").hidden=true;document.getElementById("shippingModal").setAttribute("aria-hidden","true")}
 document.getElementById("shippingFab").onclick=openShipping;document.getElementById("closeShipping").onclick=closeShipping;document.getElementById("shippingBackdrop").onclick=closeShipping;
-["shippingZone","packageWeight","declaredValue"].forEach(id=>document.getElementById(id)?.addEventListener("input",updateQuote));updateQuote();
-document.getElementById("shippingWhatsapp").onclick=function(){const city=document.getElementById("destCity").value.trim()||"por confirmar",zone=document.getElementById("shippingZone").value,weight=Number(document.getElementById("packageWeight").value||1),declared=Number(document.getElementById("declaredValue").value||0),cost=cop((SHIPPING[weight]?.[zone]||0)+Math.round(declared*.01));this.href=`https://wa.me/${WA}?text=${encodeURIComponent(`Hola, quiero coordinar un envío de cartas Pokémon. Ciudad: ${city}. Envío estimado mostrado: ${cost}. Entiendo que el envío se paga antes del despacho y las cartas + 1% de manejo al recibir.`)}`};
+["shippingZone","toploaderOption","declaredValue"].forEach(id=>document.getElementById(id)?.addEventListener("input",updateQuote));updateQuote();
+document.getElementById("shippingWhatsapp").onclick=function(){const city=document.getElementById("destCity").value.trim()||"por confirmar",zone=document.getElementById("shippingZone").value,declared=Number(document.getElementById("declaredValue").value||0),s=estimatedShipment(),weight=Math.min(5,s.kg),cost=cop((SHIPPING[weight]?.[zone]||0)+Math.round(declared*.01)+s.topCost);this.href=`https://wa.me/${WA}?text=${encodeURIComponent(`Hola, quiero coordinar un envío de cartas Pokémon. Ciudad: ${city}. Envío estimado mostrado: ${cost}. Entiendo que el envío se paga antes del despacho y las cartas + 1% de manejo al recibir.`)}`};
 function persistFavorites(){localStorage.setItem("pokemonFavorites",JSON.stringify([...state.favorites.keys()]))}
 function toggleFavorite(card){state.favorites.has(card.id)?state.favorites.delete(card.id):state.favorites.set(card.id,card);persistFavorites();updateFavorites();render()}
-function updateFavorites(){const n=state.favorites.size;document.getElementById("favoriteCount").textContent=n;document.getElementById("favoriteCountBar").textContent=n;document.getElementById("favoritesBar").hidden=!n}
+function updateFavorites(){const n=state.favorites.size;document.getElementById("favoriteCount").textContent=n;document.getElementById("favoriteCountBar").textContent=n;document.getElementById("favoritesBar").hidden=!n;if(document.getElementById("shippingCost"))updateQuote()}
 document.getElementById("favoritesFab").onclick=()=>{if(state.favorites.size)document.getElementById("favoritesBar").scrollIntoView({behavior:"smooth",block:"end"})};
 document.getElementById("clearFavorites").onclick=()=>{if(confirm("¿Quieres borrar todas las cartas guardadas?")){state.favorites.clear();persistFavorites();updateFavorites();render()}};
 document.getElementById("quoteFavorites").onclick=()=>{const lines=[...state.favorites.values()].map(c=>`• ${c.canonical_name||c.name_original||"Carta"} — ${c.card_number||c.id}`);window.open(`https://wa.me/${WA}?text=${encodeURIComponent("Hola, quiero cotizar estas cartas Pokémon:\n"+lines.join("\n")+"\n\n¿Me confirmas disponibilidad y precio?")}`,"_blank")};
