@@ -164,3 +164,16 @@ input::placeholder,textarea::placeholder{color:#8795a1!important}
   left:4px;
  }
 }
+
+/* Hard guarantee: a closed lightbox cannot remain rendered */
+#imageViewer[hidden],
+#imageViewer.viewer-closed{
+ display:none!important;
+ visibility:hidden!important;
+ pointer-events:none!important;
+}
+#imageViewer:not([hidden]){
+ display:flex;
+ visibility:visible;
+ pointer-events:auto;
+}
