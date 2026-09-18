@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CardNest</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-12">
+  <link rel="stylesheet" href="styles.css?v=20260918-13">
 </head>
 <body>
   <header class="topbar" id="pageTop">
@@ -24,6 +24,7 @@
   <button class="catalog-tab" data-category="naruto">Naruto</button>
   <button class="catalog-tab" data-category="accessories">Accesorios</button>
   <button class="catalog-tab" data-category="sealed">Producto sellado</button>
+  <button class="catalog-tab catalog-tab-electronics" data-category="electronics">Electrónica <span class="new-pill">NUEVO</span></button>
 </nav>
 <section id="discoverStrip" class="discover-strip trust-discover" aria-label="Por qué comprar en CardNest">
   <div class="discover-copy">
@@ -35,6 +36,15 @@
     <span class="proof-dot"></span>
     <strong id="discoverDynamic">Productos revisados antes de la venta</strong>
   </div>
+</section>
+<section id="electronicsLaunch" class="electronics-launch" aria-label="Nueva sección de electrónica">
+  <div class="electronics-launch-badge">NUEVO EN CARDNEST</div>
+  <div class="electronics-launch-copy">
+    <small>TECNOLOGÍA Y ACCESORIOS ELECTRÓNICOS</small>
+    <strong>¿Te apasiona la electrónica?</strong>
+    <span>Ahora también encuentras productos de tecnología seleccionados dentro de CardNest. Explora audio, carga, conectividad, periféricos y más sin salir del mismo catálogo.</span>
+  </div>
+  <button id="exploreElectronics" type="button">Explorar electrónica</button>
 </section>
 <section class="search-panel">
   <input id="searchInput" type="search" placeholder="Busca por nombre, número, colección o referencia">
@@ -104,6 +114,7 @@
   <summary><span>3</span><div><strong>Top Loaders opcionales</strong><small>Elige cantidad y cómo quieres usarlos.</small></div></summary>
   <div class="checkout-step-body">
    <label class="protection-toggle"><input id="toploaderOption" type="checkbox"><span><strong>Agregar Top Loaders</strong><small>$2.000 COP c/u · promoción: 6 por $10.000 COP.</small></span></label>
+   <p class="toploader-card-only-note"><strong>Solo para cartas:</strong> ignora esta opción si tu compra no incluye cartas. Úsala únicamente cuando quieras protección rígida adicional para una o varias cartas.</p>
    <div id="toploaderConfigurator" class="toploader-configurator" hidden>
     <div class="toploader-toolbar">
       <label>Cantidad
@@ -216,6 +227,6 @@
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="app.js?v=20260918-12"></script>
+<script src="app.js?v=20260918-13"></script>
 </body>
 </html>
