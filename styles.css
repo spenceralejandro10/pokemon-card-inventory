@@ -53,3 +53,12 @@ a.original-link,.image-link,.open-original,[href*="drive.google.com"][class*="or
 .brand-hero.brand-hero-image-only>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;background:#07192a}
 .brand-hero-image-only .brand-hero-shade,.brand-hero-image-only .brand-hero-copy{display:none!important}
 @media(max-width:760px){.brand-hero.brand-hero-image-only{min-height:0;aspect-ratio:2/1;margin:12px}.brand-hero.brand-hero-image-only>img{object-fit:contain}}
+
+.ship-accordion{margin:8px 0;border:1px solid #315878;border-radius:10px;background:#0d2b44;overflow:hidden}
+.ship-accordion>summary{padding:13px 14px;cursor:pointer;font-weight:850;color:#edf8ff;list-style:none}
+.ship-accordion>summary::-webkit-details-marker{display:none}.ship-accordion>summary:before{content:"›";display:inline-block;margin-right:9px;font-size:19px;transition:.15s}
+.ship-accordion[open]>summary:before{transform:rotate(90deg)}
+.ship-accordion .accordion-body{padding:2px 14px 14px;color:#b8cfdf;font-size:13px;line-height:1.45}
+.ship-accordion .shipping-form{display:grid}
+.shipping-modal>h2{margin-bottom:12px}
+.shipping-modal>.whatsapp-btn#createOrder{margin-top:14px;width:100%}
