@@ -1179,3 +1179,94 @@ input[type="checkbox"].field-invalid{
  border-radius:8px;padding:7px 10px;font-size:10px;font-weight:800;cursor:pointer
 }
 .offer-history-tools button:hover{background:#ffe9e6;border-color:#c9857f}
+
+/* ===== New Electronics vertical ===== */
+.catalog-tab-electronics{
+ border-color:#76b6c6!important;
+ color:#16485a!important;
+ background:#eef9fb!important;
+}
+.catalog-tab-electronics.active{
+ background:#12566d!important;
+ color:#fff!important;
+ border-color:#12566d!important;
+}
+.new-pill{
+ display:inline-flex;align-items:center;margin-left:5px;padding:2px 5px;
+ border-radius:999px;background:#18a0ae;color:#fff!important;
+ font-size:8px;font-weight:900;letter-spacing:.06em;vertical-align:middle
+}
+.catalog-tab-electronics.active .new-pill{background:#dff9fb;color:#12566d!important}
+
+.electronics-launch{
+ position:relative;overflow:hidden;
+ display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;
+ margin:12px 0 18px;padding:17px 19px;border-radius:16px;
+ background:linear-gradient(120deg,#103f52 0%,#16677a 55%,#168c8f 100%);
+ border:1px solid rgba(255,255,255,.16);
+ box-shadow:0 10px 28px rgba(16,63,82,.14)
+}
+.electronics-launch[hidden]{display:none!important}
+.electronics-launch:after{
+ content:"";position:absolute;top:-70%;left:-18%;width:13%;height:240%;
+ transform:rotate(18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+ animation:electronicsSweep 5.8s ease-in-out infinite;pointer-events:none
+}
+@keyframes electronicsSweep{0%,48%{left:-18%}72%,100%{left:112%}}
+.electronics-launch-badge{
+ position:relative;z-index:1;padding:8px 10px;border-radius:10px;
+ background:#d7f7f5;color:#115060!important;font-size:9px;font-weight:900;letter-spacing:.08em;
+ white-space:nowrap
+}
+.electronics-launch-copy{position:relative;z-index:1;display:grid;gap:3px}
+.electronics-launch-copy small{color:#bceff0!important;font-size:9px!important;font-weight:900!important;letter-spacing:.08em}
+.electronics-launch-copy strong{
+ color:#fff!important;font-family:"Segoe UI",Roboto,Arial,sans-serif!important;
+ font-size:18px!important;font-weight:850!important;letter-spacing:-.02em
+}
+.electronics-launch-copy span{color:#e2f3f4!important;font-size:11.5px!important;line-height:1.45}
+.electronics-launch button{
+ position:relative;z-index:1;border:1px solid rgba(255,255,255,.55);
+ border-radius:10px;background:#fff;color:#12566d;padding:10px 13px;
+ font-weight:850;cursor:pointer;white-space:nowrap
+}
+.electronics-launch button:hover{background:#e9fbfb}
+
+.card.electronics-card{
+ border-color:#9ccbd2!important;
+ background:#eef8f9!important;
+ box-shadow:0 9px 24px rgba(18,86,109,.10)!important
+}
+.card.electronics-card .card-body{
+ background:#eef8f9!important;
+ font-family:"Segoe UI",Roboto,Arial,sans-serif!important
+}
+.card.electronics-card .card-name{
+ color:#103f52!important;
+ font-weight:850!important
+}
+.card.electronics-card .original-name{color:#397181!important}
+.card.electronics-card .meta div{border-color:#cfe5e8!important}
+.card.electronics-card .meta dt{color:#4d7180!important}
+.card.electronics-card .meta dd{color:#153d49!important}
+.card.electronics-card .card-category-tag{
+ background:#12566d!important;color:#fff!important;border-color:#12566d!important
+}
+.card.electronics-card .favorite-btn{
+ background:#12566d!important;border-color:#12566d!important;color:#fff!important
+}
+.card.electronics-card .favorite-btn.selected{
+ background:#157c72!important;border-color:#157c72!important
+}
+.toploader-card-only-note{
+ margin:9px 0 0;padding:9px 10px;border-radius:9px;
+ background:#f7fafb;border:1px solid #d9e3e8;color:#5f6f7c!important;
+ font-size:10.5px!important;line-height:1.45!important
+}
+.toploader-card-only-note strong{color:#243746!important}
+
+@media(max-width:760px){
+ .electronics-launch{grid-template-columns:1fr;gap:10px;padding:15px}
+ .electronics-launch-badge{width:max-content}
+ .electronics-launch button{width:100%}
+}
