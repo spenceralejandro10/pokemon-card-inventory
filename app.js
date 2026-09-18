@@ -327,6 +327,17 @@ document.querySelectorAll('input[name="offerMode"]').forEach(function(r){
  }
 });
 function cardLink(id){return location.origin+location.pathname+"?card="+encodeURIComponent(id)}
+
+const clearOfferHistoryBtn=document.getElementById("clearOfferHistory");
+if(clearOfferHistoryBtn)clearOfferHistoryBtn.onclick=function(){
+ if(!state.offerHistory.length)return;
+ if(confirm("¿Eliminar el historial de ofertas guardado en este dispositivo?")){
+  state.offerHistory=[];
+  localStorage.removeItem("cardnestOfferHistory");
+  localStorage.removeItem("pokemonOfferHistory");
+  renderOfferHistory();
+ }
+};
 function renderOfferHistory(){
  const box=document.getElementById("offerHistory");if(!box)return;
  if(!state.offerHistory.length){box.innerHTML='<p class="history-empty">Todavía no has enviado ofertas.</p>';return}
@@ -718,64 +729,162 @@ document.getElementById("createOrder").onclick=async function(){
  }
 };
 
+
+function makeOrderQRDataUrl(order){
+ if(typeof QRCode==="undefined")return null;
+ try{
+  const holder=document.createElement("div");
+  holder.style.position="fixed";holder.style.left="-9999px";holder.style.top="-9999px";
+  document.body.appendChild(holder);
+  const qrText="https://wa.me/"+WA+"?text="+encodeURIComponent(
+   "Hola CardNest. Consulta del pedido "+order.id+" / código "+order.sale_code
+  );
+  new QRCode(holder,{text:qrText,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
+  const canvas=holder.querySelector("canvas");
+  const img=holder.querySelector("img");
+  const data=canvas?canvas.toDataURL("image/png"):(img?img.src:null);
+  holder.remove();
+  return data;
+ }catch(e){return null}
+}
+
 function buildPdf(){
  if(!state.order||!window.jspdf)return null;
- const jsPDF=window.jspdf.jsPDF,d=new jsPDF(),o=state.order;let y=18;
- function ensureSpace(h){if(y+h>278){d.addPage();y=18}}
- function line(label,value){
-  ensureSpace(12);
-  d.setFont("helvetica","bold");d.text(label,14,y);
-  d.setFont("helvetica","normal");
-  const parts=d.splitTextToSize(String(value||"—"),125);
-  d.text(parts,65,y);y+=Math.max(7,parts.length*5.5);
- }
- d.setFontSize(19);d.text("CardNest - Orden de envio",14,y);y+=10;
- d.setFontSize(10);
- line("Pedido:",o.id);
- line("Codigo de venta:",o.sale_code);
- line("Valido hasta:",new Date(o.expires_at).toLocaleString("es-CO"));
- line("Valor declarado:",cop(o.agreed_product_total)+" COP (no se paga en esta orden)");
- line("Nombre:",o.buyer.name);
- line("Correo:",o.buyer.email);
- line("Celular:",o.buyer.phone);
- line("Documento:",o.buyer.document);
- line("Departamento:",o.buyer.department);
- line("Ciudad:",o.buyer.city);
- line("Direccion:",o.buyer.address);
- line("Barrio / sector:",o.buyer.neighborhood);
- line("Indicaciones:",o.buyer.reference||"Sin indicaciones");
- line("Observaciones:",o.buyer.notes||"Sin observaciones");
+ const jsPDF=window.jspdf.jsPDF,d=new jsPDF({unit:"mm",format:"a4"}),o=state.order;
+ const navy=[24,50,75],gold=[244,197,66],ink=[27,39,51],muted=[96,113,127],soft=[244,247,249],line=[214,223,230],green=[20,112,78];
+ let y=0;
 
- y+=3;ensureSpace(35);
- d.setFont("helvetica","bold");d.text("Pago del envio",14,y);y+=7;
- d.setFont("helvetica","normal");
- line("Flete Coordinadora:",cop(o.shipping_price)+" COP");
- line("Manejo 1%:",cop(o.handling_price)+" COP");
- line("Top Loaders:",o.top_loader_qty+" unidad(es) · "+cop(o.protection_price)+" COP");
- if(o.top_loader_qty){
-  line("Uso Top Loaders:",topLoaderPreferenceLabel(o.top_loader_preference));
-  line("Indicacion Top Loaders:",o.top_loader_notes||"Sin indicaciones");
+ function setText(color,size,style,font){
+  d.setTextColor.apply(d,color||ink);
+  d.setFont(font||"helvetica",style||"normal");
+  d.setFontSize(size||10);
  }
- line("TOTAL A PAGAR:",cop(o.shipping_total)+" COP");
- line("Medio de pago:",o.payment_method);
- line("Datos de pago:",o.payment_destination);
+ function newPage(){
+  d.addPage();y=18;
+  d.setDrawColor.apply(d,line);
+  d.setLineWidth(.2);
+ }
+ function ensure(h){if(y+h>282)newPage()}
+ function sectionTitle(title,subtitle){
+  ensure(18);
+  setText(navy,12,"bold");d.text(title,14,y);
+  if(subtitle){setText(muted,8.5,"normal");d.text(subtitle,14,y+5)}
+  y+=subtitle?10:7;
+  d.setDrawColor.apply(d,line);d.line(14,y,196,y);y+=6;
+ }
+ function infoRow(label,value,x,w){
+  const lx=x||14,ww=w||86;
+  d.setFillColor.apply(d,soft);d.roundedRect(lx,y,ww,16,2,2,"F");
+  setText(muted,7.5,"bold");d.text(label.toUpperCase(),lx+4,y+5);
+  setText(ink,10,"bold");
+  const lines=d.splitTextToSize(String(value||"—"),ww-8);
+  d.text(lines,lx+4,y+10);
+ }
+ function infoPair(l1,v1,l2,v2){
+  ensure(18);infoRow(l1,v1,14,87);infoRow(l2,v2,105,91);y+=20;
+ }
+ function fieldLine(label,value){
+  ensure(9);
+  setText(muted,8,"bold");d.text(label,14,y);
+  setText(ink,9.2,"normal");
+  const lines=d.splitTextToSize(String(value||"—"),132);
+  d.text(lines,61,y);y+=Math.max(6,lines.length*4.7);
+ }
+ function moneyRow(label,value,bold){
+  ensure(8);
+  setText(bold?ink:muted,9,bold?"bold":"normal");d.text(label,18,y);
+  setText(bold?green:ink,bold?11:9,bold?"bold":"normal");
+  d.text(String(value),192,y,{align:"right"});
+  y+=7;
+ }
 
- y+=3;ensureSpace(20);
- d.setFont("helvetica","bold");d.text("Productos asociados al codigo",14,y);y+=7;
- d.setFont("helvetica","normal");
+ // Header
+ d.setFillColor.apply(d,navy);d.rect(0,0,210,38,"F");
+ d.setFillColor.apply(d,gold);d.rect(0,38,210,2,"F");
+ setText([255,255,255],22,"bold");d.text("CardNest",14,16);
+ setText([217,230,239],9,"normal");d.text("Orden de envío y confirmación de compra",14,23);
+ setText([255,255,255],9,"bold");d.text("PEDIDO "+o.id,196,15,{align:"right"});
+ setText([217,230,239],8,"normal");d.text("Código "+o.sale_code,196,22,{align:"right"});
+ y=49;
+
+ // Status strip + QR
+ d.setFillColor(234,247,240);d.roundedRect(14,y,136,24,3,3,"F");
+ setText(green,8,"bold");d.text("ESTADO DEL PEDIDO",19,y+7);
+ setText(ink,11,"bold");d.text("Pendiente de confirmación del pago del envío",19,y+14);
+ setText(muted,7.5,"normal");d.text("Válido hasta "+new Date(o.expires_at).toLocaleString("es-CO"),19,y+20);
+
+ const qr=makeOrderQRDataUrl(o);
+ if(qr){
+  d.setFillColor(255,255,255);d.roundedRect(157,y-2,39,39,3,3,"F");
+  d.addImage(qr,"PNG",160,y+1,33,33);
+  setText(muted,6.7,"bold");d.text("QR · WhatsApp pedido",176.5,y+39,{align:"center"});
+ }
+ y+=33;
+
+ sectionTitle("Datos del cliente","Información suministrada para preparar el despacho");
+ infoPair("Nombre completo",o.buyer.name,"Documento",o.buyer.document);
+ infoPair("Correo electrónico",o.buyer.email,"Celular",o.buyer.phone);
+ fieldLine("Departamento",o.buyer.department);
+ fieldLine("Ciudad / municipio",o.buyer.city);
+ fieldLine("Dirección",o.buyer.address);
+ fieldLine("Barrio / sector",o.buyer.neighborhood);
+ fieldLine("Indicaciones",o.buyer.reference||"Sin indicaciones");
+ fieldLine("Observaciones",o.buyer.notes||"Sin observaciones");
+ y+=4;
+
+ sectionTitle("Productos asociados al código","El analista ya conoce las referencias negociadas");
  (o.items||[]).forEach(function(item,i){
-  ensureSpace(9);
-  d.text((i+1)+". "+item.name+" | "+(item.number||item.id)+" | Cantidad: "+item.qty,14,y);y+=6;
+  ensure(15);
+  d.setFillColor.apply(d,soft);d.roundedRect(14,y,182,13,2,2,"F");
+  setText(navy,9.5,"bold");d.text(String(i+1).padStart(2,"0"),19,y+8);
+  setText(ink,9.5,"bold");d.text(String(item.name||item.id),31,y+6);
+  setText(muted,7.5,"normal");d.text((item.number||item.id)+" · Cantidad: "+item.qty,31,y+10.5);
+  y+=16;
  });
+ y+=2;
 
- y+=5;ensureSpace(35);
- d.setFont("helvetica","bold");d.text("Estado y confirmacion",14,y);y+=7;
- d.setFont("helvetica","normal");
+ sectionTitle("Pago del envío","Este documento NO cobra nuevamente el valor negociado de los productos");
+ ensure(48);
+ d.setFillColor(249,251,252);d.roundedRect(14,y,182,43,3,3,"F");
+ y+=9;
+ moneyRow("Flete Coordinadora",cop(o.shipping_price)+" COP");
+ moneyRow("Manejo 1% sobre valor declarado",cop(o.handling_price)+" COP");
+ moneyRow("Top Loaders ("+Number(o.top_loader_qty||0)+")",cop(o.protection_price)+" COP");
+ d.setDrawColor.apply(d,line);d.line(18,y-2,192,y-2);
+ moneyRow("TOTAL A PAGAR AHORA",cop(o.shipping_total)+" COP",true);
+ y+=3;
+ fieldLine("Medio de pago",o.payment_method);
+ fieldLine("Datos de pago",o.payment_destination);
+ fieldLine("Valor declarado",cop(o.agreed_product_total)+" COP · No se paga en esta orden");
+ if(Number(o.top_loader_qty||0)>0){
+  fieldLine("Uso Top Loaders",topLoaderPreferenceLabel(o.top_loader_preference));
+  fieldLine("Indicación",o.top_loader_notes||"Sin indicaciones");
+ }
+ y+=4;
+
+ sectionTitle("Confirmación y seguimiento");
+ ensure(54);
+ d.setFillColor(255,249,231);d.roundedRect(14,y,182,24,3,3,"F");
+ setText([103,82,23],8.4,"bold");
  const warning=o.payment_demo
-  ?"MODO PRUEBA: los datos bancarios mostrados son temporales. NO REALICES PAGOS REALES. "
-  :"";
- const msg=warning+"Esta orden corresponde al pago del envio. Cuando CardNest verifique la recepcion del pago del envio, la empresa procede a alistar los productos asociados al codigo de venta para su despacho. Conserva este PDF y el codigo para seguimiento.";
- d.text(d.splitTextToSize(msg,180),14,y);
+  ?"MODO PRUEBA · Los datos de pago mostrados son temporales. NO REALICES PAGOS REALES."
+  :"Cuando CardNest confirme la recepción del pago del envío, el pedido pasa a alistamiento y preparación para despacho.";
+ d.text(d.splitTextToSize(warning,170),20,y+8);
+ y+=31;
+
+ // Demo responsible analyst / signature
+ setText(muted,7.5,"bold");d.text("RESPONSABLE COMERCIAL (DEMO)",14,y);
+ y+=7;
+ setText(navy,18,"italic","times");d.text("Alessio Romano",14,y);
+ y+=5;
+ d.setDrawColor(90,110,124);d.line(14,y,78,y);
+ y+=5;
+ setText(ink,8.5,"bold");d.text("Alessio Romano · Analista de Ventas",14,y);
+ setText(muted,7.5,"normal");d.text("CardNest Sales Operations · Demo",14,y+5);
+ d.text("Tel. demo: +39 000 000 0000 · alessio.romano@example.com",14,y+10);
+
+ setText(muted,7,"normal");
+ d.text("Documento generado electrónicamente por CardNest · Conserva el código de venta para seguimiento.",105,289,{align:"center"});
  return d;
 }
 function downloadOrderPDF(){
