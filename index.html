@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CardNest</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-10">
+  <link rel="stylesheet" href="styles.css?v=20260918-11">
 </head>
 <body>
   <header class="topbar" id="pageTop">
@@ -153,6 +153,7 @@
   <div class="receipt-id" id="receiptId"></div>
   <p class="price-hold">Las condiciones del pedido se mantienen durante <strong>4 horas</strong>.</p>
   <div class="countdown-card"><span>Tiempo restante</span><strong id="receiptCountdown">4:00:00</strong></div>
+  <div id="receiptExpiredMessage" class="receipt-expired-message" hidden>Se agotó el tiempo para pagar este pedido. Si ya realizaste el pago, haz caso omiso a este mensaje. Si no alcanzaste a realizarlo, solicita al analista un nuevo código de venta.</div>
   <p class="receipt-next-step">Realiza únicamente el pago del envío y envía el comprobante por WhatsApp. Cuando el analista confirme la recepción, CardNest procede a alistar los productos asociados a este código.</p>
   <p class="demo-payment-warning" id="demoPaymentWarning" hidden>Modo de prueba: los datos de pago del PDF son temporales. No realices pagos reales.</p>
   <button id="downloadReceipt" class="secondary-action" type="button">Descargar PDF nuevamente</button>
@@ -214,6 +215,6 @@
     <div class="viewer-content"><img id="viewerImage" alt=""><div id="viewerCaption"></div></div>
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="app.js?v=20260918-10"></script>
+<script src="app.js?v=20260918-11"></script>
 </body>
 </html>
