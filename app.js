@@ -133,3 +133,12 @@ if(viewer)viewer.addEventListener("click",e=>{if(e.target===viewer)closeImageVie
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&viewer&&!viewer.hidden)closeImageViewer(e)});
 document.getElementById("thumbPrev").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:-260,behavior:"smooth"})};
 document.getElementById("thumbNext").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:260,behavior:"smooth"})};
+
+let selectedDockScrollTimer;
+window.addEventListener("scroll",()=>{
+ const dock=document.getElementById("cartViewerBtn");
+ if(!dock||dock.hidden)return;
+ dock.classList.add("dock-yield");
+ clearTimeout(selectedDockScrollTimer);
+ selectedDockScrollTimer=setTimeout(()=>dock.classList.remove("dock-yield"),650);
+},{passive:true});
