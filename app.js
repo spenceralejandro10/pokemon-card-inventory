@@ -383,17 +383,12 @@ if(quoteFavoritesBtn)quoteFavoritesBtn.onclick=function(){
 document.getElementById("startShipping").onclick=function(){closeFavorites();openShipping()};
 
 
+
 function checkoutItems(){
  return Array.isArray(state.codeItems)?state.codeItems:[];
 }
 function checkoutUnitCount(){
  return checkoutItems().reduce(function(sum,p){return sum+Math.max(1,Number(p.qty||1))},0);
-}
-function cardCheckoutItems(){
- return checkoutItems().filter(function(p){return CARD_CATEGORIES.has(String(p.category||"").toLowerCase())});
-}
-function maxToploaders(){
- return cardCheckoutItems().reduce(function(sum,p){return sum+Math.max(1,Number(p.qty||1))},0);
 }
 function renderCodeProducts(){
  const box=document.getElementById("codeProducts");
@@ -404,52 +399,34 @@ function renderCodeProducts(){
   return '<div><span>'+String(p.name||p.id)+'</span><small>'+String(p.number||p.id)+' · Cantidad: '+Math.max(1,Number(p.qty||1))+'</small></div>';
  }).join("")+'</div>';
 }
-function topLoaderSelections(){
- if(!document.getElementById("toploaderOption").checked)return [];
- const mode=document.getElementById("toploaderMode").value;
- const cards=cardCheckoutItems();
- if(mode==="all"){
-  return cards.map(function(p){return {id:p.id,qty:Math.max(1,Number(p.qty||1))}});
- }
- const result=[];
- document.querySelectorAll(".toploader-product-row").forEach(function(row){
-  const id=row.dataset.id,qty=Math.max(0,Number(row.querySelector("input").value||0));
-  if(qty>0)result.push({id:id,qty:qty});
- });
- return result;
+function topLoaderQty(){
+ if(!document.getElementById("toploaderOption").checked)return 0;
+ return Math.max(1,Math.min(100,Number(document.getElementById("toploaderQtyInput").value||1)));
 }
-function topLoaderCount(){
- return topLoaderSelections().reduce(function(sum,x){return sum+Number(x.qty||0)},0);
+function topLoaderPrice(qty){
+ qty=Math.max(0,Math.min(100,Number(qty)||0));
+ return Math.floor(qty/6)*10000+(qty%6)*2000;
+}
+function topLoaderPreferenceLabel(value){
+ return {
+  one_per_card:"Un Top Loader por carta",
+  up_to_three:"Hasta 3 cartas por Top Loader",
+  send_loose:"Enviar Top Loaders aparte, sin asignar",
+  custom:"Otra indicación"
+ }[value]||"Sin preferencia";
 }
 function renderToploaderConfigurator(){
  const enabled=document.getElementById("toploaderOption").checked;
  const config=document.getElementById("toploaderConfigurator");
  config.hidden=!enabled;
- const mode=document.getElementById("toploaderMode").value;
- const products=document.getElementById("toploaderProducts");
- const cards=cardCheckoutItems();
- products.innerHTML="";
- if(!enabled||!cards.length){
-  if(enabled&&!cards.length)products.innerHTML='<p class="toploader-empty">Este código no contiene cartas compatibles con Top Loader.</p>';
-  document.getElementById("toploaderQty").textContent="0";
-  updateQuote();return;
- }
- if(mode==="custom"){
-  cards.forEach(function(p){
-   const max=Math.max(1,Number(p.qty||1)),row=document.createElement("label");
-   row.className="toploader-product-row";row.dataset.id=p.id;
-   row.innerHTML='<span><strong>'+String(p.name||p.id)+'</strong><small>'+String(p.number||p.id)+'</small></span><input type="number" min="0" max="'+max+'" value="0" aria-label="Cantidad de Top Loaders para '+String(p.name||p.id).replace(/"/g,"&quot;")+'">';
-   row.querySelector("input").addEventListener("input",function(){
-    this.value=Math.min(max,Math.max(0,Number(this.value||0)));
-    document.getElementById("toploaderQty").textContent=String(topLoaderCount());
-    updateQuote();
-   });
-   products.appendChild(row);
-  });
+ const qtyInput=document.getElementById("toploaderQtyInput");
+ if(enabled){
+  let q=Math.max(1,Math.min(100,Number(qtyInput.value||1)));
+  qtyInput.value=q;
+  document.getElementById("toploaderQty").textContent=String(q);
  }else{
-  products.innerHTML='<p class="toploader-all-note">Se agregará un Top Loader a cada carta negociada.</p>';
+  document.getElementById("toploaderQty").textContent="0";
  }
- document.getElementById("toploaderQty").textContent=String(topLoaderCount());
  updateQuote();
 }
 function updateQuote(){
@@ -457,21 +434,18 @@ function updateQuote(){
  const hasCode=!!state.validatedCode&&checkoutItems().length>0;
  const kg=Math.max(1,Math.min(5,Number(state.codeShippingWeightKg||1)));
  const count=checkoutUnitCount();
- const topQty=topLoaderCount();
- const protection=topQty*2000;
+ const topQty=topLoaderQty();
+ const topCost=topLoaderPrice(topQty);
  const freight=hasCode?((SHIPPING[kg]&&SHIPPING[kg][zone])||0):0;
  const handling=hasCode?Math.round(Number(state.validatedCodeTotal||0)*.01):0;
- const total=freight+handling+protection;
+ const total=freight+handling+topCost;
 
- const countEl=document.getElementById("shippingCardCount");
- const weightEl=document.getElementById("estimatedWeight");
- const topEl=document.getElementById("toploaderCost");
- if(countEl)countEl.textContent=hasCode?(count+" producto"+(count===1?"":"s")+" ligados al código"):"Valida el código para cargar el pedido";
- if(weightEl)weightEl.textContent=hasCode?("Tarifa Coordinadora · tramo "+kg+" kg"):"Tarifa Coordinadora pendiente";
- if(topEl)topEl.textContent="Top Loaders: "+cop(protection)+" COP";
+ document.getElementById("shippingCardCount").textContent=hasCode?(count+" producto"+(count===1?"":"s")+" asociados al código"):"Valida el código para cargar el pedido";
+ document.getElementById("shippingRateInfo").textContent=hasCode?"Tarifa Coordinadora calculada según zona":"Tarifa Coordinadora pendiente";
+ document.getElementById("toploaderCost").textContent="Top Loaders: "+cop(topCost)+" COP";
  document.getElementById("shippingCost").textContent=hasCode?(cop(freight)+" COP"):"Pendiente";
  document.getElementById("shippingHandling").textContent=hasCode?(cop(handling)+" COP"):"Pendiente";
- document.getElementById("shippingProtection").textContent=cop(protection)+" COP";
+ document.getElementById("shippingProtection").textContent=cop(topCost)+" COP";
  document.getElementById("shippingTotal").textContent=hasCode?(cop(total)+" COP"):"Pendiente";
 }
 function openShipping(){
@@ -491,52 +465,49 @@ document.getElementById("shippingBackdrop").onclick=closeShipping;
 document.getElementById("shippingZone").addEventListener("input",updateQuote);
 document.getElementById("shippingPaymentMethod").addEventListener("input",updateQuote);
 document.getElementById("toploaderOption").addEventListener("change",renderToploaderConfigurator);
-document.getElementById("toploaderMode").addEventListener("change",renderToploaderConfigurator);
-
-document.getElementById("fillTestCheckout").onclick=async function(){
- const btn=this;btn.disabled=true;btn.textContent="Preparando prueba...";
- document.getElementById("buyerName").value="Cliente Prueba";
- document.getElementById("buyerPhone").value="3001234567";
- document.getElementById("buyerDocument").value="123456789";
- document.getElementById("destDepartment").value="Cundinamarca";
- document.getElementById("destCity").value="Bogota";
- document.getElementById("destAddress").value="Calle 100 # 15-20";
- document.getElementById("destNeighborhood").value="Chico";
- document.getElementById("destReference").value="Datos temporales para prueba";
- document.getElementById("shippingZone").value="N";
- document.getElementById("shippingPaymentMethod").value="Nequi";
- document.getElementById("toploaderOption").checked=false;
- let found=null;
- try{
-  for(let i=1;i<=30;i++){
-   const code="CN-TEST-"+String(i).padStart(3,"0");
-   const data=await saleApi({action:"validate",code:code});
-   if(data.valid){found={code:code,data:data};break}
-  }
-  if(found){
-   document.getElementById("saleCode").value=found.code;
-   applyValidatedCode(found.code,found.data,"Modo prueba listo.");
-  }else{
-   clearValidatedCode();
-   document.getElementById("saleCode").value="";
-   setCodeStatus("error","Los códigos temporales de prueba ya fueron utilizados.");
-  }
- }catch(e){
-  clearValidatedCode();
-  setCodeStatus("error","No fue posible preparar el modo de prueba.");
- }finally{
-  btn.disabled=false;btn.textContent="⚡ Llenar datos temporales para probar";
- }
-};
+document.getElementById("toploaderQtyInput").addEventListener("input",function(){
+ let q=Math.max(1,Math.min(100,Number(this.value||1)));this.value=q;
+ document.getElementById("toploaderQty").textContent=String(q);updateQuote();
+});
+document.getElementById("customerNotes").addEventListener("input",function(){
+ document.getElementById("customerNotesCount").textContent=String(this.value.length);
+});
+document.getElementById("toploaderNotes").addEventListener("input",function(){
+ document.getElementById("toploaderNotesCount").textContent=String(this.value.length);
+});
 
 function restrictInputs(){
- const digits=function(id){const el=document.getElementById(id);el.addEventListener("input",function(){el.value=el.value.replace(/\D/g,"")})};
+ const digits=function(id){
+  const el=document.getElementById(id);
+  el.addEventListener("input",function(){el.value=el.value.replace(/\D/g,"")});
+ };
  digits("buyerPhone");digits("buyerDocument");
  ["buyerName","destDepartment","destCity"].forEach(function(id){
-  const el=document.getElementById(id);el.addEventListener("input",function(){el.value=el.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .-]/g,"")});
+  const el=document.getElementById(id);
+  el.addEventListener("input",function(){el.value=el.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .-]/g,"")});
  });
 }
 restrictInputs();
+
+function setFieldError(el,message){
+ if(!el)return;
+ el.classList.add("field-invalid");
+ let error=el.closest("label")?.querySelector(".field-error");
+ if(!error&&el.closest("label")){
+  error=document.createElement("small");error.className="field-error";el.closest("label").appendChild(error);
+ }
+ if(error)error.textContent=message;
+}
+function clearFieldError(el){
+ if(!el)return;
+ el.classList.remove("field-invalid");
+ const error=el.closest("label")?.querySelector(".field-error");
+ if(error)error.remove();
+}
+document.querySelectorAll("#checkoutUnlocked input,#checkoutUnlocked select,#checkoutUnlocked textarea").forEach(function(el){
+ el.addEventListener("input",function(){clearFieldError(el)});
+ el.addEventListener("change",function(){clearFieldError(el)});
+});
 
 async function saleApi(payload){
  const res=await fetch(SALE_API,{
@@ -558,7 +529,9 @@ function clearValidatedCode(){
  state.validatedCodeTotal=0;
  state.codeItems=[];
  state.codeShippingWeightKg=1;
+ document.getElementById("checkoutUnlocked").hidden=true;
  renderCodeProducts();
+ document.getElementById("toploaderOption").checked=false;
  renderToploaderConfigurator();
  updateQuote();
 }
@@ -567,8 +540,15 @@ function applyValidatedCode(code,data,prefix){
  state.validatedCodeTotal=Number(data.agreed_total||0);
  state.codeItems=Array.isArray(data.items)?data.items:[];
  state.codeShippingWeightKg=Math.max(1,Math.min(5,Number(data.shipping_weight_kg||1)));
- setCodeStatus("success",(prefix?prefix+" ":"")+"Código "+code+" validado. "+state.codeItems.length+" referencia"+(state.codeItems.length===1?"":"s")+" asociada"+(state.codeItems.length===1?"":"s")+".");
+ if(!state.codeItems.length){
+  clearValidatedCode();
+  setCodeStatus("error","Este código no tiene productos asociados. Solicita un código nuevo al analista.");
+  return;
+ }
+ setCodeStatus("success",(prefix?prefix+" ":"")+"Código válido. Los productos negociados fueron cargados correctamente.");
  renderCodeProducts();
+ document.getElementById("checkoutUnlocked").hidden=false;
+ document.getElementById("deliveryDetails").open=true;
  renderToploaderConfigurator();
  updateQuote();
 }
@@ -593,36 +573,121 @@ document.getElementById("validateSaleCode").onclick=async function(){
  }
 };
 
+document.getElementById("fillTestCheckout").onclick=async function(){
+ const btn=this;btn.disabled=true;btn.textContent="Preparando prueba...";
+ document.getElementById("buyerName").value="Cliente Prueba";
+ document.getElementById("buyerEmail").value="cliente.prueba@example.com";
+ document.getElementById("buyerPhone").value="3001234567";
+ document.getElementById("buyerDocument").value="123456789";
+ document.getElementById("destDepartment").value="Cundinamarca";
+ document.getElementById("destCity").value="Bogota";
+ document.getElementById("destAddress").value="Calle 100 # 15-20";
+ document.getElementById("destNeighborhood").value="Chico";
+ document.getElementById("destReference").value="Porteria principal";
+ document.getElementById("customerNotes").value="Prueba de flujo CardNest.";
+ document.getElementById("customerNotesCount").textContent=String(document.getElementById("customerNotes").value.length);
+ document.getElementById("deliveryConsent").checked=true;
+ document.getElementById("shippingZone").value="N";
+ document.getElementById("shippingPaymentMethod").value="Nequi";
+ document.getElementById("toploaderOption").checked=true;
+ document.getElementById("toploaderQtyInput").value="6";
+ document.getElementById("toploaderPreference").value="one_per_card";
+ document.getElementById("toploaderNotes").value="Aplicar primero a las cartas de mayor valor.";
+ document.getElementById("toploaderNotesCount").textContent=String(document.getElementById("toploaderNotes").value.length);
+ let found=null;
+ try{
+  const preferred=["CN-PRUEBA-001"].concat(Array.from({length:30},function(_,i){return "CN-TEST-"+String(i+1).padStart(3,"0")}));
+  for(const code of preferred){
+   const data=await saleApi({action:"validate",code:code});
+   if(data.valid){found={code:code,data:data};break}
+  }
+  if(found){
+   document.getElementById("saleCode").value=found.code;
+   applyValidatedCode(found.code,found.data,"Modo prueba listo.");
+   renderToploaderConfigurator();
+  }else{
+   clearValidatedCode();document.getElementById("saleCode").value="";
+   setCodeStatus("error","Los códigos temporales de prueba ya fueron utilizados.");
+  }
+ }catch(e){
+  clearValidatedCode();setCodeStatus("error","No fue posible preparar el modo de prueba.");
+ }finally{
+  btn.disabled=false;btn.textContent="⚡ Llenar datos temporales para probar";
+ }
+};
+
 function buyerData(){
  return {
   name:document.getElementById("buyerName").value.trim(),
+  email:document.getElementById("buyerEmail").value.trim(),
   phone:document.getElementById("buyerPhone").value.trim(),
   document:document.getElementById("buyerDocument").value.trim(),
   department:document.getElementById("destDepartment").value.trim(),
   city:document.getElementById("destCity").value.trim(),
   address:document.getElementById("destAddress").value.trim(),
   neighborhood:document.getElementById("destNeighborhood").value.trim(),
-  reference:document.getElementById("destReference").value.trim()
+  reference:document.getElementById("destReference").value.trim(),
+  notes:document.getElementById("customerNotes").value.trim(),
+  consent:document.getElementById("deliveryConsent").checked
  };
 }
 function validateBuyer(b){
+ let ok=true;
  const letters=/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .-]+$/;
- if(!b.name||b.name.length<2||!letters.test(b.name)){alert("Escribe un nombre válido. El nombre debe contener letras, no números.");return false}
- if(!/^\d{7,15}$/.test(b.phone)){alert("El celular debe contener únicamente números, entre 7 y 15 dígitos.");return false}
- if(b.document&&!/^\d{5,20}$/.test(b.document)){alert("El documento de identificación debe contener únicamente números.");return false}
- if(!b.department||!letters.test(b.department)||!b.city||!letters.test(b.city)){alert("Departamento y ciudad deben contener letras.");return false}
- if(b.address.length<5){alert("Completa una dirección válida para la entrega.");return false}
- return true;
+ const email=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+ const fields={
+  name:document.getElementById("buyerName"),
+  email:document.getElementById("buyerEmail"),
+  phone:document.getElementById("buyerPhone"),
+  document:document.getElementById("buyerDocument"),
+  department:document.getElementById("destDepartment"),
+  city:document.getElementById("destCity"),
+  address:document.getElementById("destAddress"),
+  neighborhood:document.getElementById("destNeighborhood"),
+  consent:document.getElementById("deliveryConsent")
+ };
+ Object.values(fields).forEach(clearFieldError);
+ if(!b.name||b.name.length<2||b.name.length>80||!letters.test(b.name)){setFieldError(fields.name,"Completa un nombre válido usando solo letras.");ok=false}
+ if(!email.test(b.email)||b.email.length>100){setFieldError(fields.email,"Completa un correo electrónico válido.");ok=false}
+ if(!/^\d{7,15}$/.test(b.phone)){setFieldError(fields.phone,"Completa un celular de 7 a 15 números.");ok=false}
+ if(!/^\d{5,20}$/.test(b.document)){setFieldError(fields.document,"Completa la identificación usando solo números.");ok=false}
+ if(!b.department||b.department.length>60||!letters.test(b.department)){setFieldError(fields.department,"Completa el departamento.");ok=false}
+ if(!b.city||b.city.length>60||!letters.test(b.city)){setFieldError(fields.city,"Completa la ciudad o municipio.");ok=false}
+ if(b.address.length<5||b.address.length>120){setFieldError(fields.address,"Completa la dirección de entrega.");ok=false}
+ if(b.neighborhood.length<2||b.neighborhood.length>80){setFieldError(fields.neighborhood,"Completa el barrio o sector.");ok=false}
+ if(b.notes.length>300){setFieldError(document.getElementById("customerNotes"),"Máximo 300 caracteres.");ok=false}
+ if(!b.consent){setFieldError(fields.consent,"Debes confirmar los datos y productos acordados.");ok=false}
+ if(!ok){
+  document.getElementById("deliveryDetails").open=true;
+  document.querySelector(".field-invalid")?.scrollIntoView({behavior:"smooth",block:"center"});
+ }
+ return ok;
 }
 document.getElementById("createOrder").onclick=async function(){
  const code=document.getElementById("saleCode").value.trim().toUpperCase();
  if(!code||state.validatedCode!==code||!checkoutItems().length){
-  alert("Para generar el pedido necesitas el código entregado por el analista. Ese código ya contiene los productos que fueron negociados por WhatsApp; no necesitas seleccionarlos nuevamente en la página.");
+  alert("Debes validar primero el código de venta entregado por el analista.");
   document.getElementById("saleCode").focus();return;
  }
- const b=buyerData();if(!validateBuyer(b))return;
- const paymentMethod=document.getElementById("shippingPaymentMethod").value;
- if(!paymentMethod){alert("Selecciona el medio con el que pagarás el envío.");return}
+ const b=buyerData();
+ if(!validateBuyer(b))return;
+
+ const paymentMethod=document.getElementById("shippingPaymentMethod");
+ if(!paymentMethod.value){
+  document.getElementById("shippingDetails").open=true;
+  setFieldError(paymentMethod,"Selecciona el medio para pagar el envío.");
+  paymentMethod.scrollIntoView({behavior:"smooth",block:"center"});
+  return;
+ }
+ const topEnabled=document.getElementById("toploaderOption").checked;
+ const topQty=topEnabled?topLoaderQty():0;
+ const topPreference=topEnabled?document.getElementById("toploaderPreference").value:"";
+ const topNotes=topEnabled?document.getElementById("toploaderNotes").value.trim():"";
+ if(topNotes.length>180){
+  document.getElementById("toploaderDetails").open=true;
+  setFieldError(document.getElementById("toploaderNotes"),"Máximo 180 caracteres.");
+  return;
+ }
 
  const btn=this;btn.disabled=true;btn.textContent="Generando pedido y PDF...";
  try{
@@ -630,9 +695,13 @@ document.getElementById("createOrder").onclick=async function(){
    action:"create_order",
    code:code,
    buyer:b,
-   toploaderSelections:topLoaderSelections(),
+   customerNotes:b.notes,
+   deliveryConsent:b.consent,
+   topLoaderQty:topQty,
+   topLoaderPreference:topPreference,
+   topLoaderNotes:topNotes,
    shippingZone:document.getElementById("shippingZone").value,
-   paymentMethod:paymentMethod
+   paymentMethod:paymentMethod.value
   });
   state.order=Object.assign({},data.order,{buyer:b});
   localStorage.setItem("cardnestPendingOrder",JSON.stringify(state.order));
@@ -657,26 +726,32 @@ function buildPdf(){
   const parts=d.splitTextToSize(String(value||"—"),125);
   d.text(parts,65,y);y+=Math.max(7,parts.length*5.5);
  }
- d.setFontSize(19);d.text("CardNest - Pedido de envio",14,y);y+=10;
+ d.setFontSize(19);d.text("CardNest - Orden de envio",14,y);y+=10;
  d.setFontSize(10);
  line("Pedido:",o.id);
- line("Codigo venta:",o.sale_code);
+ line("Codigo de venta:",o.sale_code);
  line("Valido hasta:",new Date(o.expires_at).toLocaleString("es-CO"));
  line("Nombre:",o.buyer.name);
+ line("Correo:",o.buyer.email);
  line("Celular:",o.buyer.phone);
- line("Documento:",o.buyer.document||"No informado");
+ line("Documento:",o.buyer.document);
  line("Departamento:",o.buyer.department);
  line("Ciudad:",o.buyer.city);
  line("Direccion:",o.buyer.address);
- line("Barrio / sector:",o.buyer.neighborhood||"No informado");
- line("Indicaciones:",o.buyer.reference||"No informado");
+ line("Barrio / sector:",o.buyer.neighborhood);
+ line("Indicaciones:",o.buyer.reference||"Sin indicaciones");
+ line("Observaciones:",o.buyer.notes||"Sin observaciones");
 
- y+=3;ensureSpace(38);
+ y+=3;ensureSpace(35);
  d.setFont("helvetica","bold");d.text("Pago del envio",14,y);y+=7;
  d.setFont("helvetica","normal");
  line("Flete Coordinadora:",cop(o.shipping_price)+" COP");
  line("Manejo 1%:",cop(o.handling_price)+" COP");
- line("Top Loaders:",cop(o.protection_price)+" COP");
+ line("Top Loaders:",o.top_loader_qty+" unidad(es) · "+cop(o.protection_price)+" COP");
+ if(o.top_loader_qty){
+  line("Uso Top Loaders:",topLoaderPreferenceLabel(o.top_loader_preference));
+  line("Indicacion Top Loaders:",o.top_loader_notes||"Sin indicaciones");
+ }
  line("TOTAL A PAGAR:",cop(o.shipping_total)+" COP");
  line("Medio de pago:",o.payment_method);
  line("Datos de pago:",o.payment_destination);
@@ -686,17 +761,16 @@ function buildPdf(){
  d.setFont("helvetica","normal");
  (o.items||[]).forEach(function(item,i){
   ensureSpace(9);
-  const top=item.toploader_qty?(" | Top Loader: "+item.toploader_qty):"";
-  d.text((i+1)+". "+item.name+" | "+(item.number||item.id)+" | Cantidad: "+item.qty+top,14,y);y+=6;
+  d.text((i+1)+". "+item.name+" | "+(item.number||item.id)+" | Cantidad: "+item.qty,14,y);y+=6;
  });
 
- y+=5;ensureSpace(30);
- d.setFont("helvetica","bold");d.text("Estado del pedido",14,y);y+=7;
+ y+=5;ensureSpace(35);
+ d.setFont("helvetica","bold");d.text("Estado y confirmacion",14,y);y+=7;
  d.setFont("helvetica","normal");
  const warning=o.payment_demo
   ?"MODO PRUEBA: los datos bancarios mostrados son temporales. NO REALICES PAGOS REALES. "
   :"";
- const msg=warning+"Este documento corresponde al pago del envio, no al valor negociado de los productos. Una vez CardNest confirme la recepcion del pago del envio, el pedido pasa a alistamiento y preparacion para despacho. Conserva el codigo de venta para seguimiento.";
+ const msg=warning+"Esta orden corresponde al pago del envio. Cuando CardNest verifique la recepcion del pago del envio, la empresa procede a alistar los productos asociados al codigo de venta para su despacho. Conserva este PDF y el codigo para seguimiento.";
  d.text(d.splitTextToSize(msg,180),14,y);
  return d;
 }
@@ -709,6 +783,7 @@ document.getElementById("downloadReceipt").onclick=downloadOrderPDF;
 let receiptTimer=null;
 function showReceipt(){
  const o=state.order;if(!o)return;
+ document.getElementById("checkoutUnlocked").hidden=false;
  document.getElementById("orderReceipt").hidden=false;
  document.getElementById("receiptId").textContent=o.sale_code||o.id;
  document.getElementById("demoPaymentWarning").hidden=!o.payment_demo;
