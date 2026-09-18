@@ -17,7 +17,7 @@ const SHIPPING={
 };
 const state={
  products:[],favorites:new Map(),offers:{},offerMode:"individual",
- offerHistory:[],category:"all",order:null,validatedCode:null,validatedCodeTotal:0,codeItems:[],codeShippingWeightKg:1
+ offerHistory:[],category:"all",order:null,validatedCode:null,codeHandlingPrice:0,codeShippingWeightKg:1
 };
 
 const normalize=function(v){return String(v==null?"":v).toLowerCase().trim()};
@@ -432,13 +432,6 @@ document.getElementById("startShipping").onclick=function(){closeFavorites();ope
 
 
 
-function checkoutItems(){
- return Array.isArray(state.codeItems)?state.codeItems:[];
-}
-function checkoutUnitCount(){
- return checkoutItems().reduce(function(sum,p){return sum+Math.max(1,Number(p.qty||1))},0);
-}
-function renderCodeProducts(){/* Productos ligados al código: uso interno, no se muestran al cliente. */}
 function topLoaderQty(){
  if(!document.getElementById("toploaderOption").checked)return 0;
  return Math.max(1,Math.min(100,Number(document.getElementById("toploaderQtyInput").value||1)));
@@ -471,16 +464,15 @@ function renderToploaderConfigurator(){
 }
 function updateQuote(){
  const zone=document.getElementById("shippingZone")?.value||"N";
- const hasCode=!!state.validatedCode&&checkoutItems().length>0;
+ const hasCode=!!state.validatedCode;
  const kg=Math.max(1,Math.min(5,Number(state.codeShippingWeightKg||1)));
- const count=checkoutUnitCount();
  const topQty=topLoaderQty();
  const topCost=topLoaderPrice(topQty);
  const freight=hasCode?((SHIPPING[kg]&&SHIPPING[kg][zone])||0):0;
- const handling=hasCode?Math.round(Number(state.validatedCodeTotal||0)*.01):0;
+ const handling=hasCode?Number(state.codeHandlingPrice||0):0;
  const total=freight+handling+topCost;
 
- document.getElementById("shippingCardCount").textContent=hasCode?(count+" producto"+(count===1?"":"s")+" asociados al código"):"Valida el código para cargar el pedido";
+ document.getElementById("shippingCardCount").textContent=hasCode?"Código de envío validado":"Valida el código para continuar";
  document.getElementById("shippingRateInfo").textContent=hasCode?"Tarifa Coordinadora calculada según zona":"Tarifa Coordinadora pendiente";
  document.getElementById("toploaderCost").textContent="Top Loaders: "+cop(topCost)+" COP";
  document.getElementById("shippingCost").textContent=hasCode?(cop(freight)+" COP"):"Pendiente";
@@ -577,8 +569,7 @@ function moveCheckoutInfoToEnd(){
 }
 function clearValidatedCode(){
  state.validatedCode=null;
- state.validatedCodeTotal=0;
- state.codeItems=[];
+ state.codeHandlingPrice=0;
  state.codeShippingWeightKg=1;
  document.getElementById("checkoutUnlocked").hidden=true;
  moveCheckoutInfoInitial();
@@ -589,10 +580,9 @@ function clearValidatedCode(){
 }
 function applyValidatedCode(code,data,prefix){
  state.validatedCode=code;
- state.validatedCodeTotal=Number(data.agreed_total||0);
- state.codeItems=Array.isArray(data.items)?data.items:[];
+ state.codeHandlingPrice=Number(data.handling_price||0);
  state.codeShippingWeightKg=Math.max(1,Math.min(5,Number(data.shipping_weight_kg||1)));
- if(!state.codeItems.length){
+ if(!data.ready_for_shipping){
   clearValidatedCode();
   setCodeStatus("error","Este código no está listo para procesar el envío. Solicita un código nuevo al analista.");
   return;
@@ -724,7 +714,7 @@ function validateBuyer(b){
 }
 document.getElementById("createOrder").onclick=async function(){
  const code=document.getElementById("saleCode").value.trim().toUpperCase();
- if(!code||state.validatedCode!==code||!checkoutItems().length){
+ if(!code||state.validatedCode!==code){
   alert("Debes validar primero el código de venta entregado por el analista.");
   document.getElementById("saleCode").focus();return;
  }
@@ -850,7 +840,7 @@ function buildPdf(){
  d.setFillColor.apply(d,navy);d.rect(0,0,210,38,"F");
  d.setFillColor.apply(d,gold);d.rect(0,38,210,2,"F");
  setText([255,255,255],22,"bold");d.text("CardNest",14,16);
- setText([217,230,239],9,"normal");d.text("Orden de envío y confirmación de compra",14,23);
+ setText([217,230,239],9,"normal");d.text("Orden y comprobante de pago del envío",14,23);
  setText([255,255,255],9,"bold");d.text("PEDIDO "+o.id,196,15,{align:"right"});
  setText([217,230,239],8,"normal");d.text("Código "+o.sale_code,196,22,{align:"right"});
  y=49;
@@ -885,14 +875,13 @@ function buildPdf(){
  d.setFillColor(249,251,252);d.roundedRect(14,y,182,43,3,3,"F");
  y+=9;
  moneyRow("Flete Coordinadora",cop(o.shipping_price)+" COP");
- moneyRow("Manejo 1% sobre valor declarado",cop(o.handling_price)+" COP");
+ moneyRow("Manejo logístico",cop(o.handling_price)+" COP");
  moneyRow("Top Loaders ("+Number(o.top_loader_qty||0)+")",cop(o.protection_price)+" COP");
  d.setDrawColor.apply(d,line);d.line(18,y-2,192,y-2);
  moneyRow("TOTAL A PAGAR AHORA",cop(o.shipping_total)+" COP",true);
  y+=3;
  fieldLine("Medio de pago",o.payment_method);
  fieldLine("Datos de pago",o.payment_destination);
- fieldLine("Valor declarado",cop(o.agreed_product_total)+" COP · No se paga en esta orden");
  if(Number(o.top_loader_qty||0)>0){
   fieldLine("Uso Top Loaders",topLoaderPreferenceLabel(o.top_loader_preference));
   fieldLine("Indicación",o.top_loader_notes||"Sin indicaciones");
