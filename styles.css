@@ -47,3 +47,4 @@ a.original-link,.image-link,.open-original,[href*="drive.google.com"][class*="or
 .thumb-nav{flex:0 0 28px;width:28px;height:48px;border:1px solid #426d8a;border-radius:7px;background:#102f49;color:#fff;font-size:23px;cursor:pointer;padding:0}
 .thumb-nav:hover{background:#174565}
 @media(max-width:760px){.cart-viewer-btn{max-width:88vw!important}.cart-viewer-thumbs{max-width:58vw}.cart-viewer-thumbs img{width:40px!important;height:56px!important}}
+.brand-hero>img{object-position:center center}
