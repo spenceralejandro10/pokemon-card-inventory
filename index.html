@@ -99,12 +99,14 @@
 <aside id="favoritesModal" class="shipping-modal favorites-modal" aria-hidden="true">
  <button id="closeFavorites" class="modal-close" type="button">×</button>
  <h2>Mis cartas seleccionadas</h2>
- <p class="modal-lead">Revisa tu selección y propón un precio. Puedes ofrecer por cada carta o por todo el lote.</p>
+ <p class="modal-lead">Haz una oferta sin compromiso. Nosotros la revisamos y te respondemos por WhatsApp. Tus cartas y ofertas quedan guardadas en este dispositivo para que puedas continuar después.</p>
+ <div class="offer-mode"><strong>¿Cómo quieres ofertar?</strong><label><input type="radio" name="offerMode" value="individual" checked> Por cada carta <small>Podemos aceptar unas y negociar o rechazar otras.</small></label><label><input type="radio" name="offerMode" value="lot"> Por todas juntas <small>Una sola oferta por el lote completo.</small></label></div>
  <div id="favoriteItems" class="favorite-items"></div>
- <label class="lot-offer">Oferta por todas las cartas <input id="lotOffer" type="number" min="0" step="1000" placeholder="$ Total del lote"></label>
+ <label id="lotOfferBox" class="lot-offer" hidden>Tu oferta por todas las cartas <div class="money-input"><span>$</span><input id="lotOffer" inputmode="numeric" placeholder="0"></div><small>Valor en pesos colombianos (COP).</small></label>
  <div class="offer-total">Oferta propuesta: <strong id="offerTotal">$0</strong></div>
  <button id="sendOffer" class="whatsapp-btn" type="button">Enviar propuesta por WhatsApp</button>
  <button id="startShipping" class="secondary-action" type="button">Ya acordé el precio · Programar envío</button>
+ <section class="offer-history"><h3>Historial de ofertas</h3><div id="offerHistory"></div></section>
 </aside>
 <script src="app.js"></script>
 </body>
