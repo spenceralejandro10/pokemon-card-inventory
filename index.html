@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CardNest</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-13">
+  <link rel="stylesheet" href="styles.css?v=20260918-14">
 </head>
 <body>
   <header class="topbar" id="pageTop">
@@ -75,8 +75,7 @@
 <aside id="shippingModal" class="shipping-modal shipping-checkout" aria-hidden="true">
 <button id="closeShipping" class="modal-close" type="button">×</button>
 <h2>Finaliza tu compra</h2>
-<p class="modal-lead">Primero valida el código que te entregó el analista después de acordar la compra por WhatsApp.</p>
-<button id="fillTestCheckout" class="test-fill-btn" type="button">⚡ Llenar datos temporales para probar</button>
+<p class="modal-lead">Para continuar debes validar el código de venta que te entrega el analista después de acordar tu compra por WhatsApp.</p>
 
 <section class="shipping-section sale-code-section checkout-gate">
  <div class="section-heading"><span>1</span><div><strong>Código de venta del analista</strong><small>Este código vincula la negociación aprobada, los productos y el valor declarado del pedido.</small></div></div>
@@ -85,12 +84,26 @@
  <div id="codeProducts" class="code-products" hidden></div>
  <div class="code-help">
    <strong>¿Todavía no tienes código?</strong>
-   <p>Selecciona los productos de tu interés, envía tu oferta por WhatsApp y llega a un acuerdo con el analista. Cuando la compra sea aprobada, recibirás el código para continuar.</p>
+   <p>1. Selecciona los productos de tu interés. 2. Envía tu oferta por WhatsApp. 3. Acuerda la compra con el analista. 4. Recibe tu código de venta y valídalo aquí para desbloquear el envío.</p>
    <a href="https://wa.me/573125214785?text=Hola%2C%20quiero%20realizar%20una%20compra%20en%20CardNest." target="_blank" rel="noopener">Hablar con el analista por WhatsApp</a>
+ </div>
+ <div class="demo-code-box">
+   <span>CÓDIGO TEMPORAL DE PRUEBA</span>
+   <strong>CN-PRUEBA-001</strong>
+   <button id="useDemoSaleCode" type="button">Usar código de prueba</button>
  </div>
 </section>
 
+<div id="checkoutInfo" class="checkout-info checkout-info-initial">
+ <details class="ship-accordion" open><summary>¿Cómo realizar una compra?</summary><div class="accordion-body"><p>Explora el catálogo, selecciona los productos que te interesan y envía una propuesta por WhatsApp. El analista confirma disponibilidad, negocia contigo y, si llegan a un acuerdo, genera un código de venta asociado exactamente a esos productos.</p></div></details>
+ <details class="ship-accordion"><summary>¿Qué es el código de venta?</summary><div class="accordion-body"><p>Es la autorización que conecta tu negociación con el pedido. Sin un código válido no se habilitan datos de entrega, Top Loaders, cotización ni generación del PDF.</p></div></details>
+ <details class="ship-accordion"><summary>¿Qué pagas en esta etapa?</summary><div class="accordion-body"><p>Después de validar el código solo pagas el transporte, el manejo asociado al valor declarado y los Top Loaders opcionales. El valor de los productos corresponde al acuerdo realizado previamente con el analista.</p></div></details>
+ <details class="ship-accordion"><summary>Sobre CardNest</summary><div class="accordion-body"><p>CardNest organiza cartas, coleccionables, accesorios, producto sellado y electrónica en un solo catálogo. Cada compra se acompaña por WhatsApp y utiliza un código de venta para mantener trazabilidad entre la negociación, el envío y el comprobante.</p></div></details>
+ <details class="ship-accordion"><summary>Después de enviar el comprobante</summary><div class="accordion-body"><p>El analista identifica el pedido mediante el código, verifica el pago del envío y, una vez confirmado, CardNest procede al alistamiento de los productos para despacho.</p></div></details>
+</div>
+
 <div id="checkoutUnlocked" class="checkout-unlocked" hidden>
+ <button id="fillTestCheckout" class="test-fill-btn" type="button">⚡ Llenar datos temporales para probar</button>
  <details id="deliveryDetails" class="checkout-step-accordion" open>
   <summary><span>2</span><div><strong>Datos para la entrega</strong><small>Todos los campos marcados con * son obligatorios.</small></div></summary>
   <div class="checkout-step-body">
@@ -171,11 +184,7 @@
   <a id="shippingWhatsapp" class="whatsapp-btn" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
  </div>
 
- <div class="checkout-info">
-  <details class="ship-accordion"><summary>¿Cómo funciona?</summary><div class="accordion-body"><p>Seleccionas productos, envías tu propuesta por WhatsApp y negocias con el analista. Si llegan a un acuerdo, recibes un código que desbloquea los datos de entrega, Top Loaders y pago del envío.</p></div></details>
-  <details class="ship-accordion"><summary>¿Qué se paga en esta etapa?</summary><div class="accordion-body"><p>Únicamente transporte Coordinadora, el manejo asociado al valor declarado y los Top Loaders opcionales. El valor de los productos corresponde al acuerdo previo con el analista.</p></div></details>
-  <details class="ship-accordion"><summary>Después del comprobante</summary><div class="accordion-body"><p>El analista identifica el pedido mediante el código de venta, verifica el comprobante y, cuando confirma el pago del envío, CardNest procede a alistar los productos.</p></div></details>
- </div>
+
 </div>
 </aside>
 
@@ -227,6 +236,6 @@
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="app.js?v=20260918-13"></script>
+<script src="app.js?v=20260918-14"></script>
 </body>
 </html>
