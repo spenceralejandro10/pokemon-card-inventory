@@ -230,3 +230,54 @@ input::placeholder,textarea::placeholder{color:#8795a1!important}
  .cart-viewer-thumbs img{width:56px!important;height:78px!important;min-width:56px!important}
  .thumb-nav{height:58px!important;width:28px!important;min-width:28px!important}
 }
+
+/* Professional typography + high-contrast light theme */
+html,body{
+ font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
+ color:#172033!important;
+ -webkit-font-smoothing:antialiased;
+ text-rendering:optimizeLegibility;
+}
+body,main,section,article,aside,nav,form,label,div,p,span,small,li,dt,dd{
+ color:#263548;
+}
+h1,h2,h3,h4,h5,h6,.section-title,.card-title,.catalog-title{
+ color:#101828!important;
+ font-weight:750!important;
+ letter-spacing:-.02em;
+}
+p,.description,.card-description,.accordion-body{
+ color:#475467!important;
+}
+small,.muted,.meta-label,.eyebrow{
+ color:#667085!important;
+}
+strong,b,.meta-value,.card-value{
+ color:#1d2939!important;
+ font-weight:700!important;
+}
+a{color:#175cd3}
+a:hover{color:#004eeb}
+label{color:#344054!important;font-weight:650}
+input,select,textarea{
+ color:#101828!important;
+ font-weight:500!important;
+}
+input::placeholder,textarea::placeholder{color:#667085!important;opacity:1!important}
+button{font-family:inherit;font-weight:700}
+.search-panel,.filters,.card,.pokemon-card,.catalog-card,.ship-accordion,.offer-history,.history-card{
+ color:#263548!important;
+}
+.card h2,.card h3,.pokemon-card h2,.pokemon-card h3,.catalog-card h2,.catalog-card h3,
+.card strong,.pokemon-card strong,.catalog-card strong{
+ color:#101828!important;
+}
+.card small,.pokemon-card small,.catalog-card small,
+.card .meta-label,.pokemon-card .meta-label,.catalog-card .meta-label{
+ color:#5f6c7b!important;
+}
+.card dl dt,.pokemon-card dl dt,.catalog-card dl dt{color:#526071!important}
+.card dl dd,.pokemon-card dl dd,.catalog-card dl dd{color:#101828!important;font-weight:650!important}
+.ship-accordion>summary{color:#182230!important;font-weight:750!important}
+.ship-accordion .accordion-body{color:#475467!important}
+.offer-total,.history-head,.history-cards,.shipping-summary{color:#263548!important}
