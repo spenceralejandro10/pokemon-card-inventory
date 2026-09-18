@@ -40,15 +40,19 @@
 <aside id="shippingModal" class="shipping-modal" aria-hidden="true">
  <button id="closeShipping" class="modal-close" type="button">×</button>
  <h2>Envío seguro contra entrega</h2>
- <p class="modal-lead">El envío se paga antes del despacho. El valor de las cartas y el 1% de manejo se pagan al recibir.</p>
+ <p class="modal-lead"><strong>Tú no adelantas el dinero de las cartas.</strong> Primero pagas únicamente el transporte para autorizar el despacho. El valor de las cartas y el manejo se cobran al momento de la entrega.</p>
+<div class="benefit-grid"><div><b>Para ti</b><span>No arriesgas el valor de la compra antes de que el pedido sea despachado.</span></div><div><b>Para nosotros</b><span>El envío ya está cubierto si cambias de opinión o el paquete debe regresar.</span></div></div>
  <div class="trust-box"><strong>Compra con más tranquilidad</strong><br>No adelantas el valor de las cartas. El pago anticipado corresponde únicamente al transporte.</div>
- <h3>Calcula tu envío</h3>
+ <h3>Calcula tu envío desde Bogotá</h3>
  <div class="shipping-form">
-  <input id="destCity" placeholder="Ciudad de destino">
-  <select id="shippingZone"><option value="N">Nacional</option><option value="L">Local</option><option value="R">Regional</option><option value="Z">Zonal</option><option value="O">Otros</option><option value="E">Destino especial</option></select>
+  <input id="destCity" placeholder="Ciudad o municipio de destino">
+  <select id="packageWeight"><option value="1">Hasta 1 kg</option><option value="2">Hasta 2 kg</option><option value="3">3 kg</option><option value="4">4 kg</option><option value="5">5 kg</option></select>
+  <input id="declaredValue" type="number" min="0" step="1000" placeholder="Valor declarado de las cartas">
+  <select id="shippingZone"><option value="N">Nacional / capitales principales</option><option value="L">Local</option><option value="R">Regional</option><option value="Z">Zonal</option><option value="O">Otros destinos</option><option value="E">Destino especial</option></select>
  </div>
- <div class="quote-box"><div>Envío estimado: <strong id="shippingCost">$17.830</strong></div><small>La tarifa exacta depende del destino y condiciones del envío.</small></div>
- <p class="conditions">Al continuar confirmas que entiendes que <strong>el envío no es negociable y debe pagarse antes del despacho</strong>. Las cartas y el 1% de manejo se pagan al recibir.</p>
+ <div class="quote-box"><div>Flete base: <strong id="shippingCost">$17.830</strong></div><div>Manejo oficial (1% valor declarado): <strong id="shippingHandling">$0</strong></div><div>Total de referencia Coordinadora: <strong id="shippingTotal">$17.830</strong></div><small>Coordinadora liquida por origen/destino, peso real o volumétrico —el mayor— y valor declarado. Esta calculadora usa su tabla pública; la cotización definitiva se confirma con Coordinadora.</small></div>
+ <div class="why-box"><h3>¿Por qué funciona para ambas partes?</h3><p><strong>Comprador:</strong> no paga las cartas por adelantado y recibe un envío con valor declarado. Coordinadora indica que el valor declarado es obligatorio y sirve como base de cobertura ante pérdida o daño.</p><p><strong>Vendedor:</strong> no asume el costo logístico de un despacho que el comprador decida no recibir.</p></div>
+<p class="conditions">Al continuar confirmas que entiendes que <strong>el envío se paga obligatoriamente antes del despacho</strong>. El valor de las cartas se recauda contra entrega. El 1% mostrado corresponde al manejo que Coordinadora publica sobre el valor declarado.</p>
  <a id="shippingWhatsapp" class="whatsapp-btn" target="_blank" rel="noopener">Continuar por WhatsApp</a>
 </aside>
 
