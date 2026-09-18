@@ -177,3 +177,56 @@ input::placeholder,textarea::placeholder{color:#8795a1!important}
  visibility:visible;
  pointer-events:auto;
 }
+
+/* Premium selected-cards dock */
+.cart-viewer-btn{
+ left:22px!important;bottom:22px!important;
+ min-height:0!important;height:auto!important;
+ max-width:min(920px,72vw)!important;
+ padding:10px 12px!important;
+ border:1px solid rgba(37,99,235,.18)!important;
+ border-radius:18px!important;
+ background:rgba(255,255,255,.96)!important;
+ box-shadow:0 14px 40px rgba(15,23,42,.16)!important;
+ backdrop-filter:blur(16px)!important;
+ overflow:visible!important;
+}
+.cart-viewer-btn::before{
+ content:"Tus seleccionadas"!important;
+ left:14px!important;bottom:calc(100% + 8px)!important;
+ padding:6px 10px!important;
+ border:0!important;border-radius:999px!important;
+ background:#172b4d!important;color:#fff!important;
+ box-shadow:0 5px 14px rgba(15,23,42,.18)!important;
+ font-size:11px!important;font-weight:800!important;letter-spacing:.15px!important;
+}
+.cart-viewer-thumbs{
+ display:flex!important;align-items:center!important;
+ width:auto!important;max-width:min(760px,60vw)!important;
+ height:106px!important;padding:2px!important;gap:7px!important;
+ overflow-x:auto!important;overflow-y:hidden!important;
+ scrollbar-width:thin!important;
+}
+.cart-viewer-thumbs img{
+ width:70px!important;height:98px!important;min-width:70px!important;
+ border-radius:8px!important;object-fit:cover!important;
+ border:2px solid #fff!important;
+ box-shadow:0 4px 12px rgba(15,23,42,.18)!important;
+ transition:transform .15s ease,box-shadow .15s ease!important;
+}
+.cart-viewer-thumbs img:hover{transform:translateY(-3px) scale(1.03)!important;box-shadow:0 8px 18px rgba(15,23,42,.24)!important}
+.thumb-nav{
+ width:32px!important;height:72px!important;min-width:32px!important;
+ border:0!important;border-radius:10px!important;
+ background:#eef3f8!important;color:#19324d!important;
+ box-shadow:none!important;font-size:18px!important;
+}
+.thumb-nav:hover{background:#dfeaf3!important}
+.cart-viewer-btn:has(.cart-viewer-thumbs:empty){display:none!important}
+@media(max-width:760px){
+ .cart-viewer-btn{left:10px!important;bottom:82px!important;max-width:calc(100vw - 20px)!important;border-radius:15px!important}
+ .cart-viewer-btn::before{content:"Tus cartas"!important;left:10px!important}
+ .cart-viewer-thumbs{height:84px!important;max-width:72vw!important}
+ .cart-viewer-thumbs img{width:56px!important;height:78px!important;min-width:56px!important}
+ .thumb-nav{height:58px!important;width:28px!important;min-width:28px!important}
+}
