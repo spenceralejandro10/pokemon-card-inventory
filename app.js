@@ -46,6 +46,21 @@ function imageUrl(p){
 }
 function productName(p){return p.canonical_name||p.name_original||"Producto"}
 function productQty(p){return Math.max(1,Number((state.offers[p.id]||{}).qty||1))}
+function shuffleList(list){
+ const a=list.slice();
+ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+ return a;
+}
+function mixCatalog(list){
+ const groups={};
+ list.forEach(function(p){(groups[p.category]||(groups[p.category]=[])).push(p)});
+ Object.keys(groups).forEach(function(k){groups[k]=shuffleList(groups[k])});
+ const out=[],categories=Object.keys(groups);
+ while(categories.some(function(k){return groups[k].length})){
+  shuffleList(categories).forEach(function(k){if(groups[k].length)out.push(groups[k].shift())});
+ }
+ return out;
+}
 
 async function loadProducts(){
  const results=await Promise.all([
@@ -57,7 +72,7 @@ async function loadProducts(){
   return Object.assign({},p,{category:"pokemon",category_label:"Pokémon",rarity_group:rarityGroup(p),demo:false});
  });
  const demo=results[1].ok?await results[1].json():[];
- state.products=pokemon.concat(demo);
+ state.products=mixCatalog(pokemon.concat(demo));
  for(const id of Array.from(state.favorites.keys())){
   const found=state.products.find(function(p){return p.id===id});
   if(found)state.favorites.set(id,found);else state.favorites.delete(id);
@@ -69,7 +84,7 @@ async function loadProducts(){
 }
 function matches(p,q,language,rarity){
  const hay=[p.id,p.canonical_name,p.name_original,p.card_number,p.set_name,p.set_code,p.language,p.rarity_detected,p.rarity_verified,p.variant,p.category_label].map(normalize).join(" ");
- return (!q||hay.includes(normalize(q)))&&(!language||p.language===language)&&(!rarity||rarityGroup(p)===rarity);
+ return (!q||hay.includes(normalize(q)))&&(!language||p.language===language)&&(!rarity||(p.category==="pokemon"&&rarityGroup(p)===rarity));
 }
 function render(){
  const grid=document.getElementById("cardsGrid"),tpl=document.getElementById("cardTemplate");
@@ -96,7 +111,9 @@ function render(){
   const demo=n.querySelector(".demo-badge");demo.hidden=!p.demo;
   n.querySelector(".card-name").textContent=productName(p);
   n.querySelector(".original-name").textContent=p.name_original&&p.name_original!==p.canonical_name?p.name_original:"";
-  n.querySelector(".language-badge").textContent=p.language||"—";
+  const langBadge=n.querySelector(".language-badge");
+  langBadge.textContent=p.language||"—";
+  langBadge.hidden=!CARD_CATEGORIES.has(p.category);
   const stock=n.querySelector(".stock-badge"),sold=(p.sale_status==="sold_out"||Number(p.stock_quantity)<=0);
   stock.textContent=sold?"NO DISPONIBLE":String(p.stock_quantity||1)+" disponible"+(Number(p.stock_quantity||1)===1?"":"s");
   stock.classList.toggle("sold",sold);card.classList.toggle("sold-out",sold);
@@ -124,11 +141,41 @@ function selectCategory(cat){
  state.category=cat||"all";
  document.querySelectorAll(".catalog-tab").forEach(function(b){b.classList.toggle("active",b.dataset.category===state.category)});
  document.getElementById("discoverStrip").hidden=state.category!=="all";
+ const rarityWrap=document.getElementById("rarityFilterWrap");
+ const rarityAllowed=state.category==="all"||state.category==="pokemon";
+ rarityWrap.hidden=!rarityAllowed;
+ if(!rarityAllowed)document.getElementById("rarityFilter").value="";
  render();
  window.scrollTo({top:document.querySelector(".catalog-nav").offsetTop-20,behavior:"smooth"});
 }
 const requestedCard=new URLSearchParams(location.search).get("card");
 if(requestedCard)document.getElementById("searchInput").value=requestedCard;
+
+function goHome(){
+ document.getElementById("searchInput").value="";
+ document.getElementById("languageFilter").value="";
+ document.getElementById("rarityFilter").value="";
+ selectCategory("all");
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+document.getElementById("brandHome").onclick=goHome;
+document.getElementById("heroHome").onclick=goHome;
+document.getElementById("resetFilters").onclick=goHome;
+
+const discoverMessages=[
+ "Productos revisados antes de la venta",
+ "Compra acompañada por WhatsApp",
+ "Trazabilidad mediante código de venta",
+ "Colecciones, accesorios y producto sellado"
+];
+let discoverIndex=0;
+setInterval(function(){
+ const el=document.getElementById("discoverDynamic");if(!el)return;
+ discoverIndex=(discoverIndex+1)%discoverMessages.length;
+ el.classList.remove("message-pop");void el.offsetWidth;
+ el.textContent=discoverMessages[discoverIndex];
+ el.classList.add("message-pop");
+},3200);
 
 function persistFavorites(){
  const ids=Array.from(state.favorites.keys());
@@ -304,6 +351,39 @@ document.getElementById("shippingBackdrop").onclick=closeShipping;
  const el=document.getElementById(id);if(el)el.addEventListener("input",updateQuote);
 });
 
+document.getElementById("fillTestCheckout").onclick=async function(){
+ const btn=this;btn.disabled=true;btn.textContent="Preparando prueba...";
+ document.getElementById("buyerName").value="Cliente Prueba";
+ document.getElementById("buyerPhone").value="3001234567";
+ document.getElementById("buyerDocument").value="123456789";
+ document.getElementById("destDepartment").value="Cundinamarca";
+ document.getElementById("destCity").value="Bogota";
+ document.getElementById("destAddress").value="Calle 100 # 15-20";
+ document.getElementById("destNeighborhood").value="Chico";
+ document.getElementById("destReference").value="Datos temporales para prueba";
+ document.getElementById("shippingZone").value="N";
+ document.getElementById("shippingPaymentMethod").value="Nequi";
+ let found=null;
+ try{
+  for(let i=1;i<=30;i++){
+   const code="CN-TEST-"+String(i).padStart(3,"0");
+   const data=await saleApi({action:"validate",code:code});
+   if(data.valid){found={code:code,total:Number(data.agreed_total||0)};break}
+  }
+  if(found){
+   document.getElementById("saleCode").value=found.code;
+   state.validatedCode=found.code;state.validatedCodeTotal=found.total;
+   setCodeStatus("success","Modo prueba listo. Código "+found.code+" validado por "+cop(found.total)+" COP.");
+  }else{
+   document.getElementById("saleCode").value="";
+   state.validatedCode=null;state.validatedCodeTotal=0;
+   setCodeStatus("error","Los códigos temporales de prueba ya fueron utilizados.");
+  }
+  updateQuote();
+ }catch(e){setCodeStatus("error","No fue posible preparar el modo de prueba.")}
+ finally{btn.disabled=false;btn.textContent="⚡ Llenar datos temporales para probar"}
+};
+
 function restrictInputs(){
  const digits=function(id){const el=document.getElementById(id);el.addEventListener("input",function(){el.value=el.value.replace(/\D/g,"")})};
  digits("buyerPhone");digits("buyerDocument");
@@ -416,11 +496,7 @@ let receiptTimer=null;
 function showReceipt(){
  const o=state.order;if(!o)return;
  document.getElementById("orderReceipt").hidden=false;
- document.getElementById("receiptId").textContent=o.id+" · Código "+o.sale_code;
- document.getElementById("receiptProductsTotal").textContent=cop(o.agreed_product_total)+" COP";
- document.getElementById("receiptShippingTotal").textContent=cop(o.shipping_total)+" COP";
- document.getElementById("receiptPaymentDestination").textContent=o.payment_destination||"";
- document.getElementById("receiptPaymentMethod").textContent=o.payment_method||"";
+ document.getElementById("receiptId").textContent=o.sale_code||o.id;
  document.getElementById("demoPaymentWarning").hidden=!o.payment_demo;
  clearInterval(receiptTimer);
  function tick(){
