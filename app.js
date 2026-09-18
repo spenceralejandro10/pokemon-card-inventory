@@ -102,18 +102,34 @@ document.getElementById("startShipping").onclick=()=>{closeFavorites();openShipp
 document.getElementById("clearFavorites").onclick=()=>{if(confirm("¿Quieres borrar todas las cartas guardadas?")){state.favorites.clear();persistFavorites();updateFavorites();render()}};
 document.getElementById("quoteFavorites").onclick=()=>{const lines=[...state.favorites.values()].map(c=>`• ${c.canonical_name||c.name_original||"Carta"} — ${c.card_number||c.id}`);window.open(`https://wa.me/${WA}?text=${encodeURIComponent("Hola, quiero cotizar estas cartas Pokémon:\n"+lines.join("\n")+"\n\n¿Me confirmas disponibilidad y precio?")}`,"_blank")};
 updateFavorites();
+window.forceCloseCardViewer=function(e){
+ if(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();}
+ const v=document.getElementById("imageViewer");
+ if(!v)return false;
+ v.classList.remove("open");
+ v.hidden=true;
+ v.setAttribute("hidden","");
+ v.style.setProperty("display","none","important");
+ document.body.classList.remove("viewer-open");
+ return false;
+};
+function closeImageViewer(e){return window.forceCloseCardViewer(e)}
 function openImageViewer(src,card){
  const v=document.getElementById("imageViewer");
  document.getElementById("viewerImage").src=src;
  document.getElementById("viewerCaption").textContent=(card.canonical_name||card.name_original||"Carta")+" · "+(card.card_number||card.id);
- v.hidden=false;v.classList.add("open");document.body.classList.add("viewer-open");
+ v.hidden=false;
+ v.removeAttribute("hidden");
+ v.style.removeProperty("display");
+ v.classList.add("open");
+ document.body.classList.add("viewer-open");
 }
-function closeImageViewer(){
- const v=document.getElementById("imageViewer");
- v.classList.remove("open");v.hidden=true;document.body.classList.remove("viewer-open");
-}
-document.getElementById("closeImageViewer").addEventListener("click",closeImageViewer);
-document.getElementById("viewerBackdrop").addEventListener("click",closeImageViewer);
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeImageViewer()});
+const viewer=document.getElementById("imageViewer");
+const closeViewer=document.getElementById("closeImageViewer");
+const viewerBackdrop=document.getElementById("viewerBackdrop");
+if(closeViewer)closeViewer.addEventListener("click",closeImageViewer);
+if(viewerBackdrop)viewerBackdrop.addEventListener("click",closeImageViewer);
+if(viewer)viewer.addEventListener("click",e=>{if(e.target===viewer)closeImageViewer(e)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&viewer&&!viewer.hidden)closeImageViewer(e)});
 document.getElementById("thumbPrev").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:-260,behavior:"smooth"})};
 document.getElementById("thumbNext").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:260,behavior:"smooth"})};
