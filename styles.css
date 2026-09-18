@@ -24,3 +24,5 @@
 .shipping-modal .shipping-summary{padding:10px 12px;margin:10px 0}
 .shipping-modal .shipping-summary p{margin:4px 0}
 a.original-link,.image-link,.open-original,[href*="drive.google.com"][class*="original"]{display:none!important}
+
+.cart-viewer-btn{display:flex!important;align-items:center!important;gap:9px!important;padding:7px 10px!important;max-width:min(420px,55vw)!important}.cart-viewer-btn[hidden]{display:none!important}.cart-viewer-thumbs{display:flex;align-items:center;min-width:0}.cart-viewer-thumbs img{width:34px;height:47px;object-fit:cover;border-radius:4px;border:1px solid #456b87;background:#071522;margin-left:-8px;box-shadow:0 2px 7px #0008}.cart-viewer-thumbs img:first-child{margin-left:0}.thumb-more{display:grid;place-items:center;width:34px;height:47px;margin-left:-8px;border-radius:4px;background:#173b57;border:1px solid #456b87;color:#fff;font-size:11px;font-weight:800}.cart-viewer-meta{display:grid;text-align:left;flex:0 0 auto}.cart-viewer-meta strong{font-size:14px}.cart-viewer-meta small{font-size:10px;color:#a9c8dc}
