@@ -942,9 +942,18 @@ function validOrderResponse(order){
  if(!order||typeof order!=="object")return false;
  const expiresAt=new Date(order.expires_at).getTime();
  const values=[order.shipping_price,order.handling_price,order.protection_price,order.shipping_total].map(Number);
- if(!order.id||!order.sale_code||!Number.isFinite(expiresAt)||expiresAt<=Date.now())return false;
+ if(!order.id||!validSaleCodeFormat(String(order.sale_code||""))||!Number.isFinite(expiresAt)||expiresAt<=Date.now())return false;
  if(values.some(function(value){return !Number.isFinite(value)||value<0}))return false;
+ if(!PAYMENT_METHODS.has(order.payment_method)||!String(order.payment_destination||"").trim())return false;
+ const topLoaderQty=Number(order.top_loader_qty||0);
+ if(!Number.isInteger(topLoaderQty)||topLoaderQty<0||topLoaderQty>100)return false;
  return Math.abs(values[0]+values[1]+values[2]-values[3])<=1;
+}
+function validStoredOrder(order){
+ if(!validOrderResponse(order)||!order.buyer||typeof order.buyer!=="object")return false;
+ return ["name","email","phone","document","department","city","address","neighborhood"].every(function(field){
+  return typeof order.buyer[field]==="string"&&order.buyer[field].trim().length>0;
+ });
 }
 document.getElementById("createOrder").onclick=async function(){
  setCheckoutStatus("");
@@ -1184,11 +1193,28 @@ document.getElementById("downloadReceipt").onclick=function(){
 };
 
 let receiptTimer=null;
+function showCompletedCheckout(){
+ document.querySelector(".checkout-gate").hidden=true;
+ document.getElementById("checkoutInfo").hidden=true;
+ document.getElementById("checkoutUnlocked").hidden=false;
+ ["fillTestCheckout","deliveryDetails","toploaderDetails","shippingDetails","createOrder"].forEach(function(id){
+  document.getElementById(id).hidden=true;
+ });
+ document.getElementById("shippingTitle").textContent="Pedido generado";
+ const lead=document.querySelector("#shippingModal > .modal-lead");
+ if(lead)lead.textContent="Conserva el código y el PDF mientras confirmas el pago del envío con CardNest.";
+ const fab=document.getElementById("shippingFab"),fabCopy=fab.querySelector("span"),fabHint=fab.querySelector("small");
+ if(fabCopy&&fabCopy.firstChild)fabCopy.firstChild.nodeValue="Ver pedido pendiente";
+ if(fabHint)fabHint.textContent="Consulta el comprobante y el tiempo restante";
+}
 function showReceipt(){
  const o=state.order;if(!o)return;
+ showCompletedCheckout();
  document.getElementById("orderReceipt").hidden=false;
  document.getElementById("receiptId").textContent=o.sale_code||o.id;
  document.getElementById("demoPaymentWarning").hidden=!o.payment_demo;
+ const expiredMessage=document.getElementById("receiptExpiredMessage");
+ if(expiredMessage)expiredMessage.hidden=true;
  clearInterval(receiptTimer);
  function tick(){
   const left=new Date(o.expires_at).getTime()-Date.now(),el=document.getElementById("receiptCountdown");
@@ -1208,13 +1234,16 @@ function showReceipt(){
   ". Total del envío: "+cop(o.shipping_total)+" COP. Adjunto el comprobante y el PDF."
  );
 }
-try{
- const saved=JSON.parse(localStorage.getItem("cardnestPendingOrder")||"null");
- if(validOrderResponse(saved))state.order=saved;
- else localStorage.removeItem("cardnestPendingOrder");
-}catch(e){}
 moveCheckoutInfoInitial();
 document.getElementById("checkoutUnlocked").hidden=true;
+try{
+ const saved=JSON.parse(localStorage.getItem("cardnestPendingOrder")||"null");
+ if(validStoredOrder(saved)){
+  state.order=saved;
+  showReceipt();
+  setCheckoutStatus("Recuperamos el pedido pendiente guardado en este dispositivo.","success");
+ }else localStorage.removeItem("cardnestPendingOrder");
+}catch(e){}
 function openImageViewer(src,p){
  const v=document.getElementById("imageViewer");if(!src||!v)return;
  document.getElementById("viewerImage").src=src;
