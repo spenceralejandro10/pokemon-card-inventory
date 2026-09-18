@@ -47,23 +47,32 @@
  <h3>Calcula tu envío desde Bogotá</h3>
  <div class="shipping-form">
   <input id="buyerName" placeholder="Nombre completo">
-  <input id="buyerPhone" inputmode="tel" placeholder="Teléfono">
-  <input id="destCity" placeholder="Ciudad o municipio de destino">
+  <input id="buyerPhone" inputmode="tel" placeholder="Celular de contacto *">
+  <input id="buyerDocument" inputmode="numeric" placeholder="Documento / identificación (opcional)">
+  <input id="destDepartment" placeholder="Departamento *">
+  <input id="destCity" placeholder="Ciudad o municipio *">
+  <input id="destAddress" placeholder="Dirección completa *">
+  <input id="destNeighborhood" placeholder="Barrio / sector (opcional)">
+  <input id="destReference" placeholder="Indicaciones de entrega (opcional)">
   <div class="shipping-choice"><label><input id="toploaderOption" type="checkbox" checked> Proteger cada carta con Top Loader <strong>+$2.000 c/u</strong></label><small>Sin Top Loader no se cobra este adicional. La carta se calcula en ~2 g; con Top Loader usamos ~10,5 g por carta como estimación logística.</small></div>
   <div class="shipping-summary"><span id="shippingCardCount">0 cartas seleccionadas</span><span id="estimatedWeight">Peso estimado: empaque mínimo 1 kg</span><span id="toploaderCost">Top Loaders: $0</span></div>
   <input id="declaredValue" type="number" min="0" step="1000" placeholder="Valor declarado de las cartas">
   <select id="shippingZone"><option value="N">Nacional / capitales principales</option><option value="L">Local</option><option value="R">Regional</option><option value="Z">Zonal</option><option value="O">Otros destinos</option><option value="E">Destino especial</option></select>
  </div>
  <div class="quote-box"><div>Flete base: <strong id="shippingCost">$17.830</strong></div><div>Manejo oficial (1% valor declarado): <strong id="shippingHandling">$0</strong></div><div>Total de referencia Coordinadora: <strong id="shippingTotal">$17.830</strong></div><small>Coordinadora liquida por origen/destino, peso real o volumétrico —el mayor— y valor declarado. Esta calculadora usa su tabla pública; la cotización definitiva se confirma con Coordinadora.</small></div>
- <div class="why-box"><h3>¿Por qué funciona para ambas partes?</h3><p><strong>Comprador:</strong> no paga las cartas por adelantado y recibe un envío con valor declarado. Coordinadora indica que el valor declarado es obligatorio y sirve como base de cobertura ante pérdida o daño.</p><p><strong>Vendedor:</strong> no asume el costo logístico de un despacho que el comprador decida no recibir.</p></div>
+ <details class="info-drop"><summary>Ventajas de esta forma de envío</summary><div><p><strong>Comprador:</strong> no adelanta el valor de las cartas; primero cubre el envío y las cartas se pagan contra entrega.</p><p><strong>Vendedor:</strong> el transporte queda cubierto antes de despachar.</p></div></details>
+<details class="info-drop"><summary>¿Cómo funciona el proceso?</summary><div><p>1. Acuerdas las cartas y el precio. 2. Registras los datos de entrega. 3. Generamos una referencia válida por 4 horas. 4. Pagas el envío. 5. Envías comprobante + referencia por WhatsApp. 6. Gestionamos el despacho.</p></div></details>
+<details class="info-drop"><summary>Condiciones y tiempos de despacho</summary><div><p>El envío se paga antes del despacho. Pedidos confirmados antes de las 12:00 m. se preparan para salir el mismo día; después se programan para el siguiente día hábil, salvo que la operación permita despacharlos antes.</p></div></details>
 <div class="dispatch-box"><h3>Despacho y entrega</h3><p><strong>Pedidos confirmados antes de las 12:00 m.:</strong> los preparamos para despacho el mismo día.</p><p><strong>Después de las 12:00 m.:</strong> se programan para el siguiente día hábil; cuando la operación lo permita, intentaremos despacharlos ese mismo día.</p><p>El tiempo de transporte empieza una vez Coordinadora recibe el paquete. Coordinadora informa los tiempos <strong>en días hábiles según origen y destino</strong> y advierte que pueden variar por vías, clima u otras condiciones logísticas.</p></div>
 <p class="conditions">Al continuar confirmas que entiendes que <strong>el envío se paga obligatoriamente antes del despacho</strong>. El valor de las cartas se recauda contra entrega. El 1% mostrado corresponde al manejo que Coordinadora publica sobre el valor declarado.</p>
- <button id="createOrder" class="whatsapp-btn" type="button">Generar pedido y referencia de pago</button>
+ <label class="payment-select">Medio usado para pagar el envío *<select id="shippingPaymentMethod"><option value="">Selecciona...</option><option>Nequi</option><option>Bre-B / llave bancaria</option><option>Bancolombia</option><option>Daviplata</option></select></label>
+<button id="createOrder" class="whatsapp-btn" type="button">Generar pedido, referencia y PDF</button>
 <div id="orderReceipt" class="order-receipt" hidden>
  <h3>Referencia de pago</h3><div class="receipt-id" id="receiptId"></div>
  <p>Esta referencia vence en <strong id="receiptCountdown">4:00:00</strong>.</p>
  <p><strong>Paga únicamente el envío antes del despacho.</strong> Después envía por WhatsApp la foto del comprobante junto con esta referencia.</p>
  <div class="payment-methods">Nequi · Bre-B / llave bancaria · Bancolombia · Daviplata</div>
+ <button id="downloadReceipt" class="secondary-action" type="button">Descargar PDF del pedido</button>
  <a id="shippingWhatsapp" class="whatsapp-btn" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
 </div>
 </aside>
@@ -108,6 +117,7 @@
  <button id="startShipping" class="secondary-action" type="button">Ya acordé el precio · Programar envío</button>
  <section class="offer-history"><h3>Historial de ofertas</h3><div id="offerHistory"></div></section>
 </aside>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
