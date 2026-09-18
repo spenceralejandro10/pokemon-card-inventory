@@ -104,6 +104,9 @@ document.getElementById("quoteFavorites").onclick=()=>{const lines=[...state.fav
 updateFavorites();
 function openImageViewer(src,card){const v=document.getElementById("imageViewer");document.getElementById("viewerImage").src=src;document.getElementById("viewerCaption").textContent=(card.canonical_name||card.name_original||"Carta")+" · "+(card.card_number||card.id);v.hidden=false;requestAnimationFrame(()=>v.classList.add("open"));document.body.classList.add("viewer-open")}
 function closeImageViewer(){const v=document.getElementById("imageViewer");v.classList.remove("open");document.body.classList.remove("viewer-open");setTimeout(()=>v.hidden=true,160)}
-document.getElementById("closeImageViewer").onclick=closeImageViewer;document.getElementById("imageViewer").onclick=e=>{const img=document.getElementById("viewerImage");if(e.target!==img&&e.target.id!=="closeImageViewer")closeImageViewer()};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeImageViewer()});
+document.getElementById("closeImageViewer").onclick=e=>{e.preventDefault();e.stopPropagation();closeImageViewer()};
+document.getElementById("imageViewer").addEventListener("click",e=>{const img=document.getElementById("viewerImage");if(!img.contains(e.target))closeImageViewer()});
+document.getElementById("viewerImage").addEventListener("click",e=>e.stopPropagation());
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("imageViewer").hidden)closeImageViewer()});
 document.getElementById("thumbPrev").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:-260,behavior:"smooth"})};
 document.getElementById("thumbNext").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:260,behavior:"smooth"})};
