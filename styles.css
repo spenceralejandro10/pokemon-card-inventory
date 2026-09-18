@@ -1143,3 +1143,26 @@ input[type="checkbox"].field-invalid{
  .shipping-form .full-field{grid-column:auto}
  .toploader-toolbar{grid-template-columns:1fr!important}
 }
+
+.reset-filters{
+ background:#f4c542!important;
+ color:#172433!important;
+ border-color:#dfb11f!important;
+ box-shadow:0 5px 14px rgba(174,130,0,.16)!important;
+}
+.reset-filters:hover{
+ background:#eab82e!important;
+ border-color:#d5a719!important;
+ transform:translateY(-1px);
+}
+.receipt-expired-message{
+ margin:10px 0 12px;
+ padding:11px 12px;
+ border-radius:10px;
+ border:1px solid #efc1bd;
+ background:#fff2f1;
+ color:#8f2b22!important;
+ font-size:12px;
+ line-height:1.45;
+ font-weight:700;
+}
