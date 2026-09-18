@@ -38,14 +38,12 @@
 <button id="shippingFab" class="shipping-fab" type="button">🚚 <span>Programa tu envío<br><small>Paga las cartas al recibir</small></span></button>
 <div id="shippingBackdrop" class="modal-backdrop" hidden></div>
 <aside id="shippingModal" class="shipping-modal" aria-hidden="true">
- <button id="closeShipping" class="modal-close" type="button">×</button>
- <h2>Programa tu envío</h2>
- <div class="order-step">1. Acuerda las cartas → 2. Paga el envío → 3. Envía comprobante → 4. Despachamos</div>
- <p class="modal-lead"><strong>Tú no adelantas el dinero de las cartas.</strong> Primero pagas únicamente el transporte para autorizar el despacho. El valor de las cartas y el manejo se cobran al momento de la entrega.</p>
-<div class="benefit-grid"><div><b>Para ti</b><span>No arriesgas el valor de la compra antes de que el pedido sea despachado.</span></div><div><b>Para nosotros</b><span>El envío ya está cubierto si cambias de opinión o el paquete debe regresar.</span></div></div>
- <div class="trust-box"><strong>Compra con más tranquilidad</strong><br>No adelantas el valor de las cartas. El pago anticipado corresponde únicamente al transporte.</div>
- <h3>Calcula tu envío desde Bogotá</h3>
- <div class="shipping-form">
+<button id="closeShipping" class="modal-close" type="button">×</button>
+<h2>Programa tu envío</h2>
+
+<details class="ship-accordion" open>
+ <summary>Datos para la entrega</summary>
+ <div class="accordion-body shipping-form">
   <input id="buyerName" placeholder="Nombre completo">
   <input id="buyerPhone" inputmode="tel" placeholder="Celular de contacto *">
   <input id="buyerDocument" inputmode="numeric" placeholder="Documento / identificación (opcional)">
@@ -54,17 +52,45 @@
   <input id="destAddress" placeholder="Dirección completa *">
   <input id="destNeighborhood" placeholder="Barrio / sector (opcional)">
   <input id="destReference" placeholder="Indicaciones de entrega (opcional)">
-  <div class="shipping-choice"><label><input id="toploaderOption" type="checkbox" checked> Proteger cada carta con Top Loader <strong>+$2.000 c/u</strong></label><small>Sin Top Loader no se cobra este adicional. La carta se calcula en ~2 g; con Top Loader usamos ~10,5 g por carta como estimación logística.</small></div>
-  <div class="shipping-summary"><span id="shippingCardCount">0 cartas seleccionadas</span><span id="estimatedWeight">Peso estimado: empaque mínimo 1 kg</span><span id="toploaderCost">Top Loaders: $0</span></div>
-  <input id="declaredValue" type="number" min="0" step="1000" placeholder="Valor declarado de las cartas">
-  <select id="shippingZone"><option value="N">Nacional / capitales principales</option><option value="L">Local</option><option value="R">Regional</option><option value="Z">Zonal</option><option value="O">Otros destinos</option><option value="E">Destino especial</option></select>
  </div>
- <div class="quote-box"><div>Flete base: <strong id="shippingCost">$17.830</strong></div><div>Manejo oficial (1% valor declarado): <strong id="shippingHandling">$0</strong></div><div>Total de referencia Coordinadora: <strong id="shippingTotal">$17.830</strong></div><small>Coordinadora liquida por origen/destino, peso real o volumétrico —el mayor— y valor declarado. Esta calculadora usa su tabla pública; la cotización definitiva se confirma con Coordinadora.</small></div>
- <details class="info-drop"><summary>Ventajas del pago contra entrega</summary><div><p>Pagas primero el transporte y el valor acordado de las cartas se gestiona contra entrega. Así no adelantas el valor de las cartas antes del despacho.</p></div></details>
-<details class="info-drop"><summary>Tiempos de despacho</summary><div><p>Los pedidos confirmados antes de las 12:00 m. se preparan para despacho el mismo día. Después de esa hora se programan para el siguiente día hábil, salvo que podamos despacharlos antes.</p></div></details>
-</div></details><div class="dispatch-box"><h3>Despacho y entrega</h3><p><strong>Pedidos confirmados antes de las 12:00 m.:</strong> los preparamos para despacho el mismo día.</p><p><strong>Después de las 12:00 m.:</strong> se programan para el siguiente día hábil; cuando la operación lo permita, intentaremos despacharlos ese mismo día.</p><p>El tiempo de transporte empieza una vez Coordinadora recibe el paquete. Coordinadora informa los tiempos <strong>en días hábiles según origen y destino</strong> y advierte que pueden variar por vías, clima u otras condiciones logísticas.</p></div>
-<p class="conditions">Al continuar confirmas que entiendes que <strong>el envío se paga obligatoriamente antes del despacho</strong>. El valor de las cartas se recauda contra entrega. El 1% mostrado corresponde al manejo que Coordinadora publica sobre el valor declarado.</p>
- <label class="payment-select">Medio usado para pagar el envío *<select id="shippingPaymentMethod"><option value="">Selecciona...</option><option>Nequi</option><option>Bre-B / llave bancaria</option><option>Bancolombia</option><option>Daviplata</option></select></label>
+</details>
+
+<details class="ship-accordion">
+ <summary>Protección de las cartas</summary>
+ <div class="accordion-body">
+  <div class="shipping-choice"><label><input id="toploaderOption" type="checkbox" checked> Proteger cada carta con Top Loader <strong>+$2.000 c/u</strong></label><small>Opcional. Si no lo eliges, no se cobra este adicional.</small></div>
+ </div>
+</details>
+
+<details class="ship-accordion">
+ <summary>Cotizar envío</summary>
+ <div class="accordion-body">
+  <div class="shipping-summary"><span id="shippingCardCount">0 cartas seleccionadas</span><span id="estimatedWeight">Peso estimado</span><span id="toploaderCost">Top Loaders: $0</span></div>
+  <div class="shipping-form">
+   <input id="declaredValue" type="number" min="0" step="1000" placeholder="Valor declarado de las cartas">
+   <select id="shippingZone"><option value="N">Nacional / capitales principales</option><option value="L">Local</option><option value="R">Regional</option><option value="Z">Zonal</option><option value="O">Otros destinos</option><option value="E">Destino especial</option></select>
+  </div>
+  <div class="quote-box"><div>Flete base: <strong id="shippingCost">$17.830</strong></div><div>Manejo (1% valor declarado): <strong id="shippingHandling">$0</strong></div><div>Total de referencia: <strong id="shippingTotal">$17.830</strong></div></div>
+ </div>
+</details>
+
+<details class="ship-accordion">
+ <summary>¿Cómo funciona?</summary>
+ <div class="accordion-body"><p>Acuerdas las cartas y el precio, completas los datos de entrega, pagas el envío y envías el comprobante. El valor acordado de las cartas se gestiona contra entrega.</p></div>
+</details>
+<details class="ship-accordion">
+ <summary>Ventajas del pago contra entrega</summary>
+ <div class="accordion-body"><p>No adelantas el valor acordado de las cartas antes del despacho. El pago anticipado corresponde al envío.</p></div>
+</details>
+<details class="ship-accordion">
+ <summary>Tiempos de despacho y entrega</summary>
+ <div class="accordion-body"><p>Los pedidos confirmados antes de las 12:00 m. se preparan para despacho el mismo día. Después se programan para el siguiente día hábil, cuando corresponda.</p></div>
+</details>
+<details class="ship-accordion">
+ <summary>Pago del envío</summary>
+ <div class="accordion-body"><label class="payment-select">Medio usado para pagar el envío *<select id="shippingPaymentMethod"><option value="">Selecciona...</option><option>Nequi</option><option>Bre-B / llave bancaria</option><option>Bancolombia</option><option>Daviplata</option></select></label></div>
+</details>
+
 <button id="createOrder" class="whatsapp-btn" type="button">Generar pedido, referencia y PDF</button>
 <div id="orderReceipt" class="order-receipt" hidden>
  <h3>Referencia de pago</h3><div class="receipt-id" id="receiptId"></div>
