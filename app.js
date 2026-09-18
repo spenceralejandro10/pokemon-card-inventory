@@ -33,7 +33,7 @@ function render(){
   const n=tpl.content.cloneNode(true),img=n.querySelector(".card-image");
   const driveId=(c.source_image_url||"").match(/\/d\/([^/]+)/)?.[1];
   img.src=c.image_path?`${SUPABASE_URL}/storage/v1/object/public/card-images/${c.image_path}`:(driveId?`https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`:"");
-  img.alt=`${c.canonical_name||c.name_original||"Carta"} ${c.card_number||""}`;
+  img.alt=`${c.canonical_name||c.name_original||"Carta"} ${c.card_number||""}`;img.title="Haz clic para ampliar";img.onclick=e=>{e.preventDefault();e.stopPropagation();openImageViewer(img.src,c)};
   n.querySelector(".card-name").textContent=c.canonical_name||c.name_original||"Pendiente de identificar";
   n.querySelector(".original-name").textContent=c.name_original&&c.name_original!==c.canonical_name?c.name_original:"";
   n.querySelector(".language-badge").textContent=c.language||"Unknown";const stock=n.querySelector(".stock-badge"),sold=(c.sale_status==="sold_out"||Number(c.stock_quantity)<=0);stock.textContent=sold?"NO DISPONIBLE":`${c.stock_quantity} disponible${c.stock_quantity===1?"":"s"}`;stock.classList.toggle("sold",sold);n.querySelector(".card").classList.toggle("sold-out",sold);
@@ -41,7 +41,7 @@ function render(){
   n.querySelector(".card-set").textContent=c.set_name||c.set_code||"Pendiente";n.querySelector(".card-hp").textContent=c.hp??"—";
   n.querySelector(".card-rarity").textContent=c.rarity_verified||c.rarity_detected||"Pendiente de revisión";
   n.querySelector(".card-status").textContent="Sin uso · protegida";
-  const a=n.querySelector(".drive-link");a.href=c.source_image_url||"#";if(!c.source_image_url)a.style.display="none";
+  const a=n.querySelector(".drive-link");if(a)a.remove();
   const fav=n.querySelector(".favorite-btn");if(sold){fav.disabled=true;fav.textContent="No disponible";}const selected=state.favorites.has(c.id); fav.classList.toggle("selected",selected); if(!sold)fav.textContent=selected?"♥ Seleccionada":"♡ Me interesa";
   fav.addEventListener("click",()=>toggleFavorite(c));
   grid.appendChild(n);
@@ -58,6 +58,10 @@ const SHIPPING={
 5:{L:16230,R:19610,N:29270,Z:41250,O:49350,E:65730}};
 const cop=n=>new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(n||0);
 const WA="573125214785";
+function imageUrl(c){
+ const driveId=(c.source_image_url||"").match(/\/d\/([^/]+)/)?.[1];
+ return c.image_path?`${SUPABASE_URL}/storage/v1/object/public/card-images/${c.image_path}`:(driveId?`https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`:"");
+}
 function estimatedShipment(){
  const count=Math.max(1,state.favorites.size),withTop=document.getElementById("toploaderOption")?.checked??true;
  const grams=count*(withTop?10.5:2)+100;
