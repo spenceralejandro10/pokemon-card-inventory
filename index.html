@@ -88,7 +88,7 @@
 
 <section class="shipping-section sale-code-section checkout-gate">
  <div class="section-heading"><span>1</span><div><strong>Código de venta del analista</strong><small>Este código confirma internamente la compra acordada y habilita únicamente el proceso de envío.</small></div></div>
- <div class="code-validator"><input id="saleCode" maxlength="40" autocomplete="off" placeholder="Ej. CN-PRUEBA-001"><button id="validateSaleCode" type="button">Validar código</button></div>
+ <div class="code-validator"><input id="saleCode" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" pattern="[A-Za-z0-9-]{6,40}" aria-label="Código de venta" placeholder="Ej. CN-VENTA-001"><button id="validateSaleCode" type="button">Validar código</button></div>
  <div id="saleCodeStatus" class="code-status" aria-live="polite">Valida tu código para continuar.</div>
  <div class="code-help">
    <strong>¿Todavía no tienes código?</strong>
@@ -97,8 +97,8 @@
  </div>
  <div class="demo-code-box">
    <span>CÓDIGO TEMPORAL DE PRUEBA</span>
-   <strong>CN-PRUEBA-001</strong>
-   <button id="useDemoSaleCode" type="button">Usar código de prueba</button>
+   <strong>Se asigna automáticamente</strong>
+   <button id="useDemoSaleCode" type="button">Preparar prueba</button>
  </div>
 </section>
 
@@ -177,6 +177,7 @@
   </div>
  </details>
 
+ <div id="checkoutStatus" class="checkout-status" role="alert" hidden></div>
  <button id="createOrder" class="whatsapp-btn checkout-primary" type="button">Generar pedido y descargar PDF</button>
 
  <div id="orderReceipt" class="order-receipt receipt-simple" hidden>

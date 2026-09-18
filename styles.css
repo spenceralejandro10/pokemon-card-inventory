@@ -1374,3 +1374,10 @@ input[type="checkbox"].field-invalid{
  .history-head{align-items:flex-start}
  .history-total{min-width:max-content}
 }
+.checkout-status{
+ margin:12px 0;padding:11px 12px;border:1px solid #b7c8d3;border-radius:9px;
+ background:#f7fafb;color:#30495a;font-size:13px;line-height:1.45;font-weight:700
+}
+.checkout-status.error{border-color:#efb8b3;background:#fff3f2;color:#9b2d24}
+.checkout-status.success{border-color:#a9dbc2;background:#eefaf4;color:#17633f}
+.checkout-status.warning{border-color:#efd598;background:#fff8e7;color:#6d5313}

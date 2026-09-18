@@ -10,6 +10,9 @@ const CATEGORY_LABELS={
  dragonball:"Dragon Ball",naruto:"Naruto",accessories:"Accesorios",sealed:"Producto sellado",electronics:"Electrónica"
 };
 const CARD_CATEGORIES=new Set(["pokemon","yugioh","digimon","dragonball","naruto"]);
+const SHIPPING_ZONES=new Set(["L","R","N","Z","O","E"]);
+const PAYMENT_METHODS=new Set(["Nequi","Bre-B / llave bancaria","Bancolombia","Daviplata"]);
+const TOP_LOADER_PREFERENCES=new Set(["one_per_card","up_to_three","send_loose","custom"]);
 const SHIPPING={
  1:{L:9000,R:10450,N:17830,Z:25750,O:27560,E:42150},
  2:{L:9000,R:10450,N:17830,Z:25750,O:27560,E:42150},
@@ -640,6 +643,7 @@ function openShipping(){
  document.getElementById("shippingModal").classList.add("open");
  document.getElementById("shippingBackdrop").hidden=false;
  document.getElementById("shippingModal").setAttribute("aria-hidden","false");
+ setCheckoutStatus("");
  updateQuote();
 }
 function closeShipping(){
@@ -698,20 +702,37 @@ document.querySelectorAll("#checkoutUnlocked input,#checkoutUnlocked select,#che
 });
 
 async function saleApi(payload){
- const res=await fetch(SALE_API,{
-  method:"POST",
-  headers:{"Content-Type":"application/json",apikey:SUPABASE_KEY},
-  body:JSON.stringify(payload)
- });
- const data=await res.json().catch(function(){return {}});
- if(!res.ok&&payload.action!=="validate")throw new Error(data.message||"No se pudo completar la operación.");
- return data;
+ const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},20000);
+ try{
+  const res=await fetch(SALE_API,{
+   method:"POST",
+   headers:{"Content-Type":"application/json",apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY},
+   body:JSON.stringify(payload),
+   signal:controller.signal
+  });
+  const data=await res.json().catch(function(){return {}});
+  if(!res.ok){
+   const error=new Error(data.message||"No se pudo completar la operación.");
+   error.code=data.error||"REQUEST_FAILED";error.status=res.status;
+   throw error;
+  }
+  return data;
+ }catch(error){
+  if(error&&error.name==="AbortError")throw new Error("La validación tardó demasiado. Intenta nuevamente.");
+  throw error;
+ }finally{clearTimeout(timer)}
 }
 function setCodeStatus(type,message){
  const box=document.getElementById("saleCodeStatus");
  box.className="code-status "+(type||"");
  box.textContent=message;
 }
+function setCheckoutStatus(message,type){
+ const box=document.getElementById("checkoutStatus");
+ box.hidden=!message;box.textContent=message||"";box.className="checkout-status "+(type||"");
+}
+function normalizedSaleCode(){return document.getElementById("saleCode").value.trim().toUpperCase()}
+function validSaleCodeFormat(code){return /^[A-Z0-9][A-Z0-9-]{5,39}$/.test(code)}
 function moveCheckoutInfoInitial(){
  const info=document.getElementById("checkoutInfo");
  const gate=document.querySelector(".checkout-gate");
@@ -735,8 +756,8 @@ function clearValidatedCode(){
 }
 function applyValidatedCode(code,data,prefix){
  state.validatedCode=code;
- state.codeHandlingPrice=Number(data.handling_price||0);
- state.codeShippingWeightKg=Math.max(1,Math.min(5,Number(data.shipping_weight_kg||1)));
+ state.codeHandlingPrice=Math.max(0,Number(data.handling_price)||0);
+ state.codeShippingWeightKg=Math.max(1,Math.min(5,Math.floor(Number(data.shipping_weight_kg)||1)));
  if(!data.ready_for_shipping){
   clearValidatedCode();
   setCodeStatus("error","Este código no está listo para procesar el envío. Solicita un código nuevo al analista.");
@@ -750,34 +771,50 @@ function applyValidatedCode(code,data,prefix){
  updateQuote();
 }
 document.getElementById("saleCode").addEventListener("input",function(){
- if(state.validatedCode&&this.value.trim().toUpperCase()!==state.validatedCode){
+ this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,"");
+ setCheckoutStatus("");
+ if(state.validatedCode&&normalizedSaleCode()!==state.validatedCode){
   clearValidatedCode();
   setCodeStatus("","El código cambió. Debes validarlo nuevamente.");
  }
 });
 const useDemoSaleCode=document.getElementById("useDemoSaleCode");
-if(useDemoSaleCode)useDemoSaleCode.onclick=function(){
- document.getElementById("saleCode").value="CN-PRUEBA-001";
- document.getElementById("saleCode").focus();
- setCodeStatus("","Código de prueba cargado. Presiona “Validar código” para continuar.");
+async function findAvailableDemoCode(){
+ const candidates=["CN-PRUEBA-001"].concat(Array.from({length:30},function(_,i){return "CN-TEST-"+String(i+1).padStart(3,"0")}));
+ for(const code of candidates){
+  const data=await saleApi({action:"validate",code:code});
+  if(data.valid&&data.ready_for_shipping)return {code:code,data:data};
+ }
+ return null;
+}
+if(useDemoSaleCode)useDemoSaleCode.onclick=async function(){
+ const btn=this;btn.disabled=true;btn.textContent="Buscando…";setCodeStatus("","Buscando un código temporal disponible.");
+ try{
+  const found=await findAvailableDemoCode();
+  if(!found){clearValidatedCode();document.getElementById("saleCode").value="";setCodeStatus("error","Los códigos temporales de prueba ya fueron utilizados.");return}
+  document.getElementById("saleCode").value=found.code;
+  applyValidatedCode(found.code,found.data,"Modo prueba listo.");
+ }catch(e){clearValidatedCode();setCodeStatus("error",e.message||"No fue posible preparar el modo de prueba.")}
+ finally{btn.disabled=false;btn.textContent="Preparar prueba"}
 };
 document.getElementById("validateSaleCode").onclick=async function(){
- const code=document.getElementById("saleCode").value.trim().toUpperCase();
+ const code=normalizedSaleCode();
  if(!code){setCodeStatus("error","Escribe el código que te entregó el analista.");return}
+ if(!validSaleCodeFormat(code)){setCodeStatus("error","El código solo puede contener letras, números y guiones.");document.getElementById("saleCode").focus();return}
+ document.getElementById("saleCode").value=code;
  const btn=this;btn.disabled=true;btn.textContent="Validando...";
  try{
   const data=await saleApi({action:"validate",code:code});
   if(data.valid)applyValidatedCode(code,data,"");
   else{clearValidatedCode();setCodeStatus("error",data.message||"Código inválido, vencido o ya utilizado.")}
  }catch(e){
-  clearValidatedCode();setCodeStatus("error","No fue posible validar el código. Intenta nuevamente.");
+  clearValidatedCode();setCodeStatus("error",e.message||"No fue posible validar el código. Intenta nuevamente.");
  }finally{
   btn.disabled=false;btn.textContent="Validar código";
  }
 };
 
-document.getElementById("fillTestCheckout").onclick=async function(){
- const btn=this;btn.disabled=true;btn.textContent="Preparando prueba...";
+document.getElementById("fillTestCheckout").onclick=function(){
  document.getElementById("buyerName").value="Cliente Prueba";
  document.getElementById("buyerEmail").value="cliente.prueba@example.com";
  document.getElementById("buyerPhone").value="3001234567";
@@ -797,26 +834,9 @@ document.getElementById("fillTestCheckout").onclick=async function(){
  document.getElementById("toploaderPreference").value="one_per_card";
  document.getElementById("toploaderNotes").value="Aplicar primero a las cartas de mayor valor.";
  document.getElementById("toploaderNotesCount").textContent=String(document.getElementById("toploaderNotes").value.length);
- let found=null;
- try{
-  const preferred=["CN-PRUEBA-001"].concat(Array.from({length:30},function(_,i){return "CN-TEST-"+String(i+1).padStart(3,"0")}));
-  for(const code of preferred){
-   const data=await saleApi({action:"validate",code:code});
-   if(data.valid){found={code:code,data:data};break}
-  }
-  if(found){
-   document.getElementById("saleCode").value=found.code;
-   applyValidatedCode(found.code,found.data,"Modo prueba listo.");
-   renderToploaderConfigurator();
-  }else{
-   clearValidatedCode();document.getElementById("saleCode").value="";
-   setCodeStatus("error","Los códigos temporales de prueba ya fueron utilizados.");
-  }
- }catch(e){
-  clearValidatedCode();setCodeStatus("error","No fue posible preparar el modo de prueba.");
- }finally{
-  btn.disabled=false;btn.textContent="⚡ Llenar datos temporales para probar";
- }
+ document.querySelectorAll("#checkoutUnlocked .field-invalid").forEach(clearFieldError);
+ setCheckoutStatus("Datos temporales cargados. Revisa la cotización antes de generar el pedido.","success");
+ renderToploaderConfigurator();
 };
 
 function buyerData(){
@@ -859,36 +879,54 @@ function validateBuyer(b){
  if(b.address.length<5||b.address.length>120){setFieldError(fields.address,"Completa la dirección de entrega.");ok=false}
  if(b.neighborhood.length<2||b.neighborhood.length>80){setFieldError(fields.neighborhood,"Completa el barrio o sector.");ok=false}
  if(b.notes.length>300){setFieldError(document.getElementById("customerNotes"),"Máximo 300 caracteres.");ok=false}
- if(!b.consent){setFieldError(fields.consent,"Debes confirmar los datos y productos acordados.");ok=false}
+ if(!b.consent){setFieldError(fields.consent,"Debes confirmar que los datos de entrega son correctos.");ok=false}
  if(!ok){
   document.getElementById("deliveryDetails").open=true;
   document.querySelector(".field-invalid")?.scrollIntoView({behavior:"smooth",block:"center"});
  }
  return ok;
 }
+function validOrderResponse(order){
+ if(!order||typeof order!=="object")return false;
+ const expiresAt=new Date(order.expires_at).getTime();
+ const values=[order.shipping_price,order.handling_price,order.protection_price,order.shipping_total].map(Number);
+ if(!order.id||!order.sale_code||!Number.isFinite(expiresAt)||expiresAt<=Date.now())return false;
+ if(values.some(function(value){return !Number.isFinite(value)||value<0}))return false;
+ return Math.abs(values[0]+values[1]+values[2]-values[3])<=1;
+}
 document.getElementById("createOrder").onclick=async function(){
- const code=document.getElementById("saleCode").value.trim().toUpperCase();
- if(!code||state.validatedCode!==code){
-  alert("Debes validar primero el código de venta entregado por el analista.");
+ setCheckoutStatus("");
+ const code=normalizedSaleCode();
+ if(!validSaleCodeFormat(code)||state.validatedCode!==code){
+  setCheckoutStatus("Debes validar primero el código de venta entregado por el analista.","error");
   document.getElementById("saleCode").focus();return;
  }
  const b=buyerData();
- if(!validateBuyer(b))return;
+ if(!validateBuyer(b)){setCheckoutStatus("Revisa los campos marcados antes de continuar.","error");return}
 
- const paymentMethod=document.getElementById("shippingPaymentMethod");
- if(!paymentMethod.value){
+ const paymentMethod=document.getElementById("shippingPaymentMethod"),shippingZone=document.getElementById("shippingZone");
+ if(!PAYMENT_METHODS.has(paymentMethod.value)){
   document.getElementById("shippingDetails").open=true;
   setFieldError(paymentMethod,"Selecciona el medio para pagar el envío.");
   paymentMethod.scrollIntoView({behavior:"smooth",block:"center"});
+  setCheckoutStatus("Selecciona un medio de pago válido.","error");
   return;
  }
+ if(!SHIPPING_ZONES.has(shippingZone.value)){setCheckoutStatus("Selecciona una zona de envío válida.","error");return}
  const topEnabled=document.getElementById("toploaderOption").checked;
  const topQty=topEnabled?topLoaderQty():0;
  const topPreference=topEnabled?document.getElementById("toploaderPreference").value:"";
  const topNotes=topEnabled?document.getElementById("toploaderNotes").value.trim():"";
- if(topNotes.length>180){
+ if(topEnabled&&!TOP_LOADER_PREFERENCES.has(topPreference)){
   document.getElementById("toploaderDetails").open=true;
-  setFieldError(document.getElementById("toploaderNotes"),"Máximo 180 caracteres.");
+  setFieldError(document.getElementById("toploaderPreference"),"Selecciona cómo quieres usar los Top Loaders.");
+  setCheckoutStatus("Revisa la configuración de Top Loaders.","error");
+  return;
+ }
+ if(topNotes.length>180||(topEnabled&&topPreference==="custom"&&topNotes.length<3)){
+  document.getElementById("toploaderDetails").open=true;
+  setFieldError(document.getElementById("toploaderNotes"),topNotes.length>180?"Máximo 180 caracteres.":"Describe brevemente cómo quieres usarlos.");
+  setCheckoutStatus("Revisa la indicación de Top Loaders.","error");
   return;
  }
 
@@ -903,19 +941,24 @@ document.getElementById("createOrder").onclick=async function(){
    topLoaderQty:topQty,
    topLoaderPreference:topPreference,
    topLoaderNotes:topNotes,
-   shippingZone:document.getElementById("shippingZone").value,
+   shippingZone:shippingZone.value,
    paymentMethod:paymentMethod.value
   });
+  if(!data.ok||!validOrderResponse(data.order))throw new Error("El servidor devolvió una respuesta incompleta. No se generó el comprobante.");
   state.order=Object.assign({},data.order,{buyer:b});
   localStorage.setItem("cardnestPendingOrder",JSON.stringify(state.order));
   showReceipt();
-  downloadOrderPDF();
+  const pdfReady=downloadOrderPDF();
   setCodeStatus("success","Pedido generado correctamente. Conserva este código para seguimiento.");
+  setCheckoutStatus(pdfReady?"Pedido generado y PDF descargado correctamente.":"Pedido generado. No fue posible descargar el PDF; usa el botón “Descargar PDF nuevamente”.",pdfReady?"success":"warning");
   generated=true;
   btn.disabled=true;
   btn.textContent="Pedido generado";
  }catch(e){
-  alert(e.message||"No fue posible generar el pedido.");
+  if(e.code==="INVALID_OR_EXPIRED_CODE"){
+   clearValidatedCode();setCodeStatus("error","El código ya no está disponible. Solicita uno nuevo al analista.");
+  }
+  setCheckoutStatus(e.message||"No fue posible generar el pedido.","error");
  }finally{
   if(!generated){btn.disabled=false;btn.textContent="Generar pedido y descargar PDF";}
  }
@@ -1069,9 +1112,13 @@ function buildPdf(){
 }
 function downloadOrderPDF(){
  const d=buildPdf();
- if(d)d.save("CardNest-envio-"+state.order.sale_code+".pdf");
+ if(!d)return false;
+ d.save("CardNest-envio-"+state.order.sale_code+".pdf");
+ return true;
 }
-document.getElementById("downloadReceipt").onclick=downloadOrderPDF;
+document.getElementById("downloadReceipt").onclick=function(){
+ if(!downloadOrderPDF())setCheckoutStatus("No fue posible preparar el PDF. Recarga la página e intenta nuevamente.","error");
+};
 
 let receiptTimer=null;
 function showReceipt(){
@@ -1100,7 +1147,8 @@ function showReceipt(){
 }
 try{
  const saved=JSON.parse(localStorage.getItem("cardnestPendingOrder")||"null");
- if(saved&&new Date(saved.expires_at).getTime()>Date.now())state.order=saved;
+ if(validOrderResponse(saved))state.order=saved;
+ else localStorage.removeItem("cardnestPendingOrder");
 }catch(e){}
 moveCheckoutInfoInitial();
 document.getElementById("checkoutUnlocked").hidden=true;
