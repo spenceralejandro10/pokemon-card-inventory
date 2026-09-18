@@ -250,7 +250,8 @@ document.getElementById("sendOffer").onclick=function(){
  const note="\\n\\nSi la propuesta es aprobada, por favor envíenme el código de venta para continuar con el pedido y el envío. Gracias.";
  window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(intro+lines.join("\\n")+totalLine+note),"_blank");
 };
-document.getElementById("quoteFavorites").onclick=function(){
+const quoteFavoritesBtn=document.getElementById("quoteFavorites");
+if(quoteFavoritesBtn)quoteFavoritesBtn.onclick=function(){
  const lines=selectedProducts().map(function(p){return "• "+productName(p)+" — "+(p.card_number||p.id)});
  window.open("https://wa.me/"+WA+"?text="+encodeURIComponent("Hola, quiero cotizar estos productos de CardNest:\\n"+lines.join("\\n")+"\\n\\n¿Me confirman disponibilidad?"),"_blank");
 };
