@@ -34,26 +34,23 @@
     </section>
 
     <section id="cardsGrid" class="cards-grid"></section>
-  <section class="checkout-panel">
-<h2>Compra con pago contra entrega</h2>
-<p><strong>Compra protegida:</strong> antes del despacho pagas únicamente el envío. El valor de las cartas y el 1% de manejo se pagan cuando recibes el pedido.</p>
-<div class="checkout-grid">
-<input id="buyerName" placeholder="Nombre completo">
-<input id="buyerPhone" placeholder="Celular">
-<input id="destCity" placeholder="Ciudad destino">
-<input id="destAddress" placeholder="Dirección">
-<input id="productPrice" type="number" placeholder="Valor de la carta">
-<select id="shippingZone"><option value="N">Nacional</option><option value="L">Local</option><option value="R">Regional</option><option value="Z">Zonal</option><option value="O">Otros</option><option value="E">Destino especial</option></select>
-</div>
-<div class="quote-box">
-<div>Envío estimado: <strong id="shippingCost">$17.830</strong></div>
-<div>Envío obligatorio antes del despacho: <strong id="upfrontCost">$17.830</strong></div><div>Valor de las cartas: <strong id="productCost">$0</strong></div><div>Manejo Coordinadora (1% valor declarado): <strong id="handlingCost">$0</strong></div><div>Total a pagar al recibir: <strong id="codCost">$0</strong></div>
-</div>
-<div class="trust-box"><strong>¿Por qué es más seguro?</strong><br>No pagas las cartas por adelantado. Primero cubres el transporte para autorizar el despacho; al momento de la entrega pagas el producto y el 1% de manejo asociado al valor declarado.</div><div class="payment-methods"><strong>Pagar envío antes del despacho:</strong> Nequi · Bre-B / llave bancaria · Bancolombia · Daviplata</div>
-<p class="checkout-note">La tarifa mostrada es estimada con la tabla pública de Coordinadora. La tarifa exacta por ciudad se conectará al API oficial cuando estén disponibles las credenciales comerciales.</p>
-<a class="coord-link" href="https://coordinadora.com/servicios/pago-contra-entrega/" target="_blank" rel="noopener">Condiciones de pago contra entrega de Coordinadora</a>
-</section>
 </main>
+<button id="shippingFab" class="shipping-fab" type="button">🚚 <span>Programa tu envío<br><small>Paga las cartas al recibir</small></span></button>
+<div id="shippingBackdrop" class="modal-backdrop" hidden></div>
+<aside id="shippingModal" class="shipping-modal" aria-hidden="true">
+ <button id="closeShipping" class="modal-close" type="button">×</button>
+ <h2>Envío seguro contra entrega</h2>
+ <p class="modal-lead">El envío se paga antes del despacho. El valor de las cartas y el 1% de manejo se pagan al recibir.</p>
+ <div class="trust-box"><strong>Compra con más tranquilidad</strong><br>No adelantas el valor de las cartas. El pago anticipado corresponde únicamente al transporte.</div>
+ <h3>Calcula tu envío</h3>
+ <div class="shipping-form">
+  <input id="destCity" placeholder="Ciudad de destino">
+  <select id="shippingZone"><option value="N">Nacional</option><option value="L">Local</option><option value="R">Regional</option><option value="Z">Zonal</option><option value="O">Otros</option><option value="E">Destino especial</option></select>
+ </div>
+ <div class="quote-box"><div>Envío estimado: <strong id="shippingCost">$17.830</strong></div><small>La tarifa exacta depende del destino y condiciones del envío.</small></div>
+ <p class="conditions">Al continuar confirmas que entiendes que <strong>el envío no es negociable y debe pagarse antes del despacho</strong>. Las cartas y el 1% de manejo se pagan al recibir.</p>
+ <a id="shippingWhatsapp" class="whatsapp-btn" target="_blank" rel="noopener">Continuar por WhatsApp</a>
+</aside>
 
   <template id="cardTemplate">
     <article class="card">
@@ -74,11 +71,14 @@
           <div><dt>Rareza</dt><dd class="card-rarity"></dd></div>
           <div><dt>Estado</dt><dd class="card-status"></dd></div>
         </dl>
+        <button class="favorite-btn" type="button">♡ Me interesa</button>
         <a class="drive-link" target="_blank" rel="noopener">Abrir imagen original</a>
       </div>
     </article>
   </template>
 
+  <button id="favoritesFab" class="favorites-fab" type="button">♡ <span id="favoriteCount">0</span> seleccionadas</button>
+<div id="favoritesBar" class="favorites-bar" hidden><span><strong id="favoriteCountBar">0</strong> cartas seleccionadas</span><button id="quoteFavorites" type="button">Cotizar por WhatsApp</button><button id="clearFavorites" type="button">Limpiar</button></div>
   <script src="app.js"></script>
 </body>
 </html>
