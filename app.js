@@ -20,7 +20,7 @@ const SHIPPING={
 const state={
  products:[],favorites:new Map(),offers:{},offerMode:"individual",
  offerHistory:[],category:"all",sort:"featured",visibleLimit:CATALOG_PAGE_SIZE,
- order:null,validatedCode:null,codeHandlingPrice:0,codeShippingWeightKg:1
+ lotOffer:0,order:null,validatedCode:null,codeHandlingPrice:0,codeShippingWeightKg:1
 };
 
 const normalize=function(v){
@@ -30,9 +30,29 @@ const cop=function(n){return new Intl.NumberFormat("es-CO",{style:"currency",cur
 const parseCOP=function(v){return Number(String(v||"").replace(/\D/g,""))||0};
 function formatCOPInput(el){const n=parseCOP(el.value);el.value=n?new Intl.NumberFormat("es-CO").format(n):""}
 function productKey(p){return String(p.category||"product")+"::"+String(p.id)}
-function productOffer(p){return state.offers[productKey(p)]||{}}
+function productOffer(p){
+ const key=productKey(p);
+ if(!state.offers[key]&&state.offers[p.id]){
+  state.offers[key]=state.offers[p.id];
+  delete state.offers[p.id];
+ }
+ return state.offers[key]||{};
+}
+function escapeHTML(value){
+ return String(value==null?"":value).replace(/[&<>"']/g,function(char){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char];
+ });
+}
 
 try{state.offerHistory=(JSON.parse(localStorage.getItem("cardnestOfferHistory")||localStorage.getItem("pokemonOfferHistory")||"[]")||[]).slice(0,3);localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory))}catch(e){}
+try{
+ const draft=JSON.parse(localStorage.getItem("cardnestOfferDraft")||"null");
+ if(draft&&typeof draft==="object"){
+  if(draft.offers&&typeof draft.offers==="object")state.offers=draft.offers;
+  if(draft.mode==="individual"||draft.mode==="lot")state.offerMode=draft.mode;
+  state.lotOffer=Math.max(0,Math.min(10000000,Number(draft.lotOffer)||0));
+ }
+}catch(e){}
 let savedFavoriteRefs=[];
 try{
  const saved=JSON.parse(localStorage.getItem("cardnestFavorites")||localStorage.getItem("pokemonFavorites")||"[]");
@@ -277,8 +297,10 @@ function selectCategory(cat){
  render();
  window.scrollTo({top:document.querySelector(".catalog-nav").offsetTop-20,behavior:"smooth"});
 }
-const requestedCard=new URLSearchParams(location.search).get("card");
+const initialParams=new URLSearchParams(location.search);
+const requestedCard=initialParams.get("card"),requestedCategory=initialParams.get("category");
 if(requestedCard)document.getElementById("searchInput").value=requestedCard;
+if(requestedCategory&&CATEGORY_LABELS[requestedCategory])selectCategory(requestedCategory);
 
 function goHome(){
  document.getElementById("searchInput").value="";
@@ -323,6 +345,13 @@ function persistFavorites(){
  localStorage.setItem("cardnestFavorites",JSON.stringify(ids));
  localStorage.setItem("pokemonFavorites",JSON.stringify(ids));
 }
+function persistOfferDraft(){
+ localStorage.setItem("cardnestOfferDraft",JSON.stringify({offers:state.offers,mode:state.offerMode,lotOffer:state.lotOffer}));
+}
+function setOfferStatus(message,type){
+ const box=document.getElementById("offerStatus");
+ box.hidden=!message;box.textContent=message||"";box.className="offer-status "+(type||"");
+}
 function toggleFavorite(p){
  const key=productKey(p);
  if(state.favorites.has(key))state.favorites.delete(key);else state.favorites.set(key,p);
@@ -363,20 +392,34 @@ function renderCartViewer(){
  products.forEach(function(p){
   const item=document.createElement("div");item.className="cart-view-card";
   const src=imageUrl(p);
-  item.innerHTML=(src?'<img src="'+src+'" alt="'+productName(p).replace(/"/g,"&quot;")+'">':'<div class="cart-placeholder">'+(CATEGORY_LABELS[p.category]||"Producto")+'</div>')+
-   '<div><strong>'+productName(p)+'</strong><small>'+String(p.card_number||p.id)+'</small></div>';
-  const img=item.querySelector("img");if(img)img.onclick=function(){openImageViewer(src,p)};
+  let media;
+  if(src){
+   media=document.createElement("img");media.src=src;media.alt=productName(p);media.onclick=function(){openImageViewer(src,p)};
+  }else{
+   media=document.createElement("div");media.className="cart-placeholder";media.textContent=CATEGORY_LABELS[p.category]||"Producto";
+  }
+  const info=document.createElement("div"),name=document.createElement("strong"),reference=document.createElement("small");
+  name.textContent=productName(p);reference.textContent=String(p.card_number||p.id);info.append(name,reference);
+  const remove=document.createElement("button");remove.type="button";remove.className="cart-remove";remove.textContent="Quitar";
+  remove.setAttribute("aria-label","Quitar "+productName(p)+" de la selección");
+  remove.onclick=function(){toggleFavorite(p)};
+  item.append(media,info,remove);
   g.appendChild(item);
  });
+ if(!products.length)closeCartViewer();
 }
 
-function openFavorites(){renderFavoriteItems();document.getElementById("favoritesModal").classList.add("open");document.getElementById("favoritesBackdrop").hidden=false}
+function openFavorites(){setOfferStatus("");renderFavoriteItems();document.getElementById("favoritesModal").classList.add("open");document.getElementById("favoritesBackdrop").hidden=false}
 function closeFavorites(){document.getElementById("favoritesModal").classList.remove("open");document.getElementById("favoritesBackdrop").hidden=true}
 document.getElementById("reviewFavorites").onclick=openFavorites;
 document.getElementById("closeFavorites").onclick=closeFavorites;
 document.getElementById("favoritesBackdrop").onclick=closeFavorites;
 document.getElementById("clearFavorites").onclick=function(){
- if(confirm("¿Quieres borrar todos los productos seleccionados?")){state.favorites.clear();persistFavorites();updateFavorites();render()}
+ if(confirm("¿Quieres borrar todos los productos seleccionados?")){
+  state.favorites.clear();state.offers={};state.lotOffer=0;
+  document.getElementById("lotOffer").value="";
+  persistFavorites();persistOfferDraft();updateFavorites();render();closeFavorites();closeCartViewer();
+ }
 };
 
 
@@ -400,14 +443,17 @@ function renderFavoriteItems(){
  selectedProducts().forEach(function(p){
   const row=document.createElement("div");row.className="favorite-item";
   const max=Math.max(1,Number(p.stock_quantity||1)),key=productKey(p),o=productOffer(p),disabled=state.offerMode==="lot"?"disabled":"";
-  row.innerHTML='<div class="favorite-product-info"><strong>'+productName(p)+'</strong><small>ID '+p.id+' · '+(p.card_number||"Sin referencia")+'</small><small>Disponibles: '+max+'</small></div>'+
+  row.innerHTML='<div class="favorite-product-info"><strong>'+escapeHTML(productName(p))+'</strong><small>ID '+escapeHTML(p.id)+' · '+escapeHTML(p.card_number||"Sin referencia")+'</small><small>Disponibles: '+max+'</small><button class="offer-remove" type="button">Quitar de la selección</button></div>'+
    '<div class="offer-controls"><label>Cantidad<input class="qty-input" type="number" min="1" max="'+max+'" value="'+(o.qty||1)+'"></label>'+
    '<label>Oferta por unidad <b>COP</b><div class="money-input"><span>$</span><input class="price-input" inputmode="numeric" maxlength="10" placeholder="Mín. 3.000" '+disabled+' value="'+(o.price?new Intl.NumberFormat("es-CO").format(o.price):"")+'"></div><small class="offer-field-help">Mínimo $3.000 COP por unidad.</small></label></div>';
-  const qty=row.querySelector(".qty-input"),price=row.querySelector(".price-input");
+  const qty=row.querySelector(".qty-input"),price=row.querySelector(".price-input"),remove=row.querySelector(".offer-remove");
+  remove.setAttribute("aria-label","Quitar "+productName(p)+" de la selección");
+  remove.onclick=function(){toggleFavorite(p);renderFavoriteItems()};
   qty.oninput=function(e){
    const q=Math.min(max,Math.max(1,Number(e.target.value||1)));
    e.target.value=q;
    state.offers[key]=Object.assign({},state.offers[key]||{},{qty:q});
+   persistOfferDraft();
    updateOfferTotal();
   };
   price.oninput=function(e){
@@ -415,6 +461,7 @@ function renderFavoriteItems(){
    if(val>MAX_OFFER_TOTAL)val=MAX_OFFER_TOTAL;
    e.target.value=val?new Intl.NumberFormat("es-CO").format(val):"";
    state.offers[key]=Object.assign({},state.offers[key]||{},{price:val});
+   persistOfferDraft();
    setOfferInputState(e.target,!val||val>=MIN_OFFER_PER_UNIT,val&&val<MIN_OFFER_PER_UNIT?"La oferta mínima es $3.000 COP.":"Mínimo $3.000 COP por unidad.");
    updateOfferTotal();
   };
@@ -443,16 +490,28 @@ document.getElementById("lotOffer").oninput=function(e){
  let n=parseCOP(e.target.value);
  if(n>MAX_OFFER_TOTAL)n=MAX_OFFER_TOTAL;
  e.target.value=n?new Intl.NumberFormat("es-CO").format(n):"";
+ state.lotOffer=n;persistOfferDraft();setOfferStatus("");
  updateOfferTotal();
 };
 document.querySelectorAll('input[name="offerMode"]').forEach(function(r){
  r.onchange=function(e){
   state.offerMode=e.target.value;
   document.getElementById("lotOfferBox").hidden=state.offerMode!=="lot";
+  persistOfferDraft();setOfferStatus("");
   renderFavoriteItems();
  }
 });
-function cardLink(id){return location.origin+location.pathname+"?card="+encodeURIComponent(id)}
+document.getElementById("lotOffer").value=state.lotOffer?new Intl.NumberFormat("es-CO").format(state.lotOffer):"";
+const restoredOfferMode=document.querySelector('input[name="offerMode"][value="'+state.offerMode+'"]');
+if(restoredOfferMode)restoredOfferMode.checked=true;
+document.getElementById("lotOfferBox").hidden=state.offerMode!=="lot";
+function cardLink(id,category){
+ const url=new URL(location.href);
+ url.search="";url.hash="";
+ url.searchParams.set("card",String(id));
+ if(category)url.searchParams.set("category",String(category));
+ return url.toString();
+}
 
 const clearOfferHistoryBtn=document.getElementById("clearOfferHistory");
 if(clearOfferHistoryBtn)clearOfferHistoryBtn.onclick=function(){
@@ -467,33 +526,44 @@ if(clearOfferHistoryBtn)clearOfferHistoryBtn.onclick=function(){
 function renderOfferHistory(){
  const box=document.getElementById("offerHistory");if(!box)return;
  if(!state.offerHistory.length){box.innerHTML='<p class="history-empty">Todavía no has enviado ofertas.</p>';return}
- box.innerHTML=state.offerHistory.slice(0,3).map(function(o){
-  return '<article class="history-card"><div class="history-head"><div><strong>'+o.id+'</strong><small>'+new Date(o.date).toLocaleString("es-CO")+' · '+o.cards.length+' referencia'+(o.cards.length===1?"":"s")+'</small></div><strong>'+cop(o.total)+' COP</strong></div>'+
-   '<div class="history-cards">'+o.cards.map(function(c){return '<a href="'+cardLink(c.id)+'"><span>'+c.name+'</span><small>ID '+c.id+' · '+(c.number||"Sin número")+' · Cantidad: '+(c.qty||1)+'</small></a>'}).join("")+'</div></article>';
+ box.innerHTML=state.offerHistory.slice(0,3).map(function(o,index){
+  const cards=Array.isArray(o.cards)?o.cards:[],date=new Date(o.date),dateLabel=Number.isNaN(date.getTime())?"Fecha no disponible":date.toLocaleString("es-CO");
+  return '<article class="history-card"><div class="history-head"><div><strong>'+escapeHTML(o.id||"Oferta")+'</strong><small>'+escapeHTML(dateLabel)+' · '+cards.length+' referencia'+(cards.length===1?"":"s")+'</small></div><div class="history-total"><strong>'+cop(o.total)+' COP</strong><button type="button" data-delete-offer="'+index+'" aria-label="Eliminar esta oferta">Eliminar</button></div></div>'+
+   '<div class="history-cards">'+cards.map(function(c){return '<a href="'+escapeHTML(cardLink(c.id,c.category))+'"><span>'+escapeHTML(c.name||"Producto")+'</span><small>ID '+escapeHTML(c.id)+' · '+escapeHTML(c.number||"Sin número")+' · Cantidad: '+Math.max(1,Number(c.qty)||1)+'</small></a>'}).join("")+'</div></article>';
  }).join("");
+ box.querySelectorAll("[data-delete-offer]").forEach(function(button){
+  button.onclick=function(){
+   state.offerHistory.splice(Number(button.dataset.deleteOffer),1);
+   localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory));
+   renderOfferHistory();
+  };
+ });
 }
 document.getElementById("sendOffer").onclick=function(){
  const products=selectedProducts();
- if(!products.length){alert("Selecciona al menos un producto.");return}
+ setOfferStatus("");
+ if(!products.length){setOfferStatus("Selecciona al menos un producto.","error");return}
  let total=0;
  if(state.offerMode==="lot"){
   const lot=parseCOP(document.getElementById("lotOffer").value);
   const minLot=MIN_OFFER_PER_UNIT*Math.max(1,offerUnitsTotal());
-  if(lot<minLot){alert("La oferta por el lote debe ser de al menos "+cop(minLot)+" COP.");return}
-  if(lot>MAX_OFFER_TOTAL){alert("La oferta total no puede superar "+cop(MAX_OFFER_TOTAL)+" COP.");return}
+  if(lot<minLot){setOfferStatus("La oferta por el lote debe ser de al menos "+cop(minLot)+" COP.","error");document.getElementById("lotOffer").focus();return}
+  if(lot>MAX_OFFER_TOTAL){setOfferStatus("La oferta total no puede superar "+cop(MAX_OFFER_TOTAL)+" COP.","error");document.getElementById("lotOffer").focus();return}
   total=lot;
  }else{
   const invalid=products.find(function(p){return Number(productOffer(p).price||0)<MIN_OFFER_PER_UNIT});
   if(invalid){
-   alert('Debes asignar una oferta mínima de $3.000 COP a cada producto. Falta: '+productName(invalid)+'.');
    renderFavoriteItems();
+   setOfferStatus('Debes asignar una oferta mínima de $3.000 COP a cada producto. Falta: '+productName(invalid)+'.',"error");
+   const invalidIndex=products.indexOf(invalid),invalidInput=document.querySelectorAll(".price-input")[invalidIndex];
+   if(invalidInput){invalidInput.focus();setOfferInputState(invalidInput,false,"La oferta mínima es $3.000 COP.")}
    return;
   }
   total=products.reduce(function(a,p){
    const o=productOffer(p);
    return a+Number(o.price||0)*Number(o.qty||1);
   },0);
-  if(total>MAX_OFFER_TOTAL){alert("La oferta total no puede superar "+cop(MAX_OFFER_TOTAL)+" COP.");return}
+  if(total>MAX_OFFER_TOTAL){setOfferStatus("La oferta total no puede superar "+cop(MAX_OFFER_TOTAL)+" COP.","error");return}
  }
  const ref="OF-"+Date.now().toString(36).toUpperCase();
  const lines=products.map(function(p){
@@ -502,7 +572,7 @@ document.getElementById("sendOffer").onclick=function(){
    ?"• ID "+p.id+" | "+productName(p)+" | Cantidad: "+qty
    :"• ID "+p.id+" | "+productName(p)+" | Cantidad: "+qty+" | Oferta por unidad: "+cop(price)+" COP | Subtotal: "+cop(price*qty)+" COP";
  });
- const record={id:ref,date:new Date().toISOString(),mode:state.offerMode,total:total,cards:products.map(function(p){return {id:p.id,name:productName(p),number:p.card_number,qty:productQty(p)}})};
+ const record={id:ref,date:new Date().toISOString(),mode:state.offerMode,total:total,cards:products.map(function(p){return {id:p.id,category:p.category,name:productName(p),number:p.card_number,qty:productQty(p)}})};
  state.offerHistory.unshift(record);
  state.offerHistory=state.offerHistory.slice(0,3);
  localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory));
@@ -510,7 +580,9 @@ document.getElementById("sendOffer").onclick=function(){
  const intro="Hola, equipo CardNest. Estoy interesado en comprar los siguientes productos y quisiera confirmar disponibilidad y revisar mi propuesta.\\n\\nReferencia de oferta: "+ref+"\\nModalidad: "+(state.offerMode==="lot"?"Oferta por el lote completo":"Oferta por producto")+"\\n\\n";
  const totalLine="\\nPropuesta total: "+cop(total)+" COP";
  const note="\\n\\nSi la propuesta es aprobada, por favor envíenme el código de venta para continuar con el pedido y el envío. Gracias.";
- window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(intro+lines.join("\\n")+totalLine+note),"_blank");
+ const opened=window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(intro+lines.join("\\n")+totalLine+note),"_blank","noopener");
+ if(opened)opened.opener=null;
+ setOfferStatus("Oferta preparada. WhatsApp se abrió con el detalle de la propuesta.","success");
 };
 document.getElementById("startShipping").onclick=function(){closeFavorites();openShipping()};
 

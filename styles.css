@@ -1347,3 +1347,30 @@ input[type="checkbox"].field-invalid{
  .search-panel>input,.search-panel>select,.search-panel .filter-field,.search-panel .reset-filters{width:100%}
  .catalog-pagination{padding-bottom:150px}
 }
+
+/* Selection and offer draft controls */
+.cart-view-card{position:relative}
+.cart-remove{
+ width:100%;margin-top:8px;padding:7px 9px;border:1px solid #6f8ba0;border-radius:7px;
+ background:#102d49;color:#dcefff;font-size:12px;font-weight:800;cursor:pointer
+}
+.cart-remove:hover{background:#173f61}
+.offer-remove{
+ margin-top:8px;padding:0;border:0;background:transparent;color:#a2362e;
+ font-size:11px;font-weight:800;text-decoration:underline;cursor:pointer
+}
+.offer-status{
+ margin:10px 0;padding:11px 12px;border:1px solid #b7c8d3;border-radius:9px;
+ background:#f7fafb;color:#30495a;font-size:13px;line-height:1.4;font-weight:700
+}
+.offer-status.error{border-color:#efb8b3;background:#fff3f2;color:#9b2d24}
+.offer-status.success{border-color:#a9dbc2;background:#eefaf4;color:#17633f}
+.history-total{display:grid;justify-items:end;gap:5px}
+.history-total button{
+ border:0;background:transparent;color:#9b2d24;padding:0;font-size:10px;
+ font-weight:800;text-decoration:underline;cursor:pointer
+}
+@media(max-width:620px){
+ .history-head{align-items:flex-start}
+ .history-total{min-width:max-content}
+}
