@@ -1166,3 +1166,16 @@ input[type="checkbox"].field-invalid{
  line-height:1.45;
  font-weight:700;
 }
+
+.offer-history-tools{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding:0 14px 12px;
+}
+.offer-history-tools span{
+ color:#667684!important;font-size:10px!important;font-weight:650!important
+}
+.offer-history-tools button{
+ border:1px solid #d6a7a3;background:#fff6f5;color:#9b2d24;
+ border-radius:8px;padding:7px 10px;font-size:10px;font-weight:800;cursor:pointer
+}
+.offer-history-tools button:hover{background:#ffe9e6;border-color:#c9857f}
