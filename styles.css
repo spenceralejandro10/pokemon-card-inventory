@@ -48,3 +48,8 @@ a.original-link,.image-link,.open-original,[href*="drive.google.com"][class*="or
 .thumb-nav:hover{background:#174565}
 @media(max-width:760px){.cart-viewer-btn{max-width:88vw!important}.cart-viewer-thumbs{max-width:58vw}.cart-viewer-thumbs img{width:40px!important;height:56px!important}}
 .brand-hero>img{object-position:center center}
+/* Hero: image only, preserve the banner artwork */
+.brand-hero.brand-hero-image-only{min-height:0;aspect-ratio:2/1;max-width:1440px;background:#07192a;border-radius:14px}
+.brand-hero.brand-hero-image-only>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;background:#07192a}
+.brand-hero-image-only .brand-hero-shade,.brand-hero-image-only .brand-hero-copy{display:none!important}
+@media(max-width:760px){.brand-hero.brand-hero-image-only{min-height:0;aspect-ratio:2/1;margin:12px}.brand-hero.brand-hero-image-only>img{object-fit:contain}}
