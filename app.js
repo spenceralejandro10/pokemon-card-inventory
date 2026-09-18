@@ -36,7 +36,7 @@ function rarityGroup(p){
  const t=normalize([p.rarity_verified,p.rarity_detected,p.variant,p.canonical_name].filter(Boolean).join(" "));
  if(/\bex\b/.test(t))return "ex";
  if(t.includes("holo")||t.includes("foil")||t.includes("brillo"))return "holo";
- if(t.includes("full art")||t.includes("arte completo")||t.includes("illustration")||t.includes(" sar")||t.includes(" ar"))return "fullart";
+ if(t.includes("full art")||t.includes("arte completo")||t.includes("illustration")||/(^|\\s)(ar|sar)(\\s|$)/.test(t))return "fullart";
  return "general";
 }
 function imageUrl(p){
@@ -376,7 +376,7 @@ document.getElementById("createOrder").onclick=async function(){
  if(!paymentMethod){alert("Selecciona el medio con el que pagarás el envío.");return}
  const btn=this;btn.disabled=true;btn.textContent="Generando pedido...";
  try{
-  const items=selectedProducts().map(function(p){return {id:p.id,name:productName(p),number:p.card_number||"",qty:productQty(p)}});
+  const items=selectedProducts().map(function(p){return {id:p.id,name:productName(p),number:p.card_number||"",category:p.category,qty:productQty(p)}});
   const data=await saleApi({action:"create_order",code:code,buyer:b,items:items,protect:document.getElementById("toploaderOption").checked,shippingZone:document.getElementById("shippingZone").value,paymentMethod:paymentMethod});
   state.order=Object.assign({},data.order,{sale_code:code,buyer:b,items:items});
   localStorage.setItem("cardnestPendingOrder",JSON.stringify(state.order));
