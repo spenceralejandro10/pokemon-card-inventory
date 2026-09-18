@@ -25,7 +25,7 @@ const cop=function(n){return new Intl.NumberFormat("es-CO",{style:"currency",cur
 const parseCOP=function(v){return Number(String(v||"").replace(/\D/g,""))||0};
 function formatCOPInput(el){const n=parseCOP(el.value);el.value=n?new Intl.NumberFormat("es-CO").format(n):""}
 
-try{state.offerHistory=JSON.parse(localStorage.getItem("cardnestOfferHistory")||localStorage.getItem("pokemonOfferHistory")||"[]")}catch(e){}
+try{state.offerHistory=(JSON.parse(localStorage.getItem("cardnestOfferHistory")||localStorage.getItem("pokemonOfferHistory")||"[]")||[]).slice(0,5)}catch(e){}
 try{
  const saved=JSON.parse(localStorage.getItem("cardnestFavorites")||localStorage.getItem("pokemonFavorites")||"[]");
  saved.forEach(function(id){state.favorites.set(id,null)});
@@ -253,6 +253,22 @@ document.getElementById("clearFavorites").onclick=function(){
  if(confirm("¿Quieres borrar todos los productos seleccionados?")){state.favorites.clear();persistFavorites();updateFavorites();render()}
 };
 
+
+const MIN_OFFER_PER_UNIT=3000;
+const MAX_OFFER_TOTAL=10000000;
+function offerUnitsTotal(){
+ return selectedProducts().reduce(function(sum,p){
+  return sum+Math.max(1,Number((state.offers[p.id]||{}).qty||1));
+ },0);
+}
+function setOfferInputState(input,valid,message){
+ input.classList.toggle("offer-invalid",!valid);
+ const label=input.closest("label");
+ let help=label.querySelector(".offer-field-help");
+ if(!help){help=document.createElement("small");help.className="offer-field-help";label.appendChild(help)}
+ help.textContent=message||"";
+ help.classList.toggle("error",!valid&&!!message);
+}
 function renderFavoriteItems(){
  const box=document.getElementById("favoriteItems");box.innerHTML="";
  selectedProducts().forEach(function(p){
@@ -260,45 +276,98 @@ function renderFavoriteItems(){
   const max=Math.max(1,Number(p.stock_quantity||1)),o=state.offers[p.id]||{},disabled=state.offerMode==="lot"?"disabled":"";
   row.innerHTML='<div class="favorite-product-info"><strong>'+productName(p)+'</strong><small>ID '+p.id+' · '+(p.card_number||"Sin referencia")+'</small><small>Disponibles: '+max+'</small></div>'+
    '<div class="offer-controls"><label>Cantidad<input class="qty-input" type="number" min="1" max="'+max+'" value="'+(o.qty||1)+'"></label>'+
-   '<label>Oferta por unidad <b>COP</b><div class="money-input"><span>$</span><input class="price-input" inputmode="numeric" placeholder="Ej. 50.000" '+disabled+' value="'+(o.price?new Intl.NumberFormat("es-CO").format(o.price):"")+'"></div></label></div>';
+   '<label>Oferta por unidad <b>COP</b><div class="money-input"><span>$</span><input class="price-input" inputmode="numeric" maxlength="10" placeholder="Mín. 3.000" '+disabled+' value="'+(o.price?new Intl.NumberFormat("es-CO").format(o.price):"")+'"></div><small class="offer-field-help">Mínimo $3.000 COP por unidad.</small></label></div>';
   const qty=row.querySelector(".qty-input"),price=row.querySelector(".price-input");
-  qty.oninput=function(e){const q=Math.min(max,Math.max(1,Number(e.target.value||1)));state.offers[p.id]=Object.assign({},state.offers[p.id]||{},{qty:q});updateOfferTotal();updateQuote()};
-  price.oninput=function(e){formatCOPInput(e.target);state.offers[p.id]=Object.assign({},state.offers[p.id]||{},{price:parseCOP(e.target.value)});updateOfferTotal()};
+  qty.oninput=function(e){
+   const q=Math.min(max,Math.max(1,Number(e.target.value||1)));
+   e.target.value=q;
+   state.offers[p.id]=Object.assign({},state.offers[p.id]||{},{qty:q});
+   updateOfferTotal();
+  };
+  price.oninput=function(e){
+   let val=parseCOP(e.target.value);
+   if(val>MAX_OFFER_TOTAL)val=MAX_OFFER_TOTAL;
+   e.target.value=val?new Intl.NumberFormat("es-CO").format(val):"";
+   state.offers[p.id]=Object.assign({},state.offers[p.id]||{},{price:val});
+   setOfferInputState(e.target,!val||val>=MIN_OFFER_PER_UNIT,val&&val<MIN_OFFER_PER_UNIT?"La oferta mínima es $3.000 COP.":"Mínimo $3.000 COP por unidad.");
+   updateOfferTotal();
+  };
   box.appendChild(row);
  });
  renderOfferHistory();updateOfferTotal();
 }
 function updateOfferTotal(){
  const lot=parseCOP(document.getElementById("lotOffer").value);
- const sum=selectedProducts().reduce(function(a,p){const o=state.offers[p.id]||{};return a+Number(o.price||0)*Number(o.qty||1)},0);
- document.getElementById("offerTotal").textContent=cop(state.offerMode==="lot"?lot:sum)+" COP";
+ const sum=selectedProducts().reduce(function(a,p){
+  const o=state.offers[p.id]||{};
+  return a+Number(o.price||0)*Number(o.qty||1);
+ },0);
+ const total=state.offerMode==="lot"?lot:sum;
+ const totalEl=document.getElementById("offerTotal");
+ totalEl.textContent=cop(total)+" COP";
+ totalEl.classList.toggle("offer-total-over",total>MAX_OFFER_TOTAL);
+ const lotHelp=document.getElementById("lotOfferHelp");
+ if(state.offerMode==="lot"){
+  const minLot=MIN_OFFER_PER_UNIT*Math.max(1,offerUnitsTotal());
+  lotHelp.textContent="Mínimo para este lote: "+cop(minLot)+" COP · Máximo: "+cop(MAX_OFFER_TOTAL)+" COP.";
+  lotHelp.classList.toggle("error",!!lot&&(lot<minLot||lot>MAX_OFFER_TOTAL));
+ }
 }
-document.getElementById("lotOffer").oninput=function(e){formatCOPInput(e.target);updateOfferTotal()};
+document.getElementById("lotOffer").oninput=function(e){
+ let n=parseCOP(e.target.value);
+ if(n>MAX_OFFER_TOTAL)n=MAX_OFFER_TOTAL;
+ e.target.value=n?new Intl.NumberFormat("es-CO").format(n):"";
+ updateOfferTotal();
+};
 document.querySelectorAll('input[name="offerMode"]').forEach(function(r){
- r.onchange=function(e){state.offerMode=e.target.value;document.getElementById("lotOfferBox").hidden=state.offerMode!=="lot";renderFavoriteItems()}
+ r.onchange=function(e){
+  state.offerMode=e.target.value;
+  document.getElementById("lotOfferBox").hidden=state.offerMode!=="lot";
+  renderFavoriteItems();
+ }
 });
 function cardLink(id){return location.origin+location.pathname+"?card="+encodeURIComponent(id)}
 function renderOfferHistory(){
  const box=document.getElementById("offerHistory");if(!box)return;
  if(!state.offerHistory.length){box.innerHTML='<p class="history-empty">Todavía no has enviado ofertas.</p>';return}
- box.innerHTML=state.offerHistory.map(function(o){
+ box.innerHTML=state.offerHistory.slice(0,5).map(function(o){
   return '<article class="history-card"><div class="history-head"><div><strong>'+o.id+'</strong><small>'+new Date(o.date).toLocaleString("es-CO")+' · '+o.cards.length+' referencia'+(o.cards.length===1?"":"s")+'</small></div><strong>'+cop(o.total)+' COP</strong></div>'+
    '<div class="history-cards">'+o.cards.map(function(c){return '<a href="'+cardLink(c.id)+'"><span>'+c.name+'</span><small>ID '+c.id+' · '+(c.number||"Sin número")+' · Cantidad: '+(c.qty||1)+'</small></a>'}).join("")+'</div></article>';
  }).join("");
 }
 document.getElementById("sendOffer").onclick=function(){
- const products=selectedProducts();if(!products.length){alert("Selecciona al menos un producto.");return}
- const lot=parseCOP(document.getElementById("lotOffer").value);
- const total=state.offerMode==="lot"?lot:products.reduce(function(a,p){const o=state.offers[p.id]||{};return a+Number(o.price||0)*Number(o.qty||1)},0);
- if(!total){alert("Escribe tu oferta en pesos colombianos (COP) antes de continuar.");return}
+ const products=selectedProducts();
+ if(!products.length){alert("Selecciona al menos un producto.");return}
+ let total=0;
+ if(state.offerMode==="lot"){
+  const lot=parseCOP(document.getElementById("lotOffer").value);
+  const minLot=MIN_OFFER_PER_UNIT*Math.max(1,offerUnitsTotal());
+  if(lot<minLot){alert("La oferta por el lote debe ser de al menos "+cop(minLot)+" COP.");return}
+  if(lot>MAX_OFFER_TOTAL){alert("La oferta total no puede superar "+cop(MAX_OFFER_TOTAL)+" COP.");return}
+  total=lot;
+ }else{
+  const invalid=products.find(function(p){return Number((state.offers[p.id]||{}).price||0)<MIN_OFFER_PER_UNIT});
+  if(invalid){
+   alert('Debes asignar una oferta mínima de $3.000 COP a cada producto. Falta: '+productName(invalid)+'.');
+   renderFavoriteItems();
+   return;
+  }
+  total=products.reduce(function(a,p){
+   const o=state.offers[p.id]||{};
+   return a+Number(o.price||0)*Number(o.qty||1);
+  },0);
+  if(total>MAX_OFFER_TOTAL){alert("La oferta total no puede superar "+cop(MAX_OFFER_TOTAL)+" COP.");return}
+ }
  const ref="OF-"+Date.now().toString(36).toUpperCase();
  const lines=products.map(function(p){
   const o=state.offers[p.id]||{},qty=Number(o.qty||1),price=Number(o.price||0);
-  return state.offerMode==="lot"?"• ID "+p.id+" | "+productName(p)+" | Cantidad: "+qty:
-   "• ID "+p.id+" | "+productName(p)+" | Cantidad: "+qty+" | Oferta por unidad: "+cop(price)+" COP | Subtotal: "+cop(price*qty)+" COP";
+  return state.offerMode==="lot"
+   ?"• ID "+p.id+" | "+productName(p)+" | Cantidad: "+qty
+   :"• ID "+p.id+" | "+productName(p)+" | Cantidad: "+qty+" | Oferta por unidad: "+cop(price)+" COP | Subtotal: "+cop(price*qty)+" COP";
  });
  const record={id:ref,date:new Date().toISOString(),mode:state.offerMode,total:total,cards:products.map(function(p){return {id:p.id,name:productName(p),number:p.card_number,qty:productQty(p)}})};
- state.offerHistory.unshift(record);state.offerHistory=state.offerHistory.slice(0,30);
+ state.offerHistory.unshift(record);
+ state.offerHistory=state.offerHistory.slice(0,5);
  localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory));
  renderOfferHistory();
  const intro="Hola, equipo CardNest. Estoy interesado en comprar los siguientes productos y quisiera confirmar disponibilidad y revisar mi propuesta.\\n\\nReferencia de oferta: "+ref+"\\nModalidad: "+(state.offerMode==="lot"?"Oferta por el lote completo":"Oferta por producto")+"\\n\\n";
