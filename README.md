@@ -1,12 +1,13 @@
-# Pokémon Card Inventory
+# CardNest
 
-Inventario web gratuito para buscar cartas Pokémon por nombre, número, idioma, set y rareza.
+Catálogo web de cartas coleccionables, accesorios, producto sellado y electrónica, con propuestas por WhatsApp y checkout protegido por código de venta.
 
 ## Objetivo
 - Frontend estático compatible con GitHub Pages.
 - Datos iniciales en JSON.
-- Imágenes alojadas en Google Drive.
-- Preparado para migrar a una base de datos real más adelante.
+- Catálogo principal y pedidos en Supabase, con respaldo local para las cartas.
+- Imágenes en Google Drive o Supabase Storage.
+- Flujo de envío, Top Loaders y comprobante PDF.
 
 ## Reglas de datos
 - Nunca inventar rarezas: usar `unknown/null` cuando no se vea o no esté verificada.
@@ -22,8 +23,18 @@ Inventario web gratuito para buscar cartas Pokémon por nombre, número, idioma,
 - `styles.css`: estilos.
 - `app.js`: búsqueda y filtros.
 - `data/cards.json`: base de datos inicial.
+- `supabase/functions/sale-order/index.ts`: función pública de validación y creación de pedidos.
+- `scripts/verify.mjs`: comprobaciones estáticas reproducibles.
 - `docs/data-model.md`: esquema del modelo.
 - `docs/extraction-rules.md`: protocolo de extracción.
+
+## Verificación local
+
+Requiere Node.js 18 o posterior y no instala dependencias:
+
+```bash
+npm test
+```
 
 ## Publicación
 Este proyecto está preparado para GitHub Pages desde la rama `main`.
