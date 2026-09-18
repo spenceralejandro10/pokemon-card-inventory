@@ -52,8 +52,7 @@ function updateQuote(){
  const freight=SHIPPING[zone]||0, handling=Math.round(price*.01);
  document.getElementById("shippingCost").textContent=cop(freight);
  document.getElementById("handlingCost").textContent=cop(handling);
- document.getElementById("upfrontCost").textContent=cop(freight+handling);
- document.getElementById("codCost").textContent=cop(price);
+ document.getElementById("upfrontCost").textContent=cop(freight); document.getElementById("productCost").textContent=cop(price); document.getElementById("codCost").textContent=cop(price+handling);
 }
 document.getElementById("productPrice")?.addEventListener("input",updateQuote);
 document.getElementById("shippingZone")?.addEventListener("change",updateQuote);
