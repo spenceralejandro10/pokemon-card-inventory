@@ -438,15 +438,7 @@ function checkoutItems(){
 function checkoutUnitCount(){
  return checkoutItems().reduce(function(sum,p){return sum+Math.max(1,Number(p.qty||1))},0);
 }
-function renderCodeProducts(){
- const box=document.getElementById("codeProducts");
- const items=checkoutItems();
- box.hidden=!items.length;
- if(!items.length){box.innerHTML="";return}
- box.innerHTML='<strong>Productos asociados al código</strong><div class="code-product-list">'+items.map(function(p){
-  return '<div><span>'+String(p.name||p.id)+'</span><small>'+String(p.number||p.id)+' · Cantidad: '+Math.max(1,Number(p.qty||1))+'</small></div>';
- }).join("")+'</div>';
-}
+function renderCodeProducts(){/* Productos ligados al código: uso interno, no se muestran al cliente. */}
 function topLoaderQty(){
  if(!document.getElementById("toploaderOption").checked)return 0;
  return Math.max(1,Math.min(100,Number(document.getElementById("toploaderQtyInput").value||1)));
@@ -602,10 +594,10 @@ function applyValidatedCode(code,data,prefix){
  state.codeShippingWeightKg=Math.max(1,Math.min(5,Number(data.shipping_weight_kg||1)));
  if(!state.codeItems.length){
   clearValidatedCode();
-  setCodeStatus("error","Este código no tiene productos asociados. Solicita un código nuevo al analista.");
+  setCodeStatus("error","Este código no está listo para procesar el envío. Solicita un código nuevo al analista.");
   return;
  }
- setCodeStatus("success",(prefix?prefix+" ":"")+"Código válido. Los productos negociados fueron cargados correctamente.");
+ setCodeStatus("success",(prefix?prefix+" ":"")+"Código válido. Ya puedes completar los datos y pagar el envío.");
  renderCodeProducts();
  document.getElementById("checkoutUnlocked").hidden=false;
  document.getElementById("deliveryDetails").open=true;
@@ -888,18 +880,7 @@ function buildPdf(){
  fieldLine("Observaciones",o.buyer.notes||"Sin observaciones");
  y+=4;
 
- sectionTitle("Productos asociados al código","El analista ya conoce las referencias negociadas");
- (o.items||[]).forEach(function(item,i){
-  ensure(15);
-  d.setFillColor.apply(d,soft);d.roundedRect(14,y,182,13,2,2,"F");
-  setText(navy,9.5,"bold");d.text(String(i+1).padStart(2,"0"),19,y+8);
-  setText(ink,9.5,"bold");d.text(String(item.name||item.id),31,y+6);
-  setText(muted,7.5,"normal");d.text((item.number||item.id)+" · Cantidad: "+item.qty,31,y+10.5);
-  y+=16;
- });
- y+=2;
-
- sectionTitle("Pago del envío","Este documento NO cobra nuevamente el valor negociado de los productos");
+ sectionTitle("Pago del envío","Esta orden corresponde únicamente a los costos asociados al envío");
  ensure(48);
  d.setFillColor(249,251,252);d.roundedRect(14,y,182,43,3,3,"F");
  y+=9;
