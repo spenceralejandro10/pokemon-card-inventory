@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CardNest</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-14">
+  <link rel="stylesheet" href="styles.css?v=20260918-15">
 </head>
 <body>
   <header class="topbar" id="pageTop">
@@ -78,10 +78,9 @@
 <p class="modal-lead">Para continuar debes validar el código de venta que te entrega el analista después de acordar tu compra por WhatsApp.</p>
 
 <section class="shipping-section sale-code-section checkout-gate">
- <div class="section-heading"><span>1</span><div><strong>Código de venta del analista</strong><small>Este código vincula la negociación aprobada, los productos y el valor declarado del pedido.</small></div></div>
+ <div class="section-heading"><span>1</span><div><strong>Código de venta del analista</strong><small>Este código confirma internamente la compra acordada y habilita únicamente el proceso de envío.</small></div></div>
  <div class="code-validator"><input id="saleCode" maxlength="40" autocomplete="off" placeholder="Ej. CN-PRUEBA-001"><button id="validateSaleCode" type="button">Validar código</button></div>
  <div id="saleCodeStatus" class="code-status" aria-live="polite">Valida tu código para continuar.</div>
- <div id="codeProducts" class="code-products" hidden></div>
  <div class="code-help">
    <strong>¿Todavía no tienes código?</strong>
    <p>1. Selecciona los productos de tu interés. 2. Envía tu oferta por WhatsApp. 3. Acuerda la compra con el analista. 4. Recibe tu código de venta y valídalo aquí para desbloquear el envío.</p>
@@ -236,6 +235,6 @@
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="app.js?v=20260918-14"></script>
+<script src="app.js?v=20260918-15"></script>
 </body>
 </html>
