@@ -139,3 +139,28 @@ input::placeholder,textarea::placeholder{color:#8795a1!important}
 .secondary-action{background:#fff!important;color:#1b2c39!important;border-color:#cbd6de!important}
 .image-viewer{background:rgba(13,20,27,.88)!important}
 .brand-hero.brand-hero-image-only{border-color:#d8e0e6!important;box-shadow:0 12px 32px rgba(31,45,61,.10)!important}
+
+/* Selection tray discoverability label */
+.cart-viewer-btn::before{
+ content:"Tus cartas seleccionadas · haz clic para verlas";
+ position:absolute;
+ left:10px;
+ bottom:calc(100% + 7px);
+ padding:7px 11px;
+ border-radius:9px;
+ background:#ffffff;
+ color:#243746;
+ border:1px solid #d5dfe6;
+ box-shadow:0 5px 16px rgba(28,43,56,.12);
+ font-size:12px;
+ font-weight:700;
+ white-space:nowrap;
+ pointer-events:none;
+}
+@media(max-width:760px){
+ .cart-viewer-btn::before{
+  content:"Toca aquí para ver tus cartas";
+  font-size:11px;
+  left:4px;
+ }
+}
