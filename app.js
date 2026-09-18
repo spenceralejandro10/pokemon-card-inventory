@@ -5,7 +5,7 @@ const SALE_API=SUPABASE_URL+"/functions/v1/sale-order";
 
 const CATEGORY_LABELS={
  all:"Todos",pokemon:"Pokémon",yugioh:"Yu-Gi-Oh!",digimon:"Digimon",
- dragonball:"Dragon Ball",naruto:"Naruto",accessories:"Accesorios",sealed:"Producto sellado"
+ dragonball:"Dragon Ball",naruto:"Naruto",accessories:"Accesorios",sealed:"Producto sellado",electronics:"Electrónica"
 };
 const CARD_CATEGORIES=new Set(["pokemon","yugioh","digimon","dragonball","naruto"]);
 const SHIPPING={
@@ -65,14 +65,30 @@ function mixCatalog(list){
 async function loadProducts(){
  const results=await Promise.all([
   fetch(SUPABASE_URL+"/rest/v1/cards?select=*&order=id.asc",{headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY}}),
-  fetch("data/demo-products.json?v=20260918-3")
+  fetch("data/demo-products.json?v=20260918-3"),
+  fetch(SUPABASE_URL+"/rest/v1/electronics_products?select=*&order=id.asc",{headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY}})
  ]);
  if(!results[0].ok)throw new Error(await results[0].text());
  const pokemon=(await results[0].json()).map(function(p){
   return Object.assign({},p,{category:"pokemon",category_label:"Pokémon",rarity_group:rarityGroup(p),demo:false});
  });
  const demo=results[1].ok?await results[1].json():[];
- state.products=mixCatalog(pokemon.concat(demo));
+ const electronics=results[2].ok?(await results[2].json()).map(function(p){
+  return {
+   id:p.id,category:"electronics",category_label:"Electrónica",
+   canonical_name:p.name,name_original:p.product_type||"",
+   language:"",card_number:p.reference_code,
+   set_name:[p.brand,p.model].filter(Boolean).join(" · "),
+   hp:null,rarity_detected:p.product_type||"Electrónica",rarity_verified:null,
+   rarity_group:"general",variant:p.short_specs||"",
+   image_path:p.image_path||"",source_image_url:p.source_image_url||"",
+   stock_quantity:p.stock_quantity,sale_status:p.sale_status,demo:p.demo,
+   electronics_brand:p.brand,electronics_model:p.model,electronics_type:p.product_type,
+   electronics_specs:p.short_specs,electronics_compatibility:p.compatibility,
+   electronics_power:p.power_info,electronics_color:p.color,electronics_condition:p.condition
+  };
+ }):[];
+ state.products=mixCatalog(pokemon.concat(demo,electronics));
  for(const id of Array.from(state.favorites.keys())){
   const found=state.products.find(function(p){return p.id===id});
   if(found)state.favorites.set(id,found);else state.favorites.delete(id);
@@ -83,7 +99,7 @@ async function loadProducts(){
  updateQuote();
 }
 function matches(p,q,language,rarity){
- const hay=[p.id,p.canonical_name,p.name_original,p.card_number,p.set_name,p.set_code,p.language,p.rarity_detected,p.rarity_verified,p.variant,p.category_label].map(normalize).join(" ");
+ const hay=[p.id,p.canonical_name,p.name_original,p.card_number,p.set_name,p.set_code,p.language,p.rarity_detected,p.rarity_verified,p.variant,p.category_label,p.electronics_brand,p.electronics_model,p.electronics_type,p.electronics_specs,p.electronics_compatibility,p.electronics_power,p.electronics_color].map(normalize).join(" ");
  return (!q||hay.includes(normalize(q)))&&(!language||p.language===language)&&(!rarity||(p.category==="pokemon"&&rarityGroup(p)===rarity));
 }
 function render(){
@@ -100,6 +116,7 @@ function render(){
  list.forEach(function(p){
   const n=tpl.content.cloneNode(true),card=n.querySelector(".card"),wrap=n.querySelector(".card-image-wrap"),img=n.querySelector(".card-image");
   const src=imageUrl(p);
+  if(p.category==="electronics")card.classList.add("electronics-card");
   if(src){
    img.src=src;img.hidden=false;img.alt=productName(p)+" "+(p.card_number||"");
    img.title="Haz clic para ampliar";
@@ -122,10 +139,20 @@ function render(){
   n.querySelector(".card-id").textContent=p.id;
   n.querySelector(".card-number").textContent=p.card_number||"Pendiente";
   n.querySelector(".card-set").textContent=p.set_name||p.set_code||"Pendiente";
+  if(p.category==="electronics"){
+   n.querySelector(".card-number").closest("div").querySelector("dt").textContent="Referencia";
+   n.querySelector(".card-set").closest("div").querySelector("dt").textContent="Marca / modelo";
+   n.querySelector(".card-rarity").closest("div").querySelector("dt").textContent="Características";
+   n.querySelector(".card-rarity").textContent=p.electronics_specs||p.variant||"Información pendiente";
+   n.querySelector(".card-status").textContent=p.electronics_condition||"Nuevo / demo";
+   n.querySelector(".original-name").textContent=[p.electronics_type,p.electronics_brand].filter(Boolean).join(" · ");
+  }
   const hpRow=n.querySelector(".card-hp-row");
   if(p.hp==null||p.hp===""){hpRow.hidden=true}else n.querySelector(".card-hp").textContent=p.hp;
-  n.querySelector(".card-rarity").textContent=p.rarity_verified||p.rarity_detected||"General";
-  n.querySelector(".card-status").textContent=p.demo?"Inventario de ejemplo":"Sin uso · protegida";
+  if(p.category!=="electronics"){
+   n.querySelector(".card-rarity").textContent=p.rarity_verified||p.rarity_detected||"General";
+   n.querySelector(".card-status").textContent=p.demo?"Inventario de ejemplo":"Sin uso · protegida";
+  }
   const fav=n.querySelector(".favorite-btn"),selected=state.favorites.has(p.id);
   if(sold){fav.disabled=true;fav.textContent="No disponible"}else{fav.textContent=selected?"♥ Seleccionado":"♡ Me interesa";fav.classList.toggle("selected",selected)}
   if(!sold)fav.onclick=function(){toggleFavorite(p)};
@@ -147,13 +174,21 @@ function selectCategory(cat){
  const rarityAllowed=state.category==="all"||state.category==="pokemon";
  rarityWrap.hidden=!rarityAllowed;
  if(!rarityAllowed)document.getElementById("rarityFilter").value="";
+ const language=document.getElementById("languageFilter");
+ const languageAllowed=state.category==="all"||CARD_CATEGORIES.has(state.category);
+ language.hidden=!languageAllowed;
+ if(!languageAllowed)language.value="";
+ const launch=document.getElementById("electronicsLaunch");
+ if(launch)launch.hidden=!(state.category==="all"||state.category==="electronics");
  const search=document.getElementById("searchInput");
  const label=CATEGORY_LABELS[state.category]||"productos";
  search.placeholder=state.category==="all"
   ?"Busca por nombre, número, colección o referencia"
   :(state.category==="accessories"||state.category==="sealed"
     ?"Busca "+label+" por nombre o referencia"
-    :"Busca "+label+" por nombre o número de carta");
+    :state.category==="electronics"
+      ?"Busca electrónica por nombre, referencia, marca o modelo"
+      :"Busca "+label+" por nombre o número de carta");
  render();
  window.scrollTo({top:document.querySelector(".catalog-nav").offsetTop-20,behavior:"smooth"});
 }
@@ -170,6 +205,8 @@ function goHome(){
 document.getElementById("brandHome").onclick=goHome;
 document.getElementById("heroHome").onclick=goHome;
 document.getElementById("resetFilters").onclick=goHome;
+const exploreElectronics=document.getElementById("exploreElectronics");
+if(exploreElectronics)exploreElectronics.onclick=function(){selectCategory("electronics")};
 
 const discoverMessages=[
  "Productos revisados antes de la venta",
