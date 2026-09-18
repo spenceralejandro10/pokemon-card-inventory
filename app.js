@@ -689,7 +689,7 @@ document.getElementById("createOrder").onclick=async function(){
   return;
  }
 
- const btn=this;btn.disabled=true;btn.textContent="Generando pedido y PDF...";
+ const btn=this;let generated=false;btn.disabled=true;btn.textContent="Generando pedido y PDF...";
  try{
   const data=await saleApi({
    action:"create_order",
@@ -708,12 +708,13 @@ document.getElementById("createOrder").onclick=async function(){
   showReceipt();
   downloadOrderPDF();
   setCodeStatus("success","Pedido generado correctamente. Conserva este código para seguimiento.");
+  generated=true;
   btn.disabled=true;
   btn.textContent="Pedido generado";
  }catch(e){
   alert(e.message||"No fue posible generar el pedido.");
  }finally{
-  btn.disabled=false;btn.textContent="Generar pedido y descargar PDF";
+  if(!generated){btn.disabled=false;btn.textContent="Generar pedido y descargar PDF";}
  }
 };
 
