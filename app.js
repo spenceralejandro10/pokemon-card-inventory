@@ -106,22 +106,14 @@ function openImageViewer(src,card){
  const v=document.getElementById("imageViewer");
  document.getElementById("viewerImage").src=src;
  document.getElementById("viewerCaption").textContent=(card.canonical_name||card.name_original||"Carta")+" · "+(card.card_number||card.id);
- v.hidden=false;
- v.classList.add("open");
- document.body.classList.add("viewer-open");
+ v.hidden=false;v.classList.add("open");document.body.classList.add("viewer-open");
 }
 function closeImageViewer(){
  const v=document.getElementById("imageViewer");
- v.classList.remove("open");
- v.hidden=true;
- document.body.classList.remove("viewer-open");
+ v.classList.remove("open");v.hidden=true;document.body.classList.remove("viewer-open");
 }
-const imageViewer=document.getElementById("imageViewer");
-const viewerImage=document.getElementById("viewerImage");
-const closeViewerButton=document.getElementById("closeImageViewer");
-closeViewerButton.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();closeImageViewer()});
-imageViewer.addEventListener("pointerdown",e=>{if(e.target===imageViewer)closeImageViewer()});
-viewerImage.addEventListener("pointerdown",e=>e.stopPropagation());
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!imageViewer.hidden)closeImageViewer()});
+document.getElementById("closeImageViewer").addEventListener("click",closeImageViewer);
+document.getElementById("viewerBackdrop").addEventListener("click",closeImageViewer);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeImageViewer()});
 document.getElementById("thumbPrev").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:-260,behavior:"smooth"})};
 document.getElementById("thumbNext").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:260,behavior:"smooth"})};
