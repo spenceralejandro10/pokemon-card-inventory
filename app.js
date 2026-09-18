@@ -76,8 +76,8 @@ function showReceipt(){if(!state.order)return;document.getElementById("orderRece
 try{const saved=JSON.parse(localStorage.getItem("pokemonPendingOrder")||"null");if(saved&&saved.expires>Date.now()){state.order=saved;setTimeout(showReceipt,0)}}catch(e){}
 function persistFavorites(){localStorage.setItem("pokemonFavorites",JSON.stringify([...state.favorites.keys()]))}
 function toggleFavorite(card){state.favorites.has(card.id)?state.favorites.delete(card.id):state.favorites.set(card.id,card);persistFavorites();updateFavorites();render()}
-function updateFavorites(){const n=state.favorites.size;document.getElementById("favoriteCount").textContent=n;document.getElementById("favoriteCountBar").textContent=n;document.getElementById("favoritesBar").hidden=!n;if(document.getElementById("shippingCost"))updateQuote()}
-document.getElementById("favoritesFab").onclick=()=>{if(state.favorites.size)openFavorites()};
+function updateFavorites(){const n=state.favorites.size;document.getElementById("favoriteCountBar").textContent=n;document.getElementById("favoritesBar").hidden=!n;const preview=document.getElementById("favoritesPreview");preview.hidden=!n;preview.innerHTML=[...state.favorites.values()].filter(Boolean).map(c=>{const driveId=(c.source_image_url||"").match(/\/d\/([^/]+)/)?.[1],src=c.image_path?`${SUPABASE_URL}/storage/v1/object/public/card-images/${c.image_path}`:(driveId?`https://drive.google.com/thumbnail?id=${driveId}&sz=w200`:"");return `<div class="preview-card">${src?`<img src="${src}" alt="">`:""}<span>${c.canonical_name||c.name_original||c.id}</span></div>`}).join("");if(document.getElementById("shippingCost"))updateQuote()}
+document.getElementById("favoritesPreview").onclick=()=>{if(state.favorites.size)openFavorites()};
 document.getElementById("reviewFavorites").onclick=openFavorites;
 function openFavorites(){renderFavoriteItems();document.getElementById("favoritesModal").classList.add("open");document.getElementById("favoritesBackdrop").hidden=false}
 function closeFavorites(){document.getElementById("favoritesModal").classList.remove("open");document.getElementById("favoritesBackdrop").hidden=true}
