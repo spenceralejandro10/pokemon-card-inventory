@@ -25,7 +25,7 @@ const cop=function(n){return new Intl.NumberFormat("es-CO",{style:"currency",cur
 const parseCOP=function(v){return Number(String(v||"").replace(/\D/g,""))||0};
 function formatCOPInput(el){const n=parseCOP(el.value);el.value=n?new Intl.NumberFormat("es-CO").format(n):""}
 
-try{state.offerHistory=(JSON.parse(localStorage.getItem("cardnestOfferHistory")||localStorage.getItem("pokemonOfferHistory")||"[]")||[]).slice(0,5)}catch(e){}
+try{state.offerHistory=(JSON.parse(localStorage.getItem("cardnestOfferHistory")||localStorage.getItem("pokemonOfferHistory")||"[]")||[]).slice(0,5);localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory))}catch(e){}
 try{
  const saved=JSON.parse(localStorage.getItem("cardnestFavorites")||localStorage.getItem("pokemonFavorites")||"[]");
  saved.forEach(function(id){state.favorites.set(id,null)});
