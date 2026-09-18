@@ -572,12 +572,24 @@ function setCodeStatus(type,message){
  box.className="code-status "+(type||"");
  box.textContent=message;
 }
+function moveCheckoutInfoInitial(){
+ const info=document.getElementById("checkoutInfo");
+ const gate=document.querySelector(".checkout-gate");
+ if(info&&gate&&info.previousElementSibling!==gate)gate.insertAdjacentElement("afterend",info);
+ info?.classList.add("checkout-info-initial");
+}
+function moveCheckoutInfoToEnd(){
+ const info=document.getElementById("checkoutInfo");
+ const unlocked=document.getElementById("checkoutUnlocked");
+ if(info&&unlocked){unlocked.appendChild(info);info.classList.remove("checkout-info-initial")}
+}
 function clearValidatedCode(){
  state.validatedCode=null;
  state.validatedCodeTotal=0;
  state.codeItems=[];
  state.codeShippingWeightKg=1;
  document.getElementById("checkoutUnlocked").hidden=true;
+ moveCheckoutInfoInitial();
  renderCodeProducts();
  document.getElementById("toploaderOption").checked=false;
  renderToploaderConfigurator();
@@ -597,6 +609,7 @@ function applyValidatedCode(code,data,prefix){
  renderCodeProducts();
  document.getElementById("checkoutUnlocked").hidden=false;
  document.getElementById("deliveryDetails").open=true;
+ moveCheckoutInfoToEnd();
  renderToploaderConfigurator();
  updateQuote();
 }
@@ -606,6 +619,12 @@ document.getElementById("saleCode").addEventListener("input",function(){
   setCodeStatus("","El código cambió. Debes validarlo nuevamente.");
  }
 });
+const useDemoSaleCode=document.getElementById("useDemoSaleCode");
+if(useDemoSaleCode)useDemoSaleCode.onclick=function(){
+ document.getElementById("saleCode").value="CN-PRUEBA-001";
+ document.getElementById("saleCode").focus();
+ setCodeStatus("","Código de prueba cargado. Presiona “Validar código” para continuar.");
+};
 document.getElementById("validateSaleCode").onclick=async function(){
  const code=document.getElementById("saleCode").value.trim().toUpperCase();
  if(!code){setCodeStatus("error","Escribe el código que te entregó el analista.");return}
@@ -933,7 +952,6 @@ document.getElementById("downloadReceipt").onclick=downloadOrderPDF;
 let receiptTimer=null;
 function showReceipt(){
  const o=state.order;if(!o)return;
- document.getElementById("checkoutUnlocked").hidden=false;
  document.getElementById("orderReceipt").hidden=false;
  document.getElementById("receiptId").textContent=o.sale_code||o.id;
  document.getElementById("demoPaymentWarning").hidden=!o.payment_demo;
@@ -958,10 +976,10 @@ function showReceipt(){
 }
 try{
  const saved=JSON.parse(localStorage.getItem("cardnestPendingOrder")||"null");
- if(saved&&new Date(saved.expires_at).getTime()>Date.now()){
-  state.order=saved;setTimeout(showReceipt,0);
- }
+ if(saved&&new Date(saved.expires_at).getTime()>Date.now())state.order=saved;
 }catch(e){}
+moveCheckoutInfoInitial();
+document.getElementById("checkoutUnlocked").hidden=true;
 function openImageViewer(src,p){
  const v=document.getElementById("imageViewer");if(!src||!v)return;
  document.getElementById("viewerImage").src=src;
