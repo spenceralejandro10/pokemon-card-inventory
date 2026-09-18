@@ -15,7 +15,11 @@
   </header>
 
   <main class="container"><section class="brand-hero brand-hero-image-only" aria-label="CardNest"><img src="https://drive.google.com/thumbnail?id=1803D_DrAX2EEoznB_eQNPK8ZbVWFenti&sz=w2000" alt="CardNest"></section>
-    <section class="search-panel">
+    <nav class="catalog-nav" aria-label="Categorías">
+<button class="catalog-tab active" data-category="pokemon">Pokémon</button><button class="catalog-tab" data-category="yugioh">Yu-Gi-Oh!</button><button class="catalog-tab" data-category="digimon">Digimon</button><button class="catalog-tab" data-category="dragonball">Dragon Ball</button><button class="catalog-tab" data-category="naruto">Naruto</button><button class="catalog-tab" data-category="accessories">Accesorios</button><button class="catalog-tab" data-category="sealed">Producto sellado</button><button class="catalog-tab catalog-tab-featured" data-category="discover">Descubre</button>
+</nav>
+<section id="discoverStrip" class="discover-strip" hidden><div><small>DESCUBRE CARDNEST</small><strong>Hallazgos, colecciones y piezas que vale la pena mirar</strong><span>Novedades, curiosidades, productos especiales y selecciones destacadas.</span></div><button type="button" data-go-category="pokemon">Explorar colección</button></section>
+<section class="search-panel">
       <input id="searchInput" type="search" placeholder="Ej: Pikachu, 062/193, Japanese, AR">
       <select id="languageFilter">
         <option value="">Todos los idiomas</option>
