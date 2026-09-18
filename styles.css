@@ -26,3 +26,13 @@
 a.original-link,.image-link,.open-original,[href*="drive.google.com"][class*="original"]{display:none!important}
 
 .cart-viewer-btn{display:flex!important;align-items:center!important;gap:9px!important;padding:7px 10px!important;max-width:min(420px,55vw)!important}.cart-viewer-btn[hidden]{display:none!important}.cart-viewer-thumbs{display:flex;align-items:center;min-width:0}.cart-viewer-thumbs img{width:34px;height:47px;object-fit:cover;border-radius:4px;border:1px solid #456b87;background:#071522;margin-left:-8px;box-shadow:0 2px 7px #0008}.cart-viewer-thumbs img:first-child{margin-left:0}.thumb-more{display:grid;place-items:center;width:34px;height:47px;margin-left:-8px;border-radius:4px;background:#173b57;border:1px solid #456b87;color:#fff;font-size:11px;font-weight:800}.cart-viewer-meta{display:grid;text-align:left;flex:0 0 auto}.cart-viewer-meta strong{font-size:14px}.cart-viewer-meta small{font-size:10px;color:#a9c8dc}
+/* FAQ-style shipping accordions */
+.shipping-help,.shipping-help-content{display:contents}
+.shipping-modal .info-drop{display:block!important;margin:7px 0;border:1px solid #315878;border-radius:9px;background:#0d2b44;overflow:hidden}
+.shipping-modal .info-drop>summary{padding:11px 13px;font-size:13px;font-weight:800;color:#e3f2fc;cursor:pointer;list-style:none}
+.shipping-modal .info-drop>summary::-webkit-details-marker{display:none}
+.shipping-modal .info-drop>summary:before{content:"›";display:inline-block;margin-right:8px;font-size:18px;line-height:10px;transition:transform .15s ease}
+.shipping-modal .info-drop[open]>summary:before{transform:rotate(90deg)}
+.shipping-modal .info-drop>div{padding:0 13px 11px;color:#abc6d9;font-size:12px;line-height:1.45}
+.shipping-modal .info-drop>div p{margin:3px 0}
+.shipping-modal .compact-info{margin-top:7px}
