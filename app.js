@@ -707,7 +707,9 @@ document.getElementById("createOrder").onclick=async function(){
   localStorage.setItem("cardnestPendingOrder",JSON.stringify(state.order));
   showReceipt();
   downloadOrderPDF();
-  clearValidatedCode();
+  setCodeStatus("success","Pedido generado correctamente. Conserva este código para seguimiento.");
+  btn.disabled=true;
+  btn.textContent="Pedido generado";
  }catch(e){
   alert(e.message||"No fue posible generar el pedido.");
  }finally{
@@ -731,6 +733,7 @@ function buildPdf(){
  line("Pedido:",o.id);
  line("Codigo de venta:",o.sale_code);
  line("Valido hasta:",new Date(o.expires_at).toLocaleString("es-CO"));
+ line("Valor declarado:",cop(o.agreed_product_total)+" COP (no se paga en esta orden)");
  line("Nombre:",o.buyer.name);
  line("Correo:",o.buyer.email);
  line("Celular:",o.buyer.phone);
