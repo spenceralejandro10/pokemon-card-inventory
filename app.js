@@ -25,6 +25,7 @@ function matches(c,q,l,r){
  return (!q||h.includes(normalize(q)))&&(!l||c.language===l)&&(!r||(c.rarity_verified||c.rarity_detected||"")===r);
 }
 function render(){
+ if(state.category&&state.category!=="pokemon"){const grid=document.getElementById("cardsGrid");grid.innerHTML='<div class="category-coming"><strong>'+({yugioh:"Yu-Gi-Oh!",digimon:"Digimon",dragonball:"Dragon Ball",naruto:"Naruto",accessories:"Accesorios",sealed:"Producto sellado"}[state.category]||"Catálogo")+'</strong><span>Esta categoría está lista para recibir productos.</span></div>';document.getElementById("countLabel").textContent="Próximamente";return}
  const q=document.getElementById("searchInput").value,l=document.getElementById("languageFilter").value,r=document.getElementById("rarityFilter").value;
  const cards=state.cards.filter(c=>matches(c,q,l,r)),grid=document.getElementById("cardsGrid"),tpl=document.getElementById("cardTemplate");
  grid.innerHTML="";document.getElementById("countLabel").textContent=`${cards.length} carta${cards.length===1?"":"s"}`;
@@ -142,3 +143,17 @@ window.addEventListener("scroll",()=>{
  clearTimeout(selectedDockScrollTimer);
  selectedDockScrollTimer=setTimeout(()=>dock.classList.remove("dock-yield"),650);
 },{passive:true});
+
+state.category="pokemon";
+function selectCategory(cat){
+ state.category=cat;
+ document.querySelectorAll(".catalog-tab").forEach(b=>b.classList.toggle("active",b.dataset.category===cat));
+ const discover=document.getElementById("discoverStrip");
+ discover.hidden=cat!=="discover";
+ document.querySelector(".search-panel").hidden=cat==="discover";
+ document.querySelector(".stats").hidden=cat==="discover";
+ document.getElementById("cardsGrid").hidden=cat==="discover";
+ if(cat!=="discover"){document.getElementById("cardsGrid").hidden=false;render()}
+}
+document.querySelectorAll(".catalog-tab").forEach(b=>b.addEventListener("click",()=>selectCategory(b.dataset.category)));
+document.querySelectorAll("[data-go-category]").forEach(b=>b.addEventListener("click",()=>selectCategory(b.dataset.goCategory)));
