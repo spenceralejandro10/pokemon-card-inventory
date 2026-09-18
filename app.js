@@ -44,3 +44,17 @@ function render(){
 }
 ["searchInput","languageFilter","rarityFilter"].forEach(id=>document.getElementById(id).addEventListener("input",render));
 loadCards().catch(e=>{console.error(e);document.getElementById("cardsGrid").innerHTML='<div class="empty">Error conectando con Supabase.</div>'});
+const SHIPPING={L:9000,R:10450,N:17830,Z:25750,O:27560,E:42150};
+const cop=n=>new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(n||0);
+function updateQuote(){
+ const price=Math.max(0,Number(document.getElementById("productPrice")?.value||0));
+ const zone=document.getElementById("shippingZone")?.value||"N";
+ const freight=SHIPPING[zone]||0, handling=Math.round(price*.01);
+ document.getElementById("shippingCost").textContent=cop(freight);
+ document.getElementById("handlingCost").textContent=cop(handling);
+ document.getElementById("upfrontCost").textContent=cop(freight+handling);
+ document.getElementById("codCost").textContent=cop(price);
+}
+document.getElementById("productPrice")?.addEventListener("input",updateQuote);
+document.getElementById("shippingZone")?.addEventListener("change",updateQuote);
+updateQuote();
