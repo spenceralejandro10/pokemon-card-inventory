@@ -223,8 +223,10 @@ function render(){
   if(p.category==="electronics")card.classList.add("electronics-card");
   if(src){
    img.src=src;img.hidden=false;img.alt=productName(p)+" "+(p.card_number||"");
-   img.title="Haz clic para ampliar";
+   img.title="Haz clic para ampliar";img.tabIndex=0;img.setAttribute("role","button");
+   img.setAttribute("aria-label","Ampliar imagen de "+productName(p));
    img.onclick=function(e){e.preventDefault();e.stopPropagation();openImageViewer(src,p)};
+   img.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();openImageViewer(src,p)}};
   }else{
    img.hidden=true;wrap.classList.add("image-pending");wrap.setAttribute("data-label",CATEGORY_LABELS[p.category]||"Producto");
   }
@@ -324,6 +326,7 @@ function resetFilters(){
 }
 document.getElementById("brandHome").onclick=goHome;
 document.getElementById("heroHome").onclick=goHome;
+document.getElementById("heroHome").onkeydown=function(event){if(event.key==="Enter"||event.key===" "){event.preventDefault();goHome()}};
 document.getElementById("resetFilters").onclick=resetFilters;
 const exploreElectronics=document.getElementById("exploreElectronics");
 if(exploreElectronics)exploreElectronics.onclick=function(){selectCategory("electronics")};
@@ -361,8 +364,25 @@ function toggleFavorite(p){
  persistFavorites();updateFavorites();render();
 }
 function selectedProducts(){return Array.from(state.favorites.values()).filter(Boolean)}
+const panelTriggers=new WeakMap();
+function syncPanelLock(){
+ document.body.classList.toggle("panel-open",!!document.querySelector(".shipping-modal.open,.cart-viewer.open"));
+}
+function openPanel(panel,backdrop){
+ panelTriggers.set(panel,document.activeElement);
+ panel.inert=false;panel.classList.add("open");panel.setAttribute("aria-hidden","false");
+ backdrop.hidden=false;syncPanelLock();
+ requestAnimationFrame(function(){panel.querySelector("button,input,select,textarea,a[href]")?.focus()});
+}
+function closePanel(panel,backdrop){
+ panel.classList.remove("open");panel.setAttribute("aria-hidden","true");panel.inert=true;
+ backdrop.hidden=true;syncPanelLock();
+ const trigger=panelTriggers.get(panel);
+ if(trigger&&document.contains(trigger)&&!trigger.hidden&&!trigger.closest("[inert]"))trigger.focus();
+}
 function updateFavorites(){
  const products=selectedProducts(),n=products.length;
+ document.body.classList.toggle("has-selection",!!n);
  document.getElementById("favoriteCountBar").textContent=n;
  document.getElementById("favoritesBar").hidden=!n;
  const btn=document.getElementById("cartViewerBtn");btn.hidden=!n;
@@ -381,9 +401,9 @@ function updateFavorites(){
  if(document.getElementById("cartViewer").classList.contains("open"))renderCartViewer();
  updateQuote();
 }
-function openCartViewer(){renderCartViewer();document.getElementById("cartViewer").classList.add("open");document.getElementById("cartViewerBackdrop").hidden=false}
-function closeCartViewer(){document.getElementById("cartViewer").classList.remove("open");document.getElementById("cartViewerBackdrop").hidden=true}
-document.getElementById("cartViewerBtn").onclick=openCartViewer;
+function openCartViewer(){renderCartViewer();openPanel(document.getElementById("cartViewer"),document.getElementById("cartViewerBackdrop"));document.getElementById("openCartViewer").setAttribute("aria-expanded","true")}
+function closeCartViewer(){closePanel(document.getElementById("cartViewer"),document.getElementById("cartViewerBackdrop"));document.getElementById("openCartViewer").setAttribute("aria-expanded","false")}
+document.getElementById("openCartViewer").onclick=openCartViewer;
 document.getElementById("closeCartViewer").onclick=closeCartViewer;
 document.getElementById("cartViewerBackdrop").onclick=closeCartViewer;
 document.getElementById("thumbPrev").onclick=function(e){e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:-350,behavior:"smooth"})};
@@ -412,8 +432,8 @@ function renderCartViewer(){
  if(!products.length)closeCartViewer();
 }
 
-function openFavorites(){setOfferStatus("");renderFavoriteItems();document.getElementById("favoritesModal").classList.add("open");document.getElementById("favoritesBackdrop").hidden=false}
-function closeFavorites(){document.getElementById("favoritesModal").classList.remove("open");document.getElementById("favoritesBackdrop").hidden=true}
+function openFavorites(){setOfferStatus("");renderFavoriteItems();openPanel(document.getElementById("favoritesModal"),document.getElementById("favoritesBackdrop"))}
+function closeFavorites(){closePanel(document.getElementById("favoritesModal"),document.getElementById("favoritesBackdrop"))}
 document.getElementById("reviewFavorites").onclick=openFavorites;
 document.getElementById("closeFavorites").onclick=closeFavorites;
 document.getElementById("favoritesBackdrop").onclick=closeFavorites;
@@ -587,7 +607,27 @@ document.getElementById("sendOffer").onclick=function(){
  if(opened)opened.opener=null;
  setOfferStatus("Oferta preparada. WhatsApp se abrió con el detalle de la propuesta.","success");
 };
-document.getElementById("startShipping").onclick=function(){closeFavorites();openShipping()};
+document.getElementById("startShipping").onclick=function(){closeFavorites();document.getElementById("shippingFab").focus();openShipping()};
+
+document.addEventListener("keydown",function(event){
+ const openPanels=Array.from(document.querySelectorAll(".shipping-modal.open,.cart-viewer.open"));
+ const panel=openPanels[openPanels.length-1];
+ if(!panel)return;
+ if(event.key==="Escape"){
+  event.preventDefault();
+  if(panel.id==="shippingModal")closeShipping();
+  else if(panel.id==="favoritesModal")closeFavorites();
+  else closeCartViewer();
+  return;
+ }
+ if(event.key!=="Tab")return;
+ const focusable=Array.from(panel.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]'))
+  .filter(function(element){return !element.hidden&&element.getClientRects().length>0});
+ if(!focusable.length)return;
+ const first=focusable[0],last=focusable[focusable.length-1];
+ if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+ else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+});
 
 
 
@@ -640,16 +680,12 @@ function updateQuote(){
  document.getElementById("shippingTotal").textContent=hasCode?(cop(total)+" COP"):"Pendiente";
 }
 function openShipping(){
- document.getElementById("shippingModal").classList.add("open");
- document.getElementById("shippingBackdrop").hidden=false;
- document.getElementById("shippingModal").setAttribute("aria-hidden","false");
+ openPanel(document.getElementById("shippingModal"),document.getElementById("shippingBackdrop"));
  setCheckoutStatus("");
  updateQuote();
 }
 function closeShipping(){
- document.getElementById("shippingModal").classList.remove("open");
- document.getElementById("shippingBackdrop").hidden=true;
- document.getElementById("shippingModal").setAttribute("aria-hidden","true");
+ closePanel(document.getElementById("shippingModal"),document.getElementById("shippingBackdrop"));
 }
 document.getElementById("shippingFab").onclick=openShipping;
 document.getElementById("closeShipping").onclick=closeShipping;
@@ -995,11 +1031,14 @@ function buildPdf(){
   d.setFontSize(size||10);
  }
  function newPage(){
-  d.addPage();y=18;
+  d.addPage();
+  setText(navy,9,"bold");d.text("CardNest",14,13);
+  setText(muted,7.5,"normal");d.text("Pedido "+String(o.id||""),196,13,{align:"right"});
+  d.setDrawColor.apply(d,line);d.line(14,16,196,16);y=23;
   d.setDrawColor.apply(d,line);
   d.setLineWidth(.2);
  }
- function ensure(h){if(y+h>282)newPage()}
+ function ensure(h){if(y+h>278)newPage()}
  function sectionTitle(title,subtitle){
   ensure(18);
   setText(navy,12,"bold");d.text(title,14,y);
@@ -1007,16 +1046,17 @@ function buildPdf(){
   y+=subtitle?10:7;
   d.setDrawColor.apply(d,line);d.line(14,y,196,y);y+=6;
  }
- function infoRow(label,value,x,w){
-  const lx=x||14,ww=w||86;
-  d.setFillColor.apply(d,soft);d.roundedRect(lx,y,ww,16,2,2,"F");
+ function infoRow(label,value,x,w,height,lines){
+  const lx=x||14,ww=w||86,rowHeight=height||16,valueLines=lines||d.splitTextToSize(String(value||"—"),ww-8);
+  d.setFillColor.apply(d,soft);d.roundedRect(lx,y,ww,rowHeight,2,2,"F");
   setText(muted,7.5,"bold");d.text(label.toUpperCase(),lx+4,y+5);
   setText(ink,10,"bold");
-  const lines=d.splitTextToSize(String(value||"—"),ww-8);
-  d.text(lines,lx+4,y+10);
+  d.text(valueLines,lx+4,y+10);
  }
  function infoPair(l1,v1,l2,v2){
-  ensure(18);infoRow(l1,v1,14,87);infoRow(l2,v2,105,91);y+=20;
+  const leftLines=d.splitTextToSize(String(v1||"—"),79),rightLines=d.splitTextToSize(String(v2||"—"),83);
+  const height=Math.max(16,11+Math.max(leftLines.length,rightLines.length)*4.4);
+  ensure(height+4);infoRow(l1,v1,14,87,height,leftLines);infoRow(l2,v2,105,91,height,rightLines);y+=height+4;
  }
  function fieldLine(label,value){
   ensure(9);
@@ -1106,15 +1146,22 @@ function buildPdf(){
  setText(muted,7.5,"normal");d.text("CardNest Sales Operations · Demo",14,y+5);
  d.text("Tel. demo: +39 000 000 0000 · alessio.romano@example.com",14,y+10);
 
- setText(muted,7,"normal");
- d.text("Documento generado electrónicamente por CardNest · Conserva el código de venta para seguimiento.",105,289,{align:"center"});
+ const pages=d.getNumberOfPages();
+ for(let page=1;page<=pages;page++){
+  d.setPage(page);d.setDrawColor.apply(d,line);d.line(14,285,196,285);
+  setText(muted,7,"normal");
+  d.text("Documento generado electrónicamente por CardNest · Conserva el código de venta para seguimiento.",14,290);
+  d.text("Página "+page+" de "+pages,196,290,{align:"right"});
+ }
  return d;
 }
 function downloadOrderPDF(){
- const d=buildPdf();
- if(!d)return false;
- d.save("CardNest-envio-"+state.order.sale_code+".pdf");
- return true;
+ try{
+  const d=buildPdf();
+  if(!d)return false;
+  d.save("CardNest-envio-"+state.order.sale_code+".pdf");
+  return true;
+ }catch(error){console.error("PDF generation failed",error);return false}
 }
 document.getElementById("downloadReceipt").onclick=function(){
  if(!downloadOrderPDF())setCheckoutStatus("No fue posible preparar el PDF. Recarga la página e intenta nuevamente.","error");
