@@ -103,35 +103,29 @@ document.getElementById("startShipping").onclick=()=>{closeFavorites();openShipp
 document.getElementById("clearFavorites").onclick=()=>{if(confirm("¿Quieres borrar todas las cartas guardadas?")){state.favorites.clear();persistFavorites();updateFavorites();render()}};
 document.getElementById("quoteFavorites").onclick=()=>{const lines=[...state.favorites.values()].map(c=>`• ${c.canonical_name||c.name_original||"Carta"} — ${c.card_number||c.id}`);window.open(`https://wa.me/${WA}?text=${encodeURIComponent("Hola, quiero cotizar estas cartas Pokémon:\n"+lines.join("\n")+"\n\n¿Me confirmas disponibilidad y precio?")}`,"_blank")};
 updateFavorites();
-window.forceCloseCardViewer=function(e){
- if(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();}
+function closeImageViewer(){
  const v=document.getElementById("imageViewer");
- if(!v)return false;
- v.classList.remove("open");
- v.hidden=true;
- v.setAttribute("hidden","");
- v.style.setProperty("display","none","important");
+ if(v?.open)v.close();
  document.body.classList.remove("viewer-open");
- return false;
-};
-function closeImageViewer(e){return window.forceCloseCardViewer(e)}
+}
 function openImageViewer(src,card){
  const v=document.getElementById("imageViewer");
  document.getElementById("viewerImage").src=src;
  document.getElementById("viewerCaption").textContent=(card.canonical_name||card.name_original||"Carta")+" · "+(card.card_number||card.id);
- v.hidden=false;
- v.removeAttribute("hidden");
- v.style.removeProperty("display");
- v.classList.add("open");
+ if(!v.open)v.showModal();
  document.body.classList.add("viewer-open");
 }
 const viewer=document.getElementById("imageViewer");
-const closeViewer=document.getElementById("closeImageViewer");
-const viewerBackdrop=document.getElementById("viewerBackdrop");
-if(closeViewer)closeViewer.addEventListener("click",closeImageViewer);
-if(viewerBackdrop)viewerBackdrop.addEventListener("click",closeImageViewer);
-if(viewer)viewer.addEventListener("click",e=>{if(e.target===viewer)closeImageViewer(e)});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&viewer&&!viewer.hidden)closeImageViewer(e)});
+if(viewer){
+ viewer.addEventListener("close",()=>document.body.classList.remove("viewer-open"));
+ viewer.addEventListener("cancel",()=>document.body.classList.remove("viewer-open"));
+ viewer.addEventListener("click",e=>{
+   const box=viewer.getBoundingClientRect();
+   const inside=e.clientX>=box.left&&e.clientX<=box.right&&e.clientY>=box.top&&e.clientY<=box.bottom;
+   if(!inside)closeImageViewer();
+ });
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&viewer?.open)closeImageViewer()});
 document.getElementById("thumbPrev").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:-260,behavior:"smooth"})};
 document.getElementById("thumbNext").onclick=e=>{e.stopPropagation();document.getElementById("cartViewerThumbs").scrollBy({left:260,behavior:"smooth"})};
 
