@@ -1456,3 +1456,9 @@ body.panel-open{overflow:hidden}
  .sale-code-row .code-validator,.sale-code-row:first-child .code-validator{grid-template-columns:1fr!important}
  .remove-sale-code{width:100%!important;min-height:38px}
 }
+
+.card-category-tag[data-category="misc"]{
+ background:#eef1f4!important;
+ color:#344654!important;
+ border-color:#d5dde3!important;
+}
