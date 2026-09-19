@@ -7,7 +7,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://cnivcnexsqobipvqxero.supabase.co; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; upgrade-insecure-requests">
   <title>CardNest</title>
   <script src="frame-guard.js?v=20260919-1"></script>
-  <link rel="stylesheet" href="styles.css?v=20260918-28">
+  <link rel="stylesheet" href="styles.css?v=20260919-29">
   <link rel="stylesheet" href="mercadolibre-channel.css?v=20260919-1">
 </head>
 <body>
@@ -29,13 +29,13 @@
   <main class="container"><section id="heroHome" class="brand-hero brand-hero-image-only" role="button" tabindex="0" aria-label="CardNest. Volver al inicio" title="Volver al inicio"><img src="https://drive.google.com/thumbnail?id=1803D_DrAX2EEoznB_eQNPK8ZbVWFenti&sz=w2000" alt="CardNest"></section>
     <nav class="catalog-nav" aria-label="Categorías">
   <button class="catalog-tab active" data-category="all">Todos</button>
-  <button class="catalog-tab" data-category="pokemon">Pokémon</button>
+  <button class="catalog-tab" data-category="pokemon">Pokémon · Cartas TCG</button>
   <button class="catalog-tab" data-category="yugioh">Yu-Gi-Oh!</button>
   <button class="catalog-tab" data-category="digimon">Digimon</button>
   <button class="catalog-tab" data-category="dragonball">Dragon Ball</button>
-  <button class="catalog-tab" data-category="naruto">Naruto</button>
+  <button class="catalog-tab" data-category="naruto">Naruto</button>\n  <button class="catalog-tab" data-category="other_cards">Otras cartas · TCG</button>
   <button class="catalog-tab" data-category="accessories">Accesorios</button>
-  <button class="catalog-tab" data-category="sealed">Producto sellado</button>
+  <button class="catalog-tab" data-category="sealed">Producto sellado</button>\n  <button class="catalog-tab" data-category="books">Libros</button>
   <button class="catalog-tab catalog-tab-electronics" data-category="electronics">Electrónica <span class="new-pill">NUEVO</span></button>
   <button class="catalog-tab" data-category="misc">Coleccionables y más</button>
 </nav>
@@ -302,7 +302,15 @@
 </aside>
 <dialog id="imageViewer" class="image-viewer">
     <form method="dialog"><button id="closeImageViewer" type="submit" aria-label="Cerrar">×</button></form>
-    <div class="viewer-content"><img id="viewerImage" alt=""><div id="viewerCaption"></div></div>
+    <div class="viewer-shell">
+      <button id="viewerPrev" class="viewer-nav viewer-prev" type="button" aria-label="Imagen anterior">‹</button>
+      <div class="viewer-content">
+        <img id="viewerImage" alt="">
+        <div class="viewer-meta"><div id="viewerCaption"></div><span id="viewerCounter"></span></div>
+        <div id="viewerThumbnails" class="viewer-thumbnails" aria-label="Otras fotos del producto"></div>
+      </div>
+      <button id="viewerNext" class="viewer-nav viewer-next" type="button" aria-label="Imagen siguiente">›</button>
+    </div>
   </dialog>
 <footer class="site-footer">
  <div class="footer-inner">
@@ -348,6 +356,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="app.js?v=20260919-1"></script>
+<script src="app.js?v=20260919-2"></script>
 </body>
 </html>
