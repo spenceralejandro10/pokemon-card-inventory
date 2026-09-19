@@ -10,6 +10,7 @@ const state={
  token:sessionStorage.getItem(TOKEN_KEY)||localStorage.getItem(TOKEN_KEY)||"",
  user:null,
  products:[],
+ categories:[],
  activity:[],
  activityHasMore:true,
  profiles:[],
@@ -486,6 +487,36 @@ function renderActivity(){
  $("#loadMoreActivity").hidden=!state.activityHasMore;
 }
 function parsePrice(v){return Number(String(v||"").replace(/\D/g,""))||0}
+function authenticityLabel(value){
+ const labels={original:"Original",generic:"Genérico",other_brand:"Otra marca",unverified:"Por verificar"};
+ return labels[String(value||"")]||"Por verificar";
+}
+function option(value,current,label){
+ return '<option value="'+safe(value)+'" '+(String(current||"")===String(value)?"selected":"")+'>'+safe(label)+'</option>';
+}
+function categoryOptions(current){
+ const rows=state.categories.length?state.categories:[
+  {code:"pokemon",name:"Pokémon - Cartas TCG"},{code:"misc",name:"Coleccionables y más"},
+  {code:"accessories",name:"Accesorios"},{code:"sealed",name:"Producto sellado"},
+  {code:"electronics",name:"Electrónica"},{code:"books",name:"Libros"},
+  {code:"other_cards",name:"Otras cartas - TCG"}
+ ];
+ return rows.map(c=>option(c.code,current,c.name)).join("");
+}
+function detailRowsHtml(details){
+ const rows=Array.isArray(details)?details:[];
+ if(!rows.length){
+  return '<div class="product-detail-empty">Sin detalles adicionales. Puedes agregar uno.</div>';
+ }
+ return rows.map((d,i)=>
+  '<div class="product-detail-edit-row" data-detail-row>'+
+   '<input class="detail-section-input" maxlength="80" value="'+safe(d.section||"General")+'" placeholder="Sección">'+
+   '<input class="detail-label-input" maxlength="100" value="'+safe(d.label||"")+'" placeholder="Campo">'+
+   '<input class="detail-value-input" maxlength="2000" value="'+safe(d.value||"")+'" placeholder="Valor o Sin información">'+
+   '<button class="remove-detail" type="button" aria-label="Eliminar detalle">×</button>'+
+  '</div>'
+ ).join("");
+}
 function renderProducts(){
  const q=($("#productSearch")?.value||"").trim().toLowerCase();
  const mode=$("#channelFilter")?.value||"all";
@@ -493,29 +524,177 @@ function renderProducts(){
   const c=channelState(p);
   if(mode==="selected"&&!c.enabled)return false;
   if(mode==="cardnest"&&c.enabled)return false;
-  const hay=[p.id,p.name,p.reference_code,p.category_code,p.product_type].join(" ").toLowerCase();
+  const a=p.authenticity||{};
+  const details=(p.details||[]).map(d=>[d.section,d.label,d.value].join(" ")).join(" ");
+  const hay=[p.id,p.name,p.reference_code,p.category_code,p.product_type,p.brand,p.model,a.authenticity_type,a.brand_name,details].join(" ").toLowerCase();
   return !q||hay.includes(q);
  });
  const box=$("#productsTable");
  if(!rows.length){box.innerHTML='<div class="panel-card">No hay productos con este filtro.</div>';return}
  box.innerHTML=rows.map(p=>{
-  const c=channelState(p),img=imageOf(p),status=c.external_status||"draft";
+  const c=channelState(p),img=imageOf(p),mlStatus=c.external_status||"draft";
   const disabled=Number(p.stock_quantity)<=0||p.sale_status!=="available"||p.demo===true;
-  return '<article class="product-row" data-product="'+safe(p.id)+'">'+
-   '<div class="product-main">'+(img?'<img class="product-thumb" src="'+safe(img)+'" alt="">':'<div class="product-thumb"></div>')+
-   '<div class="product-copy"><strong>'+safe(p.name)+'</strong><small>'+safe(p.id)+' · '+safe(p.category_code)+' · '+safe(p.reference_code||"Sin referencia")+'</small></div></div>'+
-   '<div class="product-stock"><strong>'+safe(String(p.stock_quantity))+' uds.</strong><span>'+safe(p.sale_status||"")+'</span></div>'+
-   '<label class="channel-toggle"><input class="ml-toggle" type="checkbox" '+(c.enabled?"checked":"")+' '+(disabled?"disabled":"")+'> Preparar para ML</label>'+
-   '<div class="price-wrap"><small>PRECIO ML · PRIVADO</small><input class="price-input" inputmode="numeric" placeholder="$ COP" value="'+(c.price_cop?new Intl.NumberFormat("es-CO").format(c.price_cop):"")+'" '+(disabled?"disabled":"")+'></div>'+
-   '<button class="channel-save" type="button" '+(disabled?"disabled":"")+'>Guardar</button>'+
-   '<div class="row-status '+(c.enabled?"ready":"")+'">Estado: '+safe(status)+(disabled?" · Producto no vendible":"")+'</div>'+
-   '</article>';
+  const a=p.authenticity||{authenticity_type:"unverified",brand_name:p.brand||"",notes:""};
+  const sellLabel=p.sale_status==="available"?"Disponible":p.sale_status==="sold_out"?"Agotado":p.sale_status==="draft"?"Borrador":"Archivado";
+  return '<details class="product-row product-admin-accordion" data-product="'+safe(p.id)+'">'+
+   '<summary class="product-admin-summary">'+
+    '<div class="product-main">'+(img?'<img class="product-thumb" src="'+safe(img)+'" alt="">':'<div class="product-thumb"></div>')+
+     '<div class="product-copy"><strong>'+safe(p.name)+'</strong><small>'+safe(p.id)+' · '+safe(p.product_type||"Sin tipo")+' · '+safe(p.reference_code||"Sin referencia")+'</small></div>'+
+    '</div>'+
+    '<div class="product-summary-chips">'+
+     '<span>'+safe(String(p.stock_quantity))+' uds.</span>'+
+     '<span>'+safe(sellLabel)+'</span>'+
+     '<span>'+safe(authenticityLabel(a.authenticity_type))+'</span>'+
+    '</div>'+
+   '</summary>'+
+   '<div class="product-admin-body">'+
+
+    '<details class="admin-subaccordion">'+
+     '<summary>Datos principales <small>Nombre, categoría, referencia y descripción</small></summary>'+
+     '<div class="admin-subaccordion-body product-edit-grid">'+
+      '<label class="wide-field">Nombre<input class="edit-name" maxlength="180" value="'+safe(p.name||"")+'"></label>'+
+      '<label>Nombre original<input class="edit-original-name" maxlength="180" value="'+safe(p.original_name||"")+'"></label>'+
+      '<label>Categoría<select class="edit-category">'+categoryOptions(p.category_code)+'</select></label>'+
+      '<label>Tipo de producto<input class="edit-product-type" maxlength="120" value="'+safe(p.product_type||"")+'"></label>'+
+      '<label>Marca<input class="edit-brand" maxlength="120" value="'+safe(p.brand||"")+'"></label>'+
+      '<label>Modelo<input class="edit-model" maxlength="120" value="'+safe(p.model||"")+'"></label>'+
+      '<label>Referencia<input class="edit-reference" maxlength="120" value="'+safe(p.reference_code||"")+'"></label>'+
+      '<label>Idioma<input class="edit-language" maxlength="60" value="'+safe(p.language||"")+'"></label>'+
+      '<label>Stock<input class="edit-stock" type="number" min="0" max="100000" value="'+safe(String(p.stock_quantity??0))+'"></label>'+
+      '<label>Venta<select class="edit-sale-status">'+
+       option("available",p.sale_status,"Disponible")+option("sold_out",p.sale_status,"Agotado")+option("draft",p.sale_status,"Borrador")+option("archived",p.sale_status,"Archivado")+
+      '</select></label>'+
+      '<label>Verificación<select class="edit-validation-status">'+
+       option("needs_review",p.validation_status,"Pendiente de revisión")+option("verified",p.validation_status,"Verificado")+option("rejected",p.validation_status,"Rechazado")+
+      '</select></label>'+
+      '<label class="wide-field">Descripción<textarea class="edit-description" maxlength="3000" rows="3">'+safe(p.description||"")+'</textarea></label>'+
+     '</div>'+
+    '</details>'+
+
+    '<details class="admin-subaccordion">'+
+     '<summary>Condición y autenticidad <small>'+safe(authenticityLabel(a.authenticity_type))+'</small></summary>'+
+     '<div class="admin-subaccordion-body product-edit-grid">'+
+      '<label class="wide-field">Condición física según las imágenes<input class="edit-condition" maxlength="180" value="'+safe(p.condition_label||"")+'" placeholder="Ej. Empaque visible en las fotografías"></label>'+
+      '<label>Autenticidad<select class="edit-authenticity">'+
+       option("unverified",a.authenticity_type,"Por verificar")+
+       option("original",a.authenticity_type,"Original")+
+       option("generic",a.authenticity_type,"Genérico")+
+       option("other_brand",a.authenticity_type,"Otra marca")+
+      '</select></label>'+
+      '<label>Marca asociada<input class="edit-auth-brand" maxlength="120" value="'+safe(a.brand_name||p.brand||"")+'" placeholder="Ej. Jazwares"></label>'+
+      '<label class="wide-field">Notas de autenticidad<textarea class="edit-auth-notes" maxlength="1000" rows="2">'+safe(a.notes||"")+'</textarea></label>'+
+     '</div>'+
+    '</details>'+
+
+    '<details class="admin-subaccordion">'+
+     '<summary>Detalles adicionales <small>'+safe(String((p.details||[]).length))+' campos</small></summary>'+
+     '<div class="admin-subaccordion-body">'+
+      '<div class="product-details-editor">'+detailRowsHtml(p.details)+'</div>'+
+      '<button class="add-detail secondary-button" type="button">+ Agregar detalle</button>'+
+     '</div>'+
+    '</details>'+
+
+    '<details class="admin-subaccordion">'+
+     '<summary>Mercado Libre <small>'+safe(mlStatus)+'</small></summary>'+
+     '<div class="admin-subaccordion-body ml-product-controls">'+
+      '<label class="channel-toggle"><input class="ml-toggle" type="checkbox" '+(c.enabled?"checked":"")+' '+(disabled?"disabled":"")+'> Preparar para ML</label>'+
+      '<div class="price-wrap"><small>PRECIO ML · PRIVADO</small><input class="price-input" inputmode="numeric" placeholder="$ COP" value="'+(c.price_cop?new Intl.NumberFormat("es-CO").format(c.price_cop):"")+'" '+(disabled?"disabled":"")+'></div>'+
+      '<button class="channel-save" type="button" '+(disabled?"disabled":"")+'>Guardar Mercado Libre</button>'+
+      '<div class="row-status '+(c.enabled?"ready":"")+'">Estado: '+safe(mlStatus)+(disabled?" · Producto no vendible":"")+'</div>'+
+     '</div>'+
+    '</details>'+
+
+    '<div class="product-admin-actions">'+
+     '<div class="product-save-status" role="status"></div>'+
+     '<button class="product-save" type="button">Guardar datos del producto</button>'+
+    '</div>'+
+   '</div>'+
+  '</details>';
  }).join("");
+
  $$(".product-row").forEach(row=>{
   const input=row.querySelector(".price-input");
   input?.addEventListener("input",()=>{const n=parsePrice(input.value);input.value=n?new Intl.NumberFormat("es-CO").format(n):""});
   row.querySelector(".channel-save")?.addEventListener("click",()=>saveChannel(row));
+  row.querySelector(".product-save")?.addEventListener("click",()=>saveProduct(row));
+  row.querySelector(".add-detail")?.addEventListener("click",()=>addDetailRow(row));
+  row.querySelectorAll(".remove-detail").forEach(btn=>btn.addEventListener("click",()=>removeDetailRow(btn)));
+  row.querySelectorAll(".admin-subaccordion").forEach(detail=>{
+   detail.addEventListener("toggle",()=>{
+    if(!detail.open)return;
+    row.querySelectorAll(".admin-subaccordion").forEach(other=>{if(other!==detail)other.open=false});
+   });
+  });
  });
+}
+function addDetailRow(row){
+ const editor=row.querySelector(".product-details-editor");
+ if(!editor)return;
+ editor.querySelector(".product-detail-empty")?.remove();
+ const div=document.createElement("div");
+ div.className="product-detail-edit-row";
+ div.dataset.detailRow="";
+ div.innerHTML='<input class="detail-section-input" maxlength="80" value="General" placeholder="Sección">'+
+  '<input class="detail-label-input" maxlength="100" placeholder="Campo">'+
+  '<input class="detail-value-input" maxlength="2000" placeholder="Valor o Sin información">'+
+  '<button class="remove-detail" type="button" aria-label="Eliminar detalle">×</button>';
+ div.querySelector(".remove-detail").addEventListener("click",()=>removeDetailRow(div.querySelector(".remove-detail")));
+ editor.appendChild(div);
+ div.querySelector(".detail-label-input").focus();
+}
+function removeDetailRow(btn){
+ btn.closest("[data-detail-row]")?.remove();
+}
+function collectProductDetails(row){
+ return Array.from(row.querySelectorAll("[data-detail-row]")).map((d,i)=>({
+  section:(d.querySelector(".detail-section-input")?.value||"General").trim(),
+  label:(d.querySelector(".detail-label-input")?.value||"").trim(),
+  value:(d.querySelector(".detail-value-input")?.value||"").trim()||"Sin información",
+  position:i*10,
+  is_public:true
+ })).filter(d=>d.label);
+}
+async function saveProduct(row){
+ const productId=row.dataset.product;
+ const btn=row.querySelector(".product-save");
+ const status=row.querySelector(".product-save-status");
+ const payload={
+  product_id:productId,
+  fields:{
+   name:row.querySelector(".edit-name")?.value||"",
+   original_name:row.querySelector(".edit-original-name")?.value||"",
+   category_code:row.querySelector(".edit-category")?.value||"",
+   product_type:row.querySelector(".edit-product-type")?.value||"",
+   brand:row.querySelector(".edit-brand")?.value||"",
+   model:row.querySelector(".edit-model")?.value||"",
+   reference_code:row.querySelector(".edit-reference")?.value||"",
+   language:row.querySelector(".edit-language")?.value||"",
+   condition_label:row.querySelector(".edit-condition")?.value||"",
+   description:row.querySelector(".edit-description")?.value||"",
+   stock_quantity:Number(row.querySelector(".edit-stock")?.value||0),
+   sale_status:row.querySelector(".edit-sale-status")?.value||"draft",
+   validation_status:row.querySelector(".edit-validation-status")?.value||"needs_review"
+  },
+  authenticity:{
+   authenticity_type:row.querySelector(".edit-authenticity")?.value||"unverified",
+   brand_name:row.querySelector(".edit-auth-brand")?.value||"",
+   notes:row.querySelector(".edit-auth-notes")?.value||""
+  },
+  details:collectProductDetails(row)
+ };
+ btn.disabled=true;btn.textContent="Guardando…";
+ status.textContent="Guardando cambios…";status.className="product-save-status";
+ try{
+  await api("save_product",payload);
+  status.textContent="Producto actualizado correctamente.";
+  status.className="product-save-status success";
+  await loadDashboard(true);
+ }catch(e){
+  status.textContent=e.message||"No fue posible guardar el producto.";
+  status.className="product-save-status error";
+ }finally{
+  btn.disabled=false;btn.textContent="Guardar datos del producto";
+ }
 }
 async function saveChannel(row){
  const productId=row.dataset.product,toggle=row.querySelector(".ml-toggle"),priceEl=row.querySelector(".price-input"),status=row.querySelector(".row-status"),btn=row.querySelector(".channel-save");
@@ -529,7 +708,7 @@ async function saveChannel(row){
   status.className="row-status ready";
   await loadDashboard(false);
  }catch(e){status.textContent=e.message;status.className="row-status error"}
- finally{btn.disabled=false;btn.textContent="Guardar"}
+ finally{btn.disabled=false;btn.textContent="Guardar Mercado Libre"}
 }
 
 async function fileToDataUrl(file,maxBytes){
@@ -565,6 +744,7 @@ async function loadDashboard(renderProductsToo=true){
  const data=await api("dashboard");
  state.user=data.user;
  state.products=data.products||[];
+ state.categories=data.categories||[];
  state.activity=data.activity||[];
  state.activityHasMore=state.activity.length>=25;
  state.profiles=data.profiles||[];
