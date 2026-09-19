@@ -9,10 +9,11 @@ const CATALOG_MAX_REMOTE_ROWS=25000;
 const CATALOG_REQUEST_TIMEOUT=12000;
 
 const CATEGORY_LABELS={
- all:"Todos",pokemon:"Pokémon",yugioh:"Yu-Gi-Oh!",digimon:"Digimon",
- dragonball:"Dragon Ball",naruto:"Naruto",accessories:"Accesorios",sealed:"Producto sellado",electronics:"Electrónica",misc:"Coleccionables y más"
+ all:"Todos",pokemon:"Pokémon · Cartas TCG",yugioh:"Yu-Gi-Oh!",digimon:"Digimon",
+ dragonball:"Dragon Ball",naruto:"Naruto",other_cards:"Otras cartas · TCG",
+ accessories:"Accesorios",sealed:"Producto sellado",books:"Libros",electronics:"Electrónica",misc:"Coleccionables y más"
 };
-const CARD_CATEGORIES=new Set(["pokemon","yugioh","digimon","dragonball","naruto"]);
+const CARD_CATEGORIES=new Set(["pokemon","yugioh","digimon","dragonball","naruto","other_cards"]);
 const SHIPPING_ZONES=new Set(["L","R","N","Z","O","E"]);
 const PAYMENT_METHODS=new Set(["Nequi","Bre-B / llave bancaria","Bancolombia","Daviplata"]);
 const TOP_LOADER_PREFERENCES=new Set(["one_per_card","up_to_three","send_loose","custom"]);
@@ -73,12 +74,35 @@ function rarityGroup(p){
  if(t.includes("full art")||t.includes("arte completo")||t.includes("illustration")||/(^|\\s)(ar|sar)(\\s|$)/.test(t))return "fullart";
  return "general";
 }
-function imageUrl(p){
- const source=String(p.source_image_url||p.image_url||"");
+function normalizeMediaUrl(value,storagePath){
+ const source=String(value||"");
+ if(storagePath)return SUPABASE_URL+"/storage/v1/object/public/card-images/"+storagePath;
  const driveId=source.match(/\/d\/([^/]+)/)||source.match(/[?&]id=([^&]+)/);
- if(p.image_path)return SUPABASE_URL+"/storage/v1/object/public/card-images/"+p.image_path;
- if(driveId)return "https://drive.google.com/thumbnail?id="+driveId[1]+"&sz=w1000";
+ if(driveId)return "https://drive.google.com/thumbnail?id="+driveId[1]+"&sz=w1600";
  return /^https?:\/\//i.test(source)?source:"";
+}
+function productMedia(p){
+ const media=(Array.isArray(p.media)?p.media:[])
+  .slice()
+  .sort(function(a,b){
+   return (Number(!!b.is_primary)-Number(!!a.is_primary))||(Number(a.position||0)-Number(b.position||0));
+  })
+  .map(function(m){
+   return {
+    url:normalizeMediaUrl(m.url,m.storage_path),
+    alt_text:m.alt_text||"",
+    position:Number(m.position||0),
+    is_primary:!!m.is_primary
+   };
+  })
+  .filter(function(m){return !!m.url});
+ if(media.length)return media;
+ const fallback=normalizeMediaUrl(p.primary_image_url||p.source_image_url||p.image_url,p.image_path);
+ return fallback?[{url:fallback,alt_text:productName(p),position:0,is_primary:true}]:[];
+}
+function imageUrl(p){
+ const media=productMedia(p);
+ return media.length?media[0].url:"";
 }
 function productName(p){return p.canonical_name||p.name_original||"Producto"}
 function productQty(p){return Math.max(1,Number(productOffer(p).qty||1))}
@@ -118,11 +142,11 @@ async function fetchJson(url,options){
   return await response.json();
  }finally{clearTimeout(timer)}
 }
-async function fetchSupabaseTable(table,headers,filterQuery){
- const rows=[];
+async function fetchSupabaseTable(table,headers,filterQuery,orderColumn){
+ const rows=[],order=orderColumn||"id";
  for(let offset=0;offset<CATALOG_MAX_REMOTE_ROWS;offset+=SUPABASE_PAGE_SIZE){
   const filter=filterQuery?filterQuery+"&":"";
-  const query="?select=*&"+filter+"order=id.asc&limit="+SUPABASE_PAGE_SIZE+"&offset="+offset;
+  const query="?select=*&"+filter+"order="+encodeURIComponent(order)+".asc&limit="+SUPABASE_PAGE_SIZE+"&offset="+offset;
   const page=await fetchJson(SUPABASE_URL+"/rest/v1/"+table+query,{headers:headers});
   if(!Array.isArray(page))throw new Error("Respuesta inválida al cargar "+table+".");
   rows.push.apply(rows,page);
@@ -155,6 +179,81 @@ function restoreFavorites(){
  });
  savedFavoriteRefs=[];
 }
+function mapByProduct(rows){
+ const map=new Map();
+ (Array.isArray(rows)?rows:[]).forEach(function(row){map.set(String(row.product_id),row)});
+ return map;
+}
+function mediaByProduct(rows){
+ const map=new Map();
+ (Array.isArray(rows)?rows:[]).forEach(function(row){
+  const key=String(row.product_id);
+  if(!map.has(key))map.set(key,[]);
+  map.get(key).push(row);
+ });
+ map.forEach(function(items){
+  items.sort(function(a,b){
+   return (Number(!!b.is_primary)-Number(!!a.is_primary))||(Number(a.position||0)-Number(b.position||0));
+  });
+ });
+ return map;
+}
+function normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap){
+ const category=p.category_code||"misc";
+ const a=p.attributes&&typeof p.attributes==="object"?p.attributes:{};
+ const misc=miscMap.get(String(p.id))||{};
+ const book=bookMap.get(String(p.id))||{};
+ const electronics=electronicsMap.get(String(p.id))||{};
+ const card=cardMap.get(String(p.id))||{};
+ let setName=[p.brand,p.model].filter(Boolean).join(" · ");
+ let variant=p.description||"";
+ if(category==="books"){
+  setName=[book.author,book.publisher].filter(Boolean).join(" · ")||setName;
+  variant=[book.format,book.edition,book.pages?book.pages+" páginas":""].filter(Boolean).join(" · ")||variant;
+ }
+ if(category==="electronics"){
+  setName=[p.brand,p.model].filter(Boolean).join(" · ");
+  variant=electronics.short_specs||p.description||"";
+ }
+ if(CARD_CATEGORIES.has(category)){
+  setName=card.set_name||setName;
+  variant=card.variant||a.finish||variant;
+ }
+ const record={
+  id:p.id,category:category,category_label:CATEGORY_LABELS[category]||category,
+  canonical_name:p.name,name_original:p.original_name||p.product_type||"",
+  language:p.language||card.card_language||book.book_language||"",
+  card_number:card.card_number||p.reference_code||"",
+  set_name:setName,set_code:card.set_code||"",hp:card.hp,
+  rarity_detected:card.rarity_detected||p.product_type||"",
+  rarity_verified:card.rarity_verified||"",
+  variant:variant,
+  image_path:p.image_path||"",source_image_url:p.source_image_url||"",
+  primary_image_url:p.primary_image_url||"",
+  media:mediaMap.get(String(p.id))||[],
+  stock_quantity:p.stock_quantity,sale_status:p.sale_status,demo:!!p.demo,
+  condition:p.condition_label||"",
+  generic_brand:p.brand||"",generic_model:p.model||"",generic_description:p.description||"",
+  misc_type:misc.object_type||p.product_type||"",
+  misc_theme:misc.theme_franchise||a.franchise||"",
+  misc_material:misc.material||"",
+  misc_dimensions:misc.dimensions||"",
+  misc_details:misc.extra_details||p.description||"",
+  electronics_brand:p.brand||"",electronics_model:p.model||"",
+  electronics_type:electronics.electronics_type||p.product_type||"",
+  electronics_specs:electronics.short_specs||p.description||"",
+  electronics_compatibility:electronics.compatibility||"",
+  electronics_power:electronics.power_info||"",
+  electronics_color:electronics.color||"",
+  electronics_condition:p.condition_label||"",
+  book_author:book.author||"",book_publisher:book.publisher||"",
+  book_isbn:book.isbn||"",book_format:book.format||"",
+  book_edition:book.edition||"",book_pages:book.pages||null,
+  attributes:a
+ };
+ record.rarity_group=rarityGroup(record);
+ return record;
+}
 async function loadProducts(){
  setCatalogStatus("Cargando inventario…","loading");
  const headers={apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY};
@@ -163,58 +262,49 @@ async function loadProducts(){
   fetchJson("data/demo-products.json?v=20260919-1"),
   fetchSupabaseTable("electronics_products",headers),
   fetchJson("data/cards.json?v=20260919-1"),
-  fetchSupabaseTable("products",headers,"category_code=eq.misc")
+  fetchSupabaseTable("products",headers),
+  fetchSupabaseTable("product_media",headers,"","position"),
+  fetchSupabaseTable("misc_details",headers,"","product_id"),
+  fetchSupabaseTable("book_details",headers,"","product_id"),
+  fetchSupabaseTable("electronics_details",headers,"","product_id"),
+  fetchSupabaseTable("trading_card_details",headers,"","product_id")
  ]);
  const remoteCards=results[0].status==="fulfilled"&&Array.isArray(results[0].value)?results[0].value:[];
  const localCards=results[3].status==="fulfilled"&&Array.isArray(results[3].value)?results[3].value:[];
  const pokemonSource=remoteCards.length?remoteCards:localCards;
- const pokemon=pokemonSource.map(normalizePokemonRecord);
+ const legacyPokemon=pokemonSource.map(normalizePokemonRecord);
  const demo=results[1].status==="fulfilled"&&Array.isArray(results[1].value)?results[1].value:[];
  const electronicsRaw=results[2].status==="fulfilled"&&Array.isArray(results[2].value)?results[2].value:[];
- const electronics=electronicsRaw.map(function(p){
+ const legacyElectronics=electronicsRaw.map(function(p){
   return {
    id:p.id,category:"electronics",category_label:"Electrónica",
-   canonical_name:p.name,name_original:p.product_type||"",
-   language:"",card_number:p.reference_code,
-   set_name:[p.brand,p.model].filter(Boolean).join(" · "),
-   hp:null,rarity_detected:p.product_type||"Electrónica",rarity_verified:null,
-   rarity_group:"general",variant:p.short_specs||"",
-   image_path:p.image_path||"",source_image_url:p.source_image_url||"",
+   canonical_name:p.name,name_original:p.product_type||"",language:"",card_number:p.reference_code,
+   set_name:[p.brand,p.model].filter(Boolean).join(" · "),hp:null,
+   rarity_detected:p.product_type||"Electrónica",rarity_verified:null,rarity_group:"general",
+   variant:p.short_specs||"",image_path:p.image_path||"",source_image_url:p.source_image_url||"",
    stock_quantity:p.stock_quantity,sale_status:p.sale_status,demo:p.demo,
    electronics_brand:p.brand,electronics_model:p.model,electronics_type:p.product_type,
    electronics_specs:p.short_specs,electronics_compatibility:p.compatibility,
    electronics_power:p.power_info,electronics_color:p.color,electronics_condition:p.condition
   };
  });
- const miscRaw=results[4].status==="fulfilled"&&Array.isArray(results[4].value)?results[4].value:[];
- const misc=miscRaw.map(function(p){
-  const a=p.attributes&&typeof p.attributes==="object"?p.attributes:{};
-  return {
-   id:p.id,category:"misc",category_label:"Coleccionables y más",
-   canonical_name:p.name,name_original:p.product_type||"",
-   language:"",card_number:p.reference_code||"",
-   set_name:[a.object_type,a.theme].filter(Boolean).join(" · "),
-   hp:null,rarity_detected:a.object_type||p.product_type||"Coleccionable",rarity_verified:null,
-   rarity_group:"general",variant:p.description||a.details||"",
-   image_path:p.image_path||"",source_image_url:p.source_image_url||p.primary_image_url||"",
-   stock_quantity:p.stock_quantity,sale_status:p.sale_status,demo:!!p.demo,
-   condition:p.condition_label||"",
-   misc_type:a.object_type||p.product_type||"",
-   misc_theme:a.theme||"",
-   misc_material:a.material||"",
-   misc_dimensions:a.dimensions||"",
-   misc_details:a.details||p.description||"",
-   generic_brand:p.brand||"",generic_model:p.model||"",generic_description:p.description||""
-  };
- });
- state.products=mixCatalog(pokemon.concat(demo,electronics,misc));
+ const masterRaw=results[4].status==="fulfilled"&&Array.isArray(results[4].value)?results[4].value:[];
+ const mediaMap=mediaByProduct(results[5].status==="fulfilled"?results[5].value:[]);
+ const miscMap=mapByProduct(results[6].status==="fulfilled"?results[6].value:[]);
+ const bookMap=mapByProduct(results[7].status==="fulfilled"?results[7].value:[]);
+ const electronicsMap=mapByProduct(results[8].status==="fulfilled"?results[8].value:[]);
+ const cardMap=mapByProduct(results[9].status==="fulfilled"?results[9].value:[]);
+ const master=masterRaw.map(function(p){return normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap)});
+ const byKey=new Map();
+ legacyPokemon.concat(demo,legacyElectronics,master).forEach(function(p){byKey.set(productKey(p),p)});
+ state.products=mixCatalog(Array.from(byKey.values()));
  restoreFavorites();
  persistFavorites();
  const partial=[];
+ if(!masterRaw.length&&results[4].status!=="fulfilled")partial.push("inventario maestro");
+ if(results[5].status!=="fulfilled")partial.push("galerías de imágenes");
  if(!remoteCards.length&&localCards.length)partial.push("inventario Pokémon local");
  if(results[1].status!=="fulfilled")partial.push("categorías de demostración");
- if(results[2].status!=="fulfilled")partial.push("electrónica");
- if(results[4].status!=="fulfilled")partial.push("coleccionables y más");
  setCatalogStatus(partial.length?"Catálogo parcial: no fue posible actualizar "+partial.join(" y ")+".":"",partial.length?"warning":"");
  render();
  updateFavorites();
@@ -259,7 +349,14 @@ function render(){
  }
  list.forEach(function(p){
   const n=tpl.content.cloneNode(true),card=n.querySelector(".card"),wrap=n.querySelector(".card-image-wrap"),img=n.querySelector(".card-image");
-  const src=imageUrl(p);
+  const src=imageUrl(p),mediaItems=productMedia(p);
+  if(mediaItems.length>1){
+   const photoBadge=document.createElement("span");
+   photoBadge.className="image-count-badge";
+   photoBadge.textContent=mediaItems.length+" fotos";
+   photoBadge.setAttribute("aria-label",mediaItems.length+" imágenes disponibles");
+   wrap.appendChild(photoBadge);
+  }
   if(p.category==="electronics")card.classList.add("electronics-card");
   if(src){
    img.src=src;img.hidden=false;img.alt=productName(p)+" "+(p.card_number||"");
@@ -304,7 +401,16 @@ function render(){
   }
   const hpRow=n.querySelector(".card-hp-row");
   if(p.hp==null||p.hp===""){hpRow.hidden=true}else n.querySelector(".card-hp").textContent=p.hp;
-  if(p.category!=="electronics"&&p.category!=="misc"){
+  if(!CARD_CATEGORIES.has(p.category)&&p.category!=="electronics"&&p.category!=="misc"){
+   n.querySelector(".card-number").closest("div").querySelector("dt").textContent="Referencia";
+   n.querySelector(".card-set").closest("div").querySelector("dt").textContent=p.category==="books"?"Autor / editorial":"Marca / modelo";
+   n.querySelector(".card-rarity").closest("div").querySelector("dt").textContent=p.category==="books"?"Edición / formato":"Tipo / detalles";
+   n.querySelector(".card-set").textContent=p.set_name||"Información pendiente";
+   n.querySelector(".card-rarity").textContent=p.variant||p.generic_description||p.rarity_detected||"Información pendiente";
+   n.querySelector(".card-status").textContent=p.condition||productStatus(p);
+   n.querySelector(".original-name").textContent=[p.generic_brand,p.name_original].filter(Boolean).join(" · ");
+  }
+  if(CARD_CATEGORIES.has(p.category)){
    n.querySelector(".card-rarity").textContent=p.rarity_verified||p.rarity_detected||"General";
    n.querySelector(".card-status").textContent=productStatus(p);
   }
@@ -330,7 +436,7 @@ function selectCategory(cat){
  document.querySelectorAll(".catalog-tab").forEach(function(b){b.classList.toggle("active",b.dataset.category===state.category)});
  document.getElementById("discoverStrip").hidden=state.category!=="all";
  const rarityWrap=document.getElementById("rarityFilterWrap");
- const rarityAllowed=state.category==="all"||state.category==="pokemon";
+ const rarityAllowed=state.category==="all"||CARD_CATEGORIES.has(state.category);
  rarityWrap.hidden=!rarityAllowed;
  if(!rarityAllowed)document.getElementById("rarityFilter").value="";
  const language=document.getElementById("languageFilter");
@@ -1420,20 +1526,58 @@ try{
  else localStorage.removeItem("cardnestPendingOrder");
 }catch(e){}
 refreshPendingOrderNotice();
+const imageViewerState={items:[],index:0,product:null};
+function renderImageViewer(){
+ const v=document.getElementById("imageViewer"),img=document.getElementById("viewerImage");
+ const caption=document.getElementById("viewerCaption"),counter=document.getElementById("viewerCounter");
+ const thumbs=document.getElementById("viewerThumbnails"),prev=document.getElementById("viewerPrev"),next=document.getElementById("viewerNext");
+ if(!v||!img||!imageViewerState.items.length)return;
+ const item=imageViewerState.items[imageViewerState.index],p=imageViewerState.product;
+ img.src=item.url;
+ img.alt=item.alt_text||productName(p);
+ caption.textContent=productName(p)+" · "+(p.card_number||p.id);
+ counter.textContent=imageViewerState.items.length>1?(imageViewerState.index+1)+" / "+imageViewerState.items.length:"";
+ const multi=imageViewerState.items.length>1;
+ prev.hidden=!multi;next.hidden=!multi;thumbs.hidden=!multi;
+ thumbs.innerHTML="";
+ if(multi){
+  imageViewerState.items.forEach(function(media,i){
+   const button=document.createElement("button");
+   button.type="button";button.className="viewer-thumb"+(i===imageViewerState.index?" active":"");
+   button.setAttribute("aria-label","Ver imagen "+(i+1)+" de "+imageViewerState.items.length);
+   const thumb=document.createElement("img");thumb.src=media.url;thumb.alt=media.alt_text||"";
+   button.appendChild(thumb);
+   button.onclick=function(){imageViewerState.index=i;renderImageViewer()};
+   thumbs.appendChild(button);
+  });
+ }
+}
+function moveImageViewer(step){
+ const total=imageViewerState.items.length;if(total<2)return;
+ imageViewerState.index=(imageViewerState.index+step+total)%total;
+ renderImageViewer();
+}
 function openImageViewer(src,p){
- const v=document.getElementById("imageViewer");if(!src||!v)return;
- document.getElementById("viewerImage").src=src;
- document.getElementById("viewerCaption").textContent=productName(p)+" · "+(p.card_number||p.id);
+ const v=document.getElementById("imageViewer");if(!v)return;
+ const items=productMedia(p);if(!items.length)return;
+ let index=items.findIndex(function(item){return item.url===src});if(index<0)index=0;
+ imageViewerState.items=items;imageViewerState.index=index;imageViewerState.product=p;
+ renderImageViewer();
  if(!v.open)v.showModal();document.body.classList.add("viewer-open");
 }
 function closeImageViewer(){const v=document.getElementById("imageViewer");if(v&&v.open)v.close()}
+document.getElementById("viewerPrev")?.addEventListener("click",function(){moveImageViewer(-1)});
+document.getElementById("viewerNext")?.addEventListener("click",function(){moveImageViewer(1)});
 const viewer=document.getElementById("imageViewer");
 if(viewer){
  viewer.addEventListener("close",function(){document.body.classList.remove("viewer-open")});
  viewer.addEventListener("cancel",function(){document.body.classList.remove("viewer-open")});
  viewer.addEventListener("click",function(e){if(e.target===viewer)closeImageViewer()});
+ viewer.addEventListener("keydown",function(e){
+  if(e.key==="ArrowLeft"){e.preventDefault();moveImageViewer(-1)}
+  if(e.key==="ArrowRight"){e.preventDefault();moveImageViewer(1)}
+ });
 }
-
 let selectedDockScrollTimer;
 window.addEventListener("scroll",function(){
  const dock=document.getElementById("cartViewerBtn");if(!dock||dock.hidden)return;
