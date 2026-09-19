@@ -332,10 +332,21 @@ Deno.serve(async(req)=>{
 
   if(action==="dashboard"){
     const profiles=await getProfiles().catch(()=>[]);
-    const [{data:products,error:pErr},{data:channels,error:cErr},{data:media,error:mErr},{data:logs,error:lErr}]=await Promise.all([
-      db.from("products").select("id,category_code,name,product_type,reference_code,stock_quantity,sale_status,primary_image_url,source_image_url,demo,updated_at").order("category_code").order("name"),
+    const [
+      {data:products,error:pErr},
+      {data:channels,error:cErr},
+      {data:media,error:mErr},
+      {data:details,error:dErr},
+      {data:authenticity,error:aErr},
+      {data:categories,error:catErr},
+      {data:logs,error:lErr}
+    ]=await Promise.all([
+      db.from("products").select("id,category_code,name,original_name,product_type,brand,model,reference_code,language,condition_label,description,stock_quantity,sale_status,validation_status,primary_image_url,source_image_url,demo,updated_at").order("category_code").order("name"),
       db.from("product_channels").select("*").eq("channel","mercadolibre"),
       db.from("product_media").select("id,product_id,channel_scope,position,is_primary,url,storage_path").order("position"),
+      db.from("product_details").select("id,product_id,section,label,value,position,is_public,source").order("product_id").order("position"),
+      db.from("product_authenticity").select("product_id,authenticity_type,brand_name,notes,verified_at,updated_at"),
+      db.from("catalog_categories").select("code,name,family,active").eq("active",true).order("name"),
       db.from("admin_audit_log").select("id,admin_user_id,action,entity_type,entity_id,details,created_at").order("id",{ascending:false}).limit(25)
     ]);
 
@@ -343,6 +354,9 @@ Deno.serve(async(req)=>{
 
     const safeChannels=cErr?[]:(channels||[]);
     const safeMedia=mErr?[]:(media||[]);
+    const safeDetails=dErr?[]:(details||[]);
+    const safeAuthenticity=aErr?[]:(authenticity||[]);
+    const safeCategories=catErr?[]:(categories||[]);
     const safeLogs=lErr?[]:(logs||[]);
     const actorMap=new Map((profiles||[]).map((p:any)=>[p.id,p]));
     const activity=safeLogs.map((row:any)=>({
@@ -355,19 +369,40 @@ Deno.serve(async(req)=>{
     }));
 
     const channelMap=new Map(safeChannels.map((c:any)=>[c.product_id,c]));
+    const authenticityMap=new Map(safeAuthenticity.map((a:any)=>[a.product_id,a]));
     const mediaMap=new Map<string,any[]>();
+    const detailMap=new Map<string,any[]>();
+
     for(const item of safeMedia){
       const arr=mediaMap.get(item.product_id)||[];
       arr.push(item);
       mediaMap.set(item.product_id,arr);
     }
-    const rows=(products||[]).map((p:any)=>({...p,mercadolibre:channelMap.get(p.id)||null,media:mediaMap.get(p.id)||[]}));
+    for(const item of safeDetails){
+      const arr=detailMap.get(item.product_id)||[];
+      arr.push(item);
+      detailMap.set(item.product_id,arr);
+    }
+
+    const rows=(products||[]).map((p:any)=>({
+      ...p,
+      mercadolibre:channelMap.get(p.id)||null,
+      media:mediaMap.get(p.id)||[],
+      details:detailMap.get(p.id)||[],
+      authenticity:authenticityMap.get(p.id)||{
+        authenticity_type:"unverified",
+        brand_name:p.brand||null,
+        notes:null,
+        verified_at:null
+      }
+    }));
     const self=(profiles||[]).find((p:any)=>p.id===auth.user.id)||auth.user;
     return json(req,{
       ok:true,
       user:{...auth.user,avatar_url:self?.avatar_url||null},
       profiles:profiles||[],
       products:rows,
+      categories:safeCategories,
       activity,
       unread:await unreadCount(auth.user.id).catch(()=>0),
       summary:{
@@ -688,6 +723,135 @@ Deno.serve(async(req)=>{
     await audit(auth.user.id,"chat_message_sent","admin_user",recipientId,{message_id:created.id,has_attachment:!!attachmentPath,attachment_name:attachmentName});
     const out={...created,attachment_url:attachmentPath?await signedUrl(attachmentPath,1800):null};
     return json(req,{ok:true,message:out});
+  }
+
+  if(action==="save_product"){
+    const productId=clean(body.product_id);
+    if(!productId)return json(req,{error:"PRODUCT_REQUIRED",message:"Falta el ID del producto."},400);
+
+    const fields=(body.fields&&typeof body.fields==="object"&&!Array.isArray(body.fields))?(body.fields as Record<string,unknown>):{};
+    const detailsInput=Array.isArray(body.details)?body.details:[];
+    const authenticityInput=(body.authenticity&&typeof body.authenticity==="object"&&!Array.isArray(body.authenticity))?(body.authenticity as Record<string,unknown>):{};
+
+    const name=clean(fields.name).replace(/\s+/g," ").slice(0,180);
+    const categoryCode=clean(fields.category_code).slice(0,60);
+    const productType=clean(fields.product_type).replace(/\s+/g," ").slice(0,120);
+    const originalName=clean(fields.original_name).replace(/\s+/g," ").slice(0,180);
+    const brand=clean(fields.brand).replace(/\s+/g," ").slice(0,120);
+    const model=clean(fields.model).replace(/\s+/g," ").slice(0,120);
+    const referenceCode=clean(fields.reference_code).replace(/\s+/g," ").slice(0,120);
+    const language=clean(fields.language).replace(/\s+/g," ").slice(0,60);
+    const conditionLabel=clean(fields.condition_label).replace(/\s+/g," ").slice(0,180);
+    const description=clean(fields.description).slice(0,3000);
+    const stockQuantity=Number(fields.stock_quantity);
+    const saleStatus=clean(fields.sale_status);
+    const validationStatus=clean(fields.validation_status)||"needs_review";
+
+    if(name.length<2)return json(req,{error:"INVALID_NAME",message:"El producto necesita un nombre válido."},400);
+    if(!categoryCode)return json(req,{error:"INVALID_CATEGORY",message:"Selecciona una categoría."},400);
+    if(!productType)return json(req,{error:"INVALID_TYPE",message:"Escribe el tipo de producto."},400);
+    if(!Number.isInteger(stockQuantity)||stockQuantity<0||stockQuantity>100000)return json(req,{error:"INVALID_STOCK",message:"Revisa la cantidad de inventario."},400);
+    if(!new Set(["available","sold_out","draft","archived"]).has(saleStatus))return json(req,{error:"INVALID_SALE_STATUS",message:"Selecciona un estado de venta válido."},400);
+    if(!new Set(["needs_review","verified","rejected"]).has(validationStatus))return json(req,{error:"INVALID_VALIDATION_STATUS",message:"Selecciona un estado de verificación válido."},400);
+
+    const {data:category}=await db.from("catalog_categories").select("code").eq("code",categoryCode).eq("active",true).maybeSingle();
+    if(!category)return json(req,{error:"CATEGORY_NOT_FOUND",message:"La categoría seleccionada no existe o está inactiva."},400);
+
+    const authenticityType=clean(authenticityInput.authenticity_type)||"unverified";
+    if(!new Set(["original","generic","other_brand","unverified"]).has(authenticityType)){
+      return json(req,{error:"INVALID_AUTHENTICITY",message:"Selecciona Original, Genérico, Otra marca o Por verificar."},400);
+    }
+    const authenticityBrand=clean(authenticityInput.brand_name).replace(/\s+/g," ").slice(0,120);
+    const authenticityNotes=clean(authenticityInput.notes).slice(0,1000);
+
+    const cleanDetails:any[]=[];
+    for(let i=0;i<detailsInput.length&&i<100;i++){
+      const row=detailsInput[i];
+      if(!row||typeof row!=="object"||Array.isArray(row))continue;
+      const obj=row as Record<string,unknown>;
+      const section=clean(obj.section).replace(/\s+/g," ").slice(0,80)||"General";
+      const label=clean(obj.label).replace(/\s+/g," ").slice(0,100);
+      const value=clean(obj.value).slice(0,2000);
+      if(!label)continue;
+      cleanDetails.push({
+        product_id:productId,
+        section,
+        label,
+        value:value||"Sin información",
+        position:i*10,
+        is_public:obj.is_public!==false,
+        source:"admin_panel",
+        updated_at:new Date().toISOString()
+      });
+    }
+
+    const {data:before}=await db.from("products")
+      .select("id,category_code,name,original_name,product_type,brand,model,reference_code,language,condition_label,description,stock_quantity,sale_status,validation_status")
+      .eq("id",productId).maybeSingle();
+    if(!before)return json(req,{error:"PRODUCT_NOT_FOUND",message:"El producto no existe."},404);
+
+    const now=new Date().toISOString();
+    const {data:updated,error:updateError}=await db.from("products").update({
+      category_code:categoryCode,
+      name,
+      original_name:originalName||null,
+      product_type:productType,
+      brand:brand||null,
+      model:model||null,
+      reference_code:referenceCode||null,
+      language:language||null,
+      condition_label:conditionLabel||null,
+      description:description||null,
+      stock_quantity:stockQuantity,
+      sale_status:saleStatus,
+      validation_status:validationStatus,
+      updated_at:now
+    }).eq("id",productId).select("*").single();
+
+    if(updateError||!updated)return json(req,{error:"PRODUCT_SAVE_FAILED",message:"No fue posible guardar los datos principales."},500);
+
+    const {error:authError}=await db.from("product_authenticity").upsert({
+      product_id:productId,
+      authenticity_type:authenticityType,
+      brand_name:authenticityBrand||brand||null,
+      notes:authenticityNotes||null,
+      verified_at:authenticityType==="unverified"?null:now,
+      updated_at:now
+    },{onConflict:"product_id"});
+    if(authError)return json(req,{error:"AUTHENTICITY_SAVE_FAILED",message:"Se guardó el producto, pero no la clasificación de autenticidad."},500);
+
+    const {error:deleteDetailsError}=await db.from("product_details").delete().eq("product_id",productId);
+    if(deleteDetailsError)return json(req,{error:"DETAILS_SAVE_FAILED",message:"No fue posible actualizar los detalles del producto."},500);
+
+    if(cleanDetails.length){
+      const {error:detailError}=await db.from("product_details").insert(cleanDetails);
+      if(detailError)return json(req,{error:"DETAILS_SAVE_FAILED",message:"No fue posible guardar los detalles del producto."},500);
+    }
+
+    await audit(auth.user.id,"product_updated","product",productId,{
+      previous:before,
+      current:{
+        category_code:categoryCode,
+        name,
+        product_type:productType,
+        brand:brand||null,
+        model:model||null,
+        reference_code:referenceCode||null,
+        condition_label:conditionLabel||null,
+        stock_quantity:stockQuantity,
+        sale_status:saleStatus,
+        validation_status:validationStatus,
+        authenticity_type:authenticityType
+      },
+      detail_count:cleanDetails.length
+    });
+
+    return json(req,{ok:true,product:updated,authenticity:{
+      authenticity_type:authenticityType,
+      brand_name:authenticityBrand||brand||null,
+      notes:authenticityNotes||null,
+      verified_at:authenticityType==="unverified"?null:now
+    },details:cleanDetails});
   }
 
   if(action==="save_channel"){
