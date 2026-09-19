@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CardNest</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-27">
+  <link rel="stylesheet" href="styles.css?v=20260918-28">
 </head>
 <body>
   <header class="topbar site-main-header" id="pageTop">
@@ -283,20 +283,29 @@
 </footer>
 
 <div id="collaboratorBackdrop" class="collab-backdrop" hidden></div>
-<aside id="collaboratorModal" class="collab-modal" role="dialog" aria-modal="true" aria-labelledby="collabTitle" aria-hidden="true" inert>
+<aside id="collaboratorModal" class="collab-modal collab-modal-premium" role="dialog" aria-modal="true" aria-labelledby="collabTitle" aria-hidden="true" inert>
  <button id="closeCollaboratorLogin" class="collab-close" type="button" aria-label="Cerrar">×</button>
- <div class="collab-heading"><small>PORTAL INTERNO</small><h2 id="collabTitle">Acceso de colaboradores</h2><p>Ingresa con las credenciales asignadas por tu asesor.</p></div>
+ <div class="collab-brand">
+  <img src="https://drive.google.com/thumbnail?id=1IUSpv73234Nvjz2KC_VhqhuFHSsF0yqN&sz=w1000" alt="CardNest">
+  <div><span>PORTAL INTERNO CARDNEST</span><strong>Centro de mando empresarial</strong></div>
+ </div>
+ <div class="collab-heading">
+  <h2 id="collabTitle">Acceso de colaboradores</h2>
+  <p>Área privada para el equipo autorizado de CardNest.</p>
+ </div>
  <form id="collaboratorForm">
-  <label>Usuario<input type="text" autocomplete="username" placeholder="Usuario asignado" maxlength="60" required></label>
-  <label>Contraseña<input type="password" autocomplete="current-password" placeholder="Contraseña" maxlength="80" required></label>
-  <button type="submit">Ingresar</button>
+  <label>Usuario<input id="collabUsername" type="text" autocomplete="username" placeholder="Usuario asignado" maxlength="60" required></label>
+  <label>Contraseña<input id="collabPassword" type="password" autocomplete="current-password" placeholder="Contraseña" maxlength="80" required></label>
+  <label class="collab-remember"><input id="collabRemember" type="checkbox"><span>Recordar mi acceso en este dispositivo</span></label>
+  <button type="submit"><span>Ingresar al centro de mando</span><b aria-hidden="true">→</b></button>
  </form>
- <div class="collab-register"><strong>¿Aún no tienes acceso?</strong><p>El registro no es público. Contacta con tu asesor para que te asigne usuario y contraseña.</p><a href="https://wa.me/573125214785?text=Hola%2C%20necesito%20informaci%C3%B3n%20sobre%20acceso%20para%20colaboradores." target="_blank" rel="noopener">Contactar a mi asesor</a></div>
- <p id="collabDemoNotice" class="collab-demo-notice" hidden>El acceso de colaboradores todavía no está habilitado.</p>
+ <div class="collab-security-note"><span aria-hidden="true">●</span><div><strong>Acceso protegido</strong><small>Tu contraseña no se guarda en esta página. Si eliges recordar el acceso, conservamos una sesión segura en este dispositivo.</small></div></div>
+ <div class="collab-register"><strong>¿Aún no tienes acceso?</strong><p>El registro no es público. Contacta con tu asesor para que te asigne credenciales.</p><a href="https://wa.me/573125214785?text=Hola%2C%20necesito%20informaci%C3%B3n%20sobre%20acceso%20para%20colaboradores." target="_blank" rel="noopener">Contactar a mi asesor</a></div>
+ <p id="collabDemoNotice" class="collab-demo-notice" hidden></p>
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="app.js?v=20260918-22"></script>
+<script src="app.js?v=20260918-23"></script>
 </body>
 </html>
