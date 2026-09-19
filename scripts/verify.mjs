@@ -121,6 +121,7 @@ check("Funciones Edge sin secretos incrustados",function(){
 });
 
 check("Defensas críticas de Mercado Libre activas",function(){
+ const admin=edgeFunctions.find(function(entry){return entry.file.includes("admin-control")})?.source||"";
  const oauth=edgeFunctions.find(function(entry){return entry.file.includes("mercadolibre-oauth")})?.source||"";
  const webhook=edgeFunctions.find(function(entry){return entry.file.includes("mercadolibre-webhook")})?.source||"";
  assert(oauth.includes('action === "preflight"'),"OAuth debe exponer la revisión previa");
@@ -135,6 +136,10 @@ check("Defensas críticas de Mercado Libre activas",function(){
  assert(adminHtml.includes('id="mlPreflightChecks"'),"El panel debe mostrar la revisión previa");
  assert(adminApp.includes('mlApi("preflight")'),"El frontend debe repetir el preflight antes de autorizar");
  assert(adminApp.includes("validMlAuthorizationUrl"),"El frontend debe validar la URL de autorización");
+ assert(admin.includes("readLimitedBody(req)"),"La API administrativa debe limitar el cuerpo por bytes");
+ assert(admin.includes('error:"ORIGIN_NOT_ALLOWED"'),"La API administrativa debe rechazar orígenes externos");
+ assert(admin.includes('error:"PRODUCT_NOT_SELLABLE"'),"La selección para ML debe validar inventario vendible");
+ assert(!admin.includes('if(action==="change_password")'),"La ruta antigua sin contraseña actual debe permanecer deshabilitada");
 });
 
 if(failures.length){

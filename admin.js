@@ -475,7 +475,7 @@ function renderProducts(){
  if(!rows.length){box.innerHTML='<div class="panel-card">No hay productos con este filtro.</div>';return}
  box.innerHTML=rows.map(p=>{
   const c=channelState(p),img=imageOf(p),status=c.external_status||"draft";
-  const disabled=Number(p.stock_quantity)<=0||p.sale_status==="sold_out";
+  const disabled=Number(p.stock_quantity)<=0||p.sale_status!=="available"||p.demo===true;
   return '<article class="product-row" data-product="'+safe(p.id)+'">'+
    '<div class="product-main">'+(img?'<img class="product-thumb" src="'+safe(img)+'" alt="">':'<div class="product-thumb"></div>')+
    '<div class="product-copy"><strong>'+safe(p.name)+'</strong><small>'+safe(p.id)+' · '+safe(p.category_code)+' · '+safe(p.reference_code||"Sin referencia")+'</small></div></div>'+
@@ -483,7 +483,7 @@ function renderProducts(){
    '<label class="channel-toggle"><input class="ml-toggle" type="checkbox" '+(c.enabled?"checked":"")+' '+(disabled?"disabled":"")+'> Preparar para ML</label>'+
    '<div class="price-wrap"><small>PRECIO ML · PRIVADO</small><input class="price-input" inputmode="numeric" placeholder="$ COP" value="'+(c.price_cop?new Intl.NumberFormat("es-CO").format(c.price_cop):"")+'" '+(disabled?"disabled":"")+'></div>'+
    '<button class="channel-save" type="button" '+(disabled?"disabled":"")+'>Guardar</button>'+
-   '<div class="row-status '+(c.enabled?"ready":"")+'">Estado: '+safe(status)+(disabled?" · Producto sin stock":"")+'</div>'+
+   '<div class="row-status '+(c.enabled?"ready":"")+'">Estado: '+safe(status)+(disabled?" · Producto no vendible":"")+'</div>'+
    '</article>';
  }).join("");
  $$(".product-row").forEach(row=>{
@@ -495,7 +495,7 @@ function renderProducts(){
 async function saveChannel(row){
  const productId=row.dataset.product,toggle=row.querySelector(".ml-toggle"),priceEl=row.querySelector(".price-input"),status=row.querySelector(".row-status"),btn=row.querySelector(".channel-save");
  const enabled=!!toggle.checked,price=parsePrice(priceEl.value)||null;
- if(enabled&&!price){status.textContent="Debes definir un precio para Mercado Libre.";status.className="row-status error";priceEl.focus();return}
+ if(enabled&&(!price||price<3000)){status.textContent="El precio para Mercado Libre debe ser mínimo $3.000 COP.";status.className="row-status error";priceEl.focus();return}
  btn.disabled=true;btn.textContent="Guardando…";
  try{
   const data=await api("save_channel",{product_id:productId,enabled,price_cop:price});

@@ -13,6 +13,12 @@ const MAX_BODY_BYTES=15_000_000;
 const AVATAR_MAX_BYTES=10_485_760;
 const CHAT_FILE_MAX_BYTES=5_242_880;
 const clean=(v:unknown)=>String(v??"").trim();
+const validHttpsUrl=(v:unknown)=>{
+  try{
+    const url=new URL(clean(v));
+    return url.protocol==="https:"&&!!url.hostname;
+  }catch{return false}
+};
 const hex=(bytes:Uint8Array)=>Array.from(bytes).map(b=>b.toString(16).padStart(2,"0")).join("");
 const safeFileName=(name:string)=>name.normalize("NFKD").replace(/[^A-Za-z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,90)||"archivo";
 const allowedAttachmentMimes=new Set([
@@ -26,20 +32,44 @@ const allowedAvatarMimes=new Set(["image/jpeg","image/png","image/webp","image/g
 async function sha256(value:string){
   return hex(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value))));
 }
+async function readLimitedBody(req:Request){
+  if(!req.body)return new Uint8Array();
+  const reader=req.body.getReader();
+  const chunks:Uint8Array[]=[];
+  let total=0;
+  while(true){
+    const {done,value}=await reader.read();
+    if(done)break;
+    if(!value)continue;
+    total+=value.byteLength;
+    if(total>MAX_BODY_BYTES){
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const joined=new Uint8Array(total);
+  let offset=0;
+  for(const chunk of chunks){
+    joined.set(chunk,offset);
+    offset+=chunk.byteLength;
+  }
+  return joined;
+}
 function corsHeaders(req:Request){
   const origin=req.headers.get("origin")||"";
-  const allow=allowedOrigins.has(origin)?origin:"https://spenceralejandro10.github.io";
-  return {
-    "Access-Control-Allow-Origin":allow,
+  const headers:Record<string,string>={
     "Vary":"Origin",
     "Access-Control-Allow-Headers":"content-type, apikey, x-admin-token",
     "Access-Control-Allow-Methods":"POST, OPTIONS",
     "Cache-Control":"no-store",
-    "Content-Type":"application/json",
+    "Content-Type":"application/json; charset=utf-8",
     "Referrer-Policy":"no-referrer",
     "X-Content-Type-Options":"nosniff",
     "X-Frame-Options":"DENY"
   };
+  if(allowedOrigins.has(origin))headers["Access-Control-Allow-Origin"]=origin;
+  return headers;
 }
 const json=(req:Request,body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:corsHeaders(req)});
 
@@ -121,7 +151,11 @@ function roleFunctions(title:string){
 }
 
 Deno.serve(async(req)=>{
-  if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders(req)});
+  const requestOrigin=req.headers.get("origin")||"";
+  if((req.method==="POST"||req.method==="OPTIONS")&&requestOrigin&&!allowedOrigins.has(requestOrigin)){
+    return json(req,{error:"ORIGIN_NOT_ALLOWED"},403);
+  }
+  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders(req)});
   if(req.method!=="POST")return json(req,{error:"METHOD_NOT_ALLOWED"},405);
   const contentLength=Number(req.headers.get("content-length")||0);
   if(contentLength>MAX_BODY_BYTES)return json(req,{error:"PAYLOAD_TOO_LARGE",message:"El archivo o la solicitud es demasiado grande."},413);
@@ -133,9 +167,9 @@ Deno.serve(async(req)=>{
 
   let body:Record<string,unknown>;
   try{
-    const raw=await req.text();
-    if(raw.length>MAX_BODY_BYTES)return json(req,{error:"PAYLOAD_TOO_LARGE",message:"El archivo o la solicitud es demasiado grande."},413);
-    const parsed=JSON.parse(raw||"{}");
+    const raw=await readLimitedBody(req);
+    if(!raw)return json(req,{error:"PAYLOAD_TOO_LARGE",message:"El archivo o la solicitud es demasiado grande."},413);
+    const parsed=JSON.parse(new TextDecoder().decode(raw)||"{}");
     if(!parsed||Array.isArray(parsed)||typeof parsed!=="object")throw new Error("bad");
     body=parsed as Record<string,unknown>;
   }catch{
@@ -661,12 +695,24 @@ Deno.serve(async(req)=>{
     const enabled=body.enabled===true;
     const rawPrice=body.price_cop===null||body.price_cop===""?null:Number(body.price_cop);
     if(!productId)return json(req,{error:"PRODUCT_REQUIRED"},400);
-    if(rawPrice!==null&&(!Number.isInteger(rawPrice)||rawPrice<=0||rawPrice>1000000000)){
+    if(rawPrice!==null&&(!Number.isInteger(rawPrice)||rawPrice<=0||rawPrice>1000000000||(enabled&&rawPrice<3000))){
       return json(req,{error:"INVALID_PRICE",message:"Revisa el precio de Mercado Libre."},400);
     }
     if(enabled&&rawPrice===null)return json(req,{error:"PRICE_REQUIRED",message:"Asigna un precio de Mercado Libre antes de activar este canal."},400);
-    const {data:product}=await db.from("products").select("id,name").eq("id",productId).maybeSingle();
+    const {data:product}=await db.from("products")
+      .select("id,name,category_code,product_type,stock_quantity,sale_status,demo,primary_image_url,source_image_url")
+      .eq("id",productId)
+      .maybeSingle();
     if(!product)return json(req,{error:"PRODUCT_NOT_FOUND"},404);
+    if(enabled&&(product.demo===true||!Number.isInteger(Number(product.stock_quantity))||Number(product.stock_quantity)<=0||product.sale_status!=="available")){
+      return json(req,{error:"PRODUCT_NOT_SELLABLE",message:"El producto no tiene inventario vendible para Mercado Libre."},409);
+    }
+    if(enabled&&(clean(product.name).length<3||!clean(product.category_code)||!clean(product.product_type))){
+      return json(req,{error:"PRODUCT_DATA_INCOMPLETE",message:"Completa nombre, categoría y tipo antes de preparar el producto."},409);
+    }
+    if(enabled&&!validHttpsUrl(product.primary_image_url)&&!validHttpsUrl(product.source_image_url)){
+      return json(req,{error:"PRODUCT_IMAGE_REQUIRED",message:"Agrega una imagen válida antes de preparar el producto para Mercado Libre."},409);
+    }
     const nextStatus=enabled?"ready":"draft";
     const {data:channel,error}=await db.from("product_channels").upsert({
       product_id:productId,
@@ -759,20 +805,6 @@ Deno.serve(async(req)=>{
       .single();
 
     return json(req,{ok:true,user:updated});
-  }
-
-  if(action==="change_password"){
-    const next=String(body.new_password??"");
-    const strong=next.length>=12&&/[a-z]/.test(next)&&/[A-Z]/.test(next)&&/[0-9]/.test(next)&&/[^A-Za-z0-9]/.test(next);
-    if(!strong)return json(req,{error:"WEAK_PASSWORD",message:"Usa al menos 12 caracteres con mayúscula, minúscula, número y símbolo."},400);
-    const {data,error}=await db.rpc("admin_set_password",{p_user_id:auth.user.id,p_new_password:next});
-    if(error||data!==true)return json(req,{error:"PASSWORD_CHANGE_FAILED"},500);
-    await db.from("admin_sessions").update({revoked_at:new Date().toISOString()})
-      .eq("admin_user_id",auth.user.id)
-      .neq("id",auth.session.id)
-      .is("revoked_at",null);
-    await audit(auth.user.id,"change_password","admin_user",auth.user.id);
-    return json(req,{ok:true});
   }
 
   return json(req,{error:"UNKNOWN_ACTION"},400);
