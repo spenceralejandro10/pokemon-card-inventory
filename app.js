@@ -550,6 +550,10 @@ document.querySelectorAll("[data-go-category]").forEach(function(btn){
 function selectCategory(cat){
  const requested=String(cat||"all").trim();
  state.category=VALID_CATEGORIES.has(requested)?requested:"all";
+ const mobileLabel=document.getElementById("mobileCategoryLabel");
+ if(mobileLabel)mobileLabel.textContent=state.category==="all"?"Todos":(SECTION_LABELS[state.category]||CATEGORY_LABELS[state.category]||"Categoría");
+ const filterAccordion=document.querySelector(".catalog-filter-accordion");
+ if(filterAccordion&&window.matchMedia("(max-width: 900px)").matches)filterAccordion.open=false;
  state.visibleLimit=CATALOG_PAGE_SIZE;
  document.querySelectorAll(".catalog-tab").forEach(function(b){b.classList.toggle("active",b.dataset.category===state.category)});
  document.getElementById("discoverStrip").hidden=state.category!=="all";
