@@ -124,7 +124,7 @@ function renderPresence(){
  box.innerHTML=state.profiles.map(p=>
   '<article class="presence-person">'+
    '<div class="presence-avatar">'+(p.avatar_url?'<img src="'+safe(p.avatar_url)+'" alt="">':safe(initials(p.display_name)))+'</div>'+
-   '<div><strong>'+safe(p.display_name||p.username)+'</strong><small>'+safe(p.corporate_title||"Administración")+'</small></div>'+
+   '<div><strong>'+safe(p.display_name||"Administrador")+'</strong><small>'+safe(p.corporate_title||"Administración")+'</small></div>'+
    '<span class="presence-dot '+(p.online?"online":"offline")+'"></span>'+
    '<em>'+(p.online?"En línea":"Desconectado")+'</em>'+
   '</article>'
@@ -141,10 +141,10 @@ function renderTeam(){
    '</div>'+
    '<div class="profile-info">'+
     '<div class="profile-flags"><span>'+safe(p.role==="owner"?"Propietario":"Administración")+'</span>'+(mine?'<b>Tu perfil</b>':'')+'</div>'+
-    '<h3>'+safe(p.display_name||p.username)+'</h3>'+
+    '<h3>'+safe(p.display_name||"Administrador")+'</h3>'+
     '<strong>'+safe(p.corporate_title||"Administración")+'</strong>'+
     '<p>'+safe(p.professional_title||"")+'</p>'+
-    '<dl><div><dt>Usuario</dt><dd>'+safe(p.username)+'</dd></div><div><dt>Estado</dt><dd>'+(p.online?"En línea":"Desconectado")+'</dd></div><div><dt>Último acceso</dt><dd>'+safe(formatDate(p.last_login_at))+'</dd></div></dl>'+
+    '<dl><div><dt>Estado</dt><dd>'+(p.online?"En línea":"Desconectado")+'</dd></div><div><dt>Último acceso</dt><dd>'+safe(formatDate(p.last_login_at))+'</dd></div></dl>'+
    '</div>'+
   '</article>';
  }).join("");
@@ -251,7 +251,7 @@ function populateRecipients(reset=true){
  const others=state.profiles.filter(p=>p.id!==state.user?.id);
  if(!others.length){select.innerHTML='<option value="">Sin otro administrador</option>';state.chatPartnerId="";return}
  const current=state.chatPartnerId||select.value||others[0].id;
- select.innerHTML=others.map(p=>'<option value="'+safe(p.id)+'">'+safe(p.display_name||p.username)+' · '+safe(p.corporate_title||"")+'</option>').join("");
+ select.innerHTML=others.map(p=>'<option value="'+safe(p.id)+'">'+safe(p.display_name||"Administrador")+' · '+safe(p.corporate_title||"")+'</option>').join("");
  const valid=others.some(p=>p.id===current)?current:others[0].id;
  select.value=valid;
  if(reset||state.chatPartnerId!==valid){state.chatPartnerId=valid}
