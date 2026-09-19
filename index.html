@@ -7,7 +7,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://cnivcnexsqobipvqxero.supabase.co; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; upgrade-insecure-requests">
   <title>CardNest</title>
   <script src="frame-guard.js?v=20260919-1"></script>
-  <link rel="stylesheet" href="styles.css?v=20260919-34">
+  <link rel="stylesheet" href="styles.css?v=20260919-35">
   <link rel="stylesheet" href="mercadolibre-channel.css?v=20260919-1">
 </head>
 <body>
@@ -27,19 +27,34 @@
 </header>
 
   <main class="container"><section id="heroHome" class="brand-hero brand-hero-image-only" role="button" tabindex="0" aria-label="CardNest. Volver al inicio" title="Volver al inicio"><img src="https://drive.google.com/thumbnail?id=1803D_DrAX2EEoznB_eQNPK8ZbVWFenti&sz=w2000" alt="CardNest"></section>
-    <nav class="catalog-nav" aria-label="Categorías">
-  <button class="catalog-tab active" data-category="all">Todos</button>
-  <button class="catalog-tab" data-category="pokemon">Pokémon · Cartas TCG</button>
-  <button class="catalog-tab" data-category="yugioh">Yu-Gi-Oh!</button>
-  <button class="catalog-tab" data-category="digimon">Digimon</button>
-  <button class="catalog-tab" data-category="dragonball">Dragon Ball</button>
-  <button class="catalog-tab" data-category="naruto">Naruto</button>
-  <button class="catalog-tab" data-category="other_cards">Otras cartas · TCG</button>
-  <button class="catalog-tab" data-category="accessories">Accesorios</button>
-  <button class="catalog-tab" data-category="sealed">Producto sellado</button>
-  <button class="catalog-tab" data-category="books">Libros</button>
-  <button class="catalog-tab catalog-tab-electronics" data-category="electronics">Electrónica <span class="new-pill">NUEVO</span></button>
-  <button class="catalog-tab" data-category="misc">Coleccionables y más</button>
+    <nav class="catalog-nav catalog-nav-grouped" aria-label="Categorías">
+  <div class="catalog-nav-all">
+    <span class="catalog-nav-label">Catálogo</span>
+    <button class="catalog-tab active" data-category="all">Todos</button>
+  </div>
+
+  <div class="catalog-nav-group">
+    <span class="catalog-nav-label">Cartas TCG</span>
+    <div class="catalog-nav-options">
+      <button class="catalog-tab" data-category="pokemon">Pokémon</button>
+      <button class="catalog-tab" data-category="yugioh">Yu-Gi-Oh!</button>
+      <button class="catalog-tab" data-category="digimon">Digimon</button>
+      <button class="catalog-tab" data-category="dragonball">Dragon Ball</button>
+      <button class="catalog-tab" data-category="naruto">Naruto</button>
+      <button class="catalog-tab" data-category="other_cards">Otras cartas</button>
+    </div>
+  </div>
+
+  <div class="catalog-nav-group">
+    <span class="catalog-nav-label">Otros productos</span>
+    <div class="catalog-nav-options">
+      <button class="catalog-tab" data-category="accessories">Accesorios</button>
+      <button class="catalog-tab" data-category="sealed">Producto sellado</button>
+      <button class="catalog-tab" data-category="books">Libros</button>
+      <button class="catalog-tab catalog-tab-electronics" data-category="electronics">Electrónica <span class="new-pill">NUEVO</span></button>
+      <button class="catalog-tab" data-category="misc">Coleccionables y más</button>
+    </div>
+  </div>
 </nav>
 <section class="services-hub" aria-label="Servicios y opciones de compra de CardNest">
   <header class="services-hub-head">
