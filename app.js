@@ -198,7 +198,17 @@ function mediaByProduct(rows){
  });
  return map;
 }
-function normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap){
+function detailsByProduct(rows){
+ const map=new Map();
+ (Array.isArray(rows)?rows:[]).forEach(function(row){
+  const key=String(row.product_id);
+  if(!map.has(key))map.set(key,[]);
+  map.get(key).push(row);
+ });
+ map.forEach(function(items){items.sort(function(a,b){return Number(a.position||0)-Number(b.position||0)})});
+ return map;
+}
+function normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap,detailsMap){
  const category=p.category_code||"misc";
  const a=p.attributes&&typeof p.attributes==="object"?p.attributes:{};
  const misc=miscMap.get(String(p.id))||{};
@@ -222,6 +232,7 @@ function normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMa
  const record={
   id:p.id,category:category,category_label:CATEGORY_LABELS[category]||category,
   canonical_name:p.name,name_original:p.original_name||p.product_type||"",
+  product_type:p.product_type||"",
   language:p.language||card.card_language||book.book_language||"",
   card_number:card.card_number||p.reference_code||"",
   set_name:setName,set_code:card.set_code||"",hp:card.hp,
@@ -231,7 +242,9 @@ function normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMa
   image_path:p.image_path||"",source_image_url:p.source_image_url||"",
   primary_image_url:p.primary_image_url||"",
   media:mediaMap.get(String(p.id))||[],
+  details:detailsMap.get(String(p.id))||[],
   stock_quantity:p.stock_quantity,sale_status:p.sale_status,demo:!!p.demo,
+  validation_status:p.validation_status||"",
   condition:p.condition_label||"",
   generic_brand:p.brand||"",generic_model:p.model||"",generic_description:p.description||"",
   misc_type:misc.object_type||p.product_type||"",
@@ -267,7 +280,8 @@ async function loadProducts(){
   fetchSupabaseTable("misc_details",headers,"","product_id"),
   fetchSupabaseTable("book_details",headers,"","product_id"),
   fetchSupabaseTable("electronics_details",headers,"","product_id"),
-  fetchSupabaseTable("trading_card_details",headers,"","product_id")
+  fetchSupabaseTable("trading_card_details",headers,"","product_id"),
+  fetchSupabaseTable("product_details",headers,"","id")
  ]);
  const remoteCards=results[0].status==="fulfilled"&&Array.isArray(results[0].value)?results[0].value:[];
  const localCards=results[3].status==="fulfilled"&&Array.isArray(results[3].value)?results[3].value:[];
@@ -294,7 +308,8 @@ async function loadProducts(){
  const bookMap=mapByProduct(results[7].status==="fulfilled"?results[7].value:[]);
  const electronicsMap=mapByProduct(results[8].status==="fulfilled"?results[8].value:[]);
  const cardMap=mapByProduct(results[9].status==="fulfilled"?results[9].value:[]);
- const master=masterRaw.map(function(p){return normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap)});
+ const detailsMap=detailsByProduct(results[10].status==="fulfilled"?results[10].value:[]);
+ const master=masterRaw.map(function(p){return normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap,detailsMap)});
  const byKey=new Map();
  legacyPokemon.concat(demo,legacyElectronics,master).forEach(function(p){byKey.set(productKey(p),p)});
  state.products=mixCatalog(Array.from(byKey.values()));
@@ -303,6 +318,7 @@ async function loadProducts(){
  const partial=[];
  if(!masterRaw.length&&results[4].status!=="fulfilled")partial.push("inventario maestro");
  if(results[5].status!=="fulfilled")partial.push("galerías de imágenes");
+ if(results[10].status!=="fulfilled")partial.push("detalles de productos");
  if(!remoteCards.length&&localCards.length)partial.push("inventario Pokémon local");
  if(results[1].status!=="fulfilled")partial.push("categorías de demostración");
  setCatalogStatus(partial.length?"Catálogo parcial: no fue posible actualizar "+partial.join(" y ")+".":"",partial.length?"warning":"");
@@ -311,7 +327,8 @@ async function loadProducts(){
  updateQuote();
 }
 function matches(p,q,language,rarity){
- const hay=[p.id,p.canonical_name,p.name_original,p.card_number,p.set_name,p.set_code,p.language,p.rarity_detected,p.rarity_verified,p.variant,p.category_label,p.electronics_brand,p.electronics_model,p.electronics_type,p.electronics_specs,p.electronics_compatibility,p.electronics_power,p.electronics_color,p.generic_brand,p.generic_model,p.generic_description,p.misc_type,p.misc_theme,p.misc_material,p.misc_dimensions,p.misc_details].map(normalize).join(" ");
+ const detailSearch=(Array.isArray(p.details)?p.details:[]).map(function(d){return [d.section,d.label,d.value].join(" ")}).join(" ");
+ const hay=[p.id,p.canonical_name,p.name_original,p.product_type,p.card_number,p.set_name,p.set_code,p.language,p.rarity_detected,p.rarity_verified,p.variant,p.category_label,p.electronics_brand,p.electronics_model,p.electronics_type,p.electronics_specs,p.electronics_compatibility,p.electronics_power,p.electronics_color,p.generic_brand,p.generic_model,p.generic_description,p.misc_type,p.misc_theme,p.misc_material,p.misc_dimensions,p.misc_details,detailSearch].map(normalize).join(" ");
  const terms=normalize(q).split(/\s+/).filter(Boolean);
  return terms.every(function(term){return hay.includes(term)})&&(!language||p.language===language)&&(!rarity||(p.category==="pokemon"&&rarityGroup(p)===rarity));
 }
@@ -325,6 +342,47 @@ function sortProducts(list){
   return String(a.id).localeCompare(String(b.id),"es",{numeric:true,sensitivity:"base"});
  });
  return sorted;
+}
+function displayInfo(value){
+ const text=String(value==null?"":value).trim();
+ return text||"Sin información";
+}
+function renderExtendedDetails(container,p){
+ if(!container)return;
+ container.innerHTML="";
+ const general=[
+  ["Tipo de producto",p.product_type||p.misc_type||p.electronics_type||p.rarity_detected],
+  ["Marca",p.generic_brand||p.electronics_brand],
+  ["Modelo",p.generic_model||p.electronics_model],
+  ["Descripción",p.generic_description||p.variant]
+ ];
+ const used=new Set(general.map(function(row){return normalize(row[0])}));
+ function addSection(title,rows){
+  const section=document.createElement("section");section.className="detail-section";
+  const h=document.createElement("h4");h.textContent=title;section.appendChild(h);
+  const dl=document.createElement("dl");dl.className="detail-list";
+  rows.forEach(function(row){
+   const line=document.createElement("div");
+   const dt=document.createElement("dt");dt.textContent=row[0];
+   const dd=document.createElement("dd");dd.textContent=displayInfo(row[1]);
+   line.appendChild(dt);line.appendChild(dd);dl.appendChild(line);
+  });
+  section.appendChild(dl);container.appendChild(section);
+ }
+ addSection("Información general",general);
+ const groups=new Map();
+ (Array.isArray(p.details)?p.details:[]).forEach(function(d){
+  if(!d||!d.label)return;
+  const key=normalize(d.label);if(used.has(key))return;used.add(key);
+  const section=String(d.section||"Detalles").trim()||"Detalles";
+  if(!groups.has(section))groups.set(section,[]);
+  groups.get(section).push([d.label,d.value]);
+ });
+ groups.forEach(function(rows,title){addSection(title,rows)});
+}
+function compactStatusLabel(p,sold){
+ if(p.demo)return "Estado: Demostración";
+ return sold?"Estado: No disponible":"Estado: Disponible";
 }
 function render(){
  const grid=document.getElementById("cardsGrid"),tpl=document.getElementById("cardTemplate");
@@ -414,6 +472,19 @@ function render(){
    n.querySelector(".card-rarity").textContent=p.rarity_verified||p.rarity_detected||"General";
    n.querySelector(".card-status").textContent=productStatus(p);
   }
+
+  n.querySelector(".details-summary").textContent=displayInfo(p.product_type||p.misc_type||p.electronics_type||p.rarity_detected);
+  n.querySelector(".card-status-summary").textContent=compactStatusLabel(p,sold);
+  n.querySelector(".card-stock-detail").textContent=sold?"Sin unidades disponibles":String(Number(p.stock_quantity)||1)+" unidad"+((Number(p.stock_quantity)||1)===1?"":"es")+" disponible"+((Number(p.stock_quantity)||1)===1?"":"s");
+  n.querySelector(".card-validation-detail").textContent=p.validation_status==="verified"?"Información verificada":(p.validation_status?"Pendiente de verificación":"Sin información");
+  renderExtendedDetails(n.querySelector(".extended-details"),p);
+  n.querySelectorAll(".product-accordion").forEach(function(detail){
+   detail.addEventListener("toggle",function(){
+    if(!detail.open)return;
+    card.querySelectorAll(".product-accordion").forEach(function(other){if(other!==detail)other.open=false});
+   });
+  });
+
   const fav=n.querySelector(".favorite-btn"),selected=state.favorites.has(productKey(p));
   if(sold){fav.disabled=true;fav.textContent="No disponible"}else{fav.textContent=selected?"♥ Seleccionado":"♡ Me interesa";fav.classList.toggle("selected",selected)}
   if(!sold)fav.onclick=function(){toggleFavorite(p)};
@@ -1570,6 +1641,7 @@ document.getElementById("viewerPrev")?.addEventListener("click",function(){moveI
 document.getElementById("viewerNext")?.addEventListener("click",function(){moveImageViewer(1)});
 const viewer=document.getElementById("imageViewer");
 if(viewer){
+ let touchStartX=null;
  viewer.addEventListener("close",function(){document.body.classList.remove("viewer-open")});
  viewer.addEventListener("cancel",function(){document.body.classList.remove("viewer-open")});
  viewer.addEventListener("click",function(e){if(e.target===viewer)closeImageViewer()});
@@ -1577,6 +1649,14 @@ if(viewer){
   if(e.key==="ArrowLeft"){e.preventDefault();moveImageViewer(-1)}
   if(e.key==="ArrowRight"){e.preventDefault();moveImageViewer(1)}
  });
+ viewer.addEventListener("touchstart",function(e){
+  if(e.touches&&e.touches.length===1)touchStartX=e.touches[0].clientX;
+ },{passive:true});
+ viewer.addEventListener("touchend",function(e){
+  if(touchStartX==null||!e.changedTouches||!e.changedTouches.length)return;
+  const delta=e.changedTouches[0].clientX-touchStartX;touchStartX=null;
+  if(Math.abs(delta)>55)moveImageViewer(delta<0?1:-1);
+ },{passive:true});
 }
 let selectedDockScrollTimer;
 window.addEventListener("scroll",function(){
