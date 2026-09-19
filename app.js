@@ -581,7 +581,8 @@ function selectCategory(cat){
  if(filterAccordion&&window.matchMedia("(max-width: 900px)").matches)filterAccordion.open=false;
  state.visibleLimit=CATALOG_PAGE_SIZE;
  document.querySelectorAll(".catalog-tab").forEach(function(b){b.classList.toggle("active",b.dataset.category===state.category)});
- document.getElementById("discoverStrip").hidden=state.category!=="all";
+ const discoverStrip=document.getElementById("discoverStrip");
+ if(discoverStrip)discoverStrip.hidden=state.category!=="all";
  const rarityWrap=document.getElementById("rarityFilterWrap");
  const rarityAllowed=state.category==="all"||CARD_CATEGORIES.has(state.category);
  rarityWrap.hidden=!rarityAllowed;
