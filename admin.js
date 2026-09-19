@@ -64,15 +64,16 @@ function showLogin(){
  location.replace("index.html?collab=1");
 }
 function showPanel(){
- $("#panelView").hidden=false;
+ const panel=$("#panelView");
+ if(panel)panel.hidden=false;
  const me=selfProfile();
- $("#sidebarUser").textContent=me?.display_name||me?.username||"Administrador";
- $("#sidebarRole").textContent=me?.corporate_title||me?.role||"Administrador";
- $("#headerName").textContent=me?.display_name||me?.username||"Administrador";
- $("#headerTitle").textContent=[me?.corporate_title,me?.professional_title].filter(Boolean).join(" · ")||"Administración";
- setAvatar($("#sidebarAvatar"),me);
+ const headerName=$("#headerName");
+ const headerTitle=$("#headerTitle");
+ const passwordWarning=$("#passwordWarning");
+ if(headerName)headerName.textContent=me?.display_name||me?.username||"Administrador";
+ if(headerTitle)headerTitle.textContent=[me?.corporate_title,me?.professional_title].filter(Boolean).join(" · ")||"Administración";
  setAvatar($("#headerAvatar"),me);
- $("#passwordWarning").hidden=!state.user?.must_change_password;
+ if(passwordWarning)passwordWarning.hidden=!state.user?.must_change_password;
  updateChatBadge();
  startTimers();
 }
