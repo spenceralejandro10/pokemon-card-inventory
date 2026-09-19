@@ -227,3 +227,173 @@
 @media(max-width:540px){
   .ml-channel-banner{padding:18px!important}
 }
+
+/* 2026-09-19 · Mercado Libre compact horizontal layout */
+.ml-channel-banner.ml-channel-compact{
+  display:grid!important;
+  grid-template-columns:230px minmax(0,1fr) 330px!important;
+  gap:24px!important;
+  align-items:center!important;
+  min-height:0!important;
+  margin:16px 0!important;
+  padding:18px 22px!important;
+  border-radius:18px!important;
+  background:linear-gradient(120deg,#fff4b0 0%,#ffe679 58%,#ffdc4b 100%)!important;
+}
+.ml-channel-banner.ml-channel-compact::after{
+  width:150px!important;
+  height:150px!important;
+  right:-58px!important;
+  bottom:-88px!important;
+  opacity:.45!important;
+}
+.ml-channel-brand-panel{
+  position:relative;
+  z-index:2;
+  display:grid;
+  gap:9px;
+  justify-items:start;
+  align-content:center;
+}
+.ml-channel-compact .ml-channel-logo-lockup{
+  min-height:0!important;
+  width:210px!important;
+  padding:8px 12px!important;
+  gap:7px!important;
+  border-radius:13px!important;
+}
+.ml-channel-compact .ml-channel-symbol{
+  width:48px!important;
+  height:48px!important;
+}
+.ml-channel-compact .ml-channel-wordmark{
+  width:132px!important;
+  height:54px!important;
+}
+.ml-channel-compact .ml-channel-kicker{
+  min-height:24px!important;
+  padding:3px 9px!important;
+  font-size:9px!important;
+}
+.ml-channel-content{
+  position:relative;
+  z-index:2;
+  min-width:0;
+}
+.ml-channel-content h2{
+  margin:0 0 7px!important;
+  font-size:clamp(21px,2vw,29px)!important;
+  line-height:1.08!important;
+  color:#101d38!important;
+}
+.ml-channel-content p{
+  margin:0!important;
+  max-width:none!important;
+  font-size:12.5px!important;
+  line-height:1.55!important;
+  color:#39445a!important;
+}
+.ml-channel-trust-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:12px;
+}
+.ml-channel-trust-row span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:29px;
+  padding:5px 9px;
+  border:1px solid rgba(20,33,61,.12);
+  border-radius:999px;
+  background:rgba(255,255,255,.55);
+  color:#37445a;
+  font-size:10px;
+  font-weight:800;
+}
+.ml-channel-trust-row b{
+  color:#157347;
+  font-size:11px;
+}
+.ml-channel-side{
+  position:relative;
+  z-index:2;
+  display:grid;
+  gap:10px;
+  min-width:0;
+}
+.ml-channel-safe{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:11px 12px;
+  border:1px solid rgba(20,33,61,.14);
+  border-radius:12px;
+  background:rgba(255,255,255,.62);
+}
+.ml-channel-safe img{
+  width:38px;
+  height:38px;
+  object-fit:contain;
+  flex:0 0 auto;
+}
+.ml-channel-safe strong{
+  display:block;
+  margin-bottom:3px;
+  color:#14213d;
+  font-size:11px;
+  line-height:1.25;
+}
+.ml-channel-safe span{
+  display:block;
+  color:#536078;
+  font-size:9.8px;
+  line-height:1.4;
+}
+.ml-channel-actions-side{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+  margin-top:0!important;
+}
+.ml-channel-actions-side a{
+  min-height:36px!important;
+  padding:0 9px!important;
+  border-radius:9px!important;
+  font-size:10px!important;
+  text-align:center;
+}
+.ml-channel-note{display:none!important}
+@media(max-width:1040px){
+  .ml-channel-banner.ml-channel-compact{
+    grid-template-columns:200px minmax(0,1fr)!important;
+  }
+  .ml-channel-side{
+    grid-column:1/-1;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+  }
+  .ml-channel-actions-side{min-width:310px}
+}
+@media(max-width:720px){
+  .ml-channel-banner.ml-channel-compact{
+    grid-template-columns:1fr!important;
+    padding:16px!important;
+    gap:14px!important;
+  }
+  .ml-channel-brand-panel{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .ml-channel-side{
+    grid-column:auto;
+    grid-template-columns:1fr;
+  }
+  .ml-channel-actions-side{
+    min-width:0;
+    grid-template-columns:1fr!important;
+  }
+}
