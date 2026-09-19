@@ -5,7 +5,16 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const CLIENT_ID = Deno.env.get("MERCADOLIBRE_CLIENT_ID") ?? "";
 const CLIENT_SECRET = Deno.env.get("MERCADOLIBRE_CLIENT_SECRET") ?? "";
-const MAX_BODY_BYTES = 1_048_576;
+const MAX_BODY_BYTES = 256 * 1024;
+const EXPECTED_SITE_ID = "MCO";
+const API_ORIGIN = "https://api.mercadolibre.com";
+const RESOURCE_PREFIXES: Record<string, string[]> = {
+  items: ["/items/"],
+  orders_v2: ["/orders/"],
+  questions: ["/questions/"],
+  messages: ["/messages/"],
+  shipments: ["/shipments/"]
+};
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -13,25 +22,71 @@ function json(body: unknown, status = 200) {
     headers: {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store",
-      "x-content-type-options": "nosniff"
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY"
     }
   });
 }
 const clean = (v: unknown) => String(v ?? "").trim();
 
+async function readLimitedBody(req: Request) {
+  if (!req.body) return new Uint8Array();
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > MAX_BODY_BYTES) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const joined = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    joined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return joined;
+}
+
+function verificationUrl(topic: string, resource: string) {
+  const prefixes = RESOURCE_PREFIXES[topic];
+  if (!prefixes || resource.startsWith("//") || resource.includes("\\") || !prefixes.some((prefix) => resource.startsWith(prefix))) {
+    return null;
+  }
+  try {
+    const url = new URL(resource, API_ORIGIN);
+    const pathAllowed = prefixes.some((prefix) => url.pathname.startsWith(prefix));
+    return url.origin === API_ORIGIN && pathAllowed ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req: Request) => {
-  if (req.method === "GET") return json({ ok: true, service: "CardNest Mercado Libre webhook" });
+  const configured = !!(
+    SUPABASE_URL && SERVICE_ROLE && CLIENT_SECRET.length >= 8 && /^\d+$/.test(CLIENT_ID) &&
+    Number.isSafeInteger(Number(CLIENT_ID)) && Number(CLIENT_ID) > 0
+  );
+  if (req.method === "GET") {
+    return json({ ok: true, service: "CardNest Mercado Libre webhook", configured, expected_site_id: EXPECTED_SITE_ID });
+  }
   if (req.method !== "POST") return json({ ok: false, error: "METHOD_NOT_ALLOWED" }, 405);
-  if (!SUPABASE_URL || !SERVICE_ROLE) return json({ ok: false, error: "SERVER_CONFIG" }, 503);
+  if (!configured) return json({ ok: false, error: "SERVER_CONFIG" }, 503);
 
   const contentLength = Number(req.headers.get("content-length") || 0);
   if (contentLength > MAX_BODY_BYTES) return json({ ok: false, error: "PAYLOAD_TOO_LARGE" }, 413);
 
   let event: Record<string, unknown>;
   try {
-    const raw = await req.text();
-    if (raw.length > MAX_BODY_BYTES) return json({ ok: false, error: "PAYLOAD_TOO_LARGE" }, 413);
-    const parsed = JSON.parse(raw || "{}");
+    const raw = await readLimitedBody(req);
+    if (!raw) return json({ ok: false, error: "PAYLOAD_TOO_LARGE" }, 413);
+    const parsed = JSON.parse(new TextDecoder().decode(raw) || "{}");
     if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") throw new Error("invalid");
     event = parsed as Record<string, unknown>;
   } catch {
@@ -40,12 +95,20 @@ Deno.serve(async (req: Request) => {
 
   const resource = clean(event.resource).slice(0, 500);
   const topic = clean(event.topic).slice(0, 120);
-  const userId = Number(event.user_id || 0) || null;
-  const applicationId = Number(event.application_id || 0) || null;
-  const attempts = Number(event.attempts || 0) || 0;
-  const sent = clean(event.sent);
-  const eventId = clean(event.id);
-  const dedupKey = eventId || [topic, resource, userId ?? "", sent].join("|");
+  const userId = Number(event.user_id || 0);
+  const applicationId = Number(event.application_id || 0);
+  const attempts = Math.max(0, Math.min(100, Number(event.attempts || 0) || 0));
+  const sent = clean(event.sent).slice(0, 100);
+  const eventId = clean(event.id).slice(0, 500);
+  const resourceUrl = verificationUrl(topic, resource);
+
+  // Acknowledge notifications that are not for this exact application without
+  // storing them or making authenticated requests. Mercado Libre retries non-2xx.
+  if (!Number.isSafeInteger(applicationId) || applicationId !== Number(CLIENT_ID) || !Number.isSafeInteger(userId) || userId <= 0 || !resourceUrl) {
+    return json({ ok: true });
+  }
+
+  const dedupKey = eventId || [topic, resource, userId, sent].join("|");
 
   const db = createClient(SUPABASE_URL, SERVICE_ROLE, {
     auth: { persistSession: false, autoRefreshToken: false }
@@ -59,7 +122,7 @@ Deno.serve(async (req: Request) => {
   }
 
   async function refreshTokenIfNeeded(row: any) {
-    if (!row?.access_token) return null;
+    if (!row?.access_token || !["connected", "error"].includes(row.status) || row.site_id !== EXPECTED_SITE_ID) return null;
     const expires = row.expires_at ? new Date(row.expires_at).getTime() : 0;
     if (expires > Date.now() + 5 * 60 * 1000) return row.access_token;
     if (!row.refresh_token || !CLIENT_ID || !CLIENT_SECRET) return null;
@@ -96,10 +159,16 @@ Deno.serve(async (req: Request) => {
         return null;
       }
 
+      const refreshedUserId = Number(data.user_id ?? row.user_id);
+      if (!Number.isSafeInteger(refreshedUserId) || refreshedUserId !== Number(row.user_id)) {
+        await db.rpc("mercadolibre_release_refresh_lock", { p_error: "refresh_user_mismatch" });
+        return null;
+      }
+
       const { error } = await db.rpc("mercadolibre_store_tokens", {
         p_access_token: String(data.access_token),
-        p_refresh_token: String(data.refresh_token ?? ""),
-        p_user_id: Number(data.user_id ?? row.user_id),
+        p_refresh_token: String(data.refresh_token ?? row.refresh_token),
+        p_user_id: refreshedUserId,
         p_site_id: row.site_id ?? null,
         p_nickname: row.nickname ?? null,
         p_token_type: clean(data.token_type) || "bearer",
@@ -118,6 +187,9 @@ Deno.serve(async (req: Request) => {
   }
 
   async function processEvent() {
+    const tokens = await getTokens();
+    if (!tokens || Number(tokens.user_id) !== userId || tokens.site_id !== EXPECTED_SITE_ID) return;
+
     const sentAt = sent && !Number.isNaN(new Date(sent).getTime()) ? new Date(sent).toISOString() : null;
     const { data: inserted, error: insertError } = await db
       .from("mercadolibre_webhook_events")
@@ -135,15 +207,6 @@ Deno.serve(async (req: Request) => {
 
     if (insertError || !inserted?.id) return;
 
-    if (!resource.startsWith("/")) {
-      await db.from("mercadolibre_webhook_events").update({
-        processed_at: new Date().toISOString(),
-        error: "invalid_resource"
-      }).eq("id", inserted.id);
-      return;
-    }
-
-    const tokens = await getTokens();
     const accessToken = await refreshTokenIfNeeded(tokens);
     if (!accessToken) {
       await db.from("mercadolibre_webhook_events").update({
@@ -154,9 +217,12 @@ Deno.serve(async (req: Request) => {
     }
 
     let status = 0;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8_000);
     try {
-      const verification = await fetch(`https://api.mercadolibre.com${resource}`, {
-        headers: { Authorization: `Bearer ${accessToken}`, accept: "application/json" }
+      const verification = await fetch(resourceUrl, {
+        headers: { Authorization: `Bearer ${accessToken}`, accept: "application/json" },
+        signal: controller.signal
       });
       status = verification.status;
       // The webhook is treated only as an alert. We deliberately do not persist
@@ -164,6 +230,8 @@ Deno.serve(async (req: Request) => {
       await verification.body?.cancel().catch(() => {});
     } catch {
       status = 0;
+    } finally {
+      clearTimeout(timer);
     }
 
     await db.from("mercadolibre_webhook_events").update({

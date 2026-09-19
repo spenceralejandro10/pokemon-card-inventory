@@ -6,8 +6,11 @@ const CLIENT_SECRET = Deno.env.get("MERCADOLIBRE_CLIENT_SECRET") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const REDIRECT_URI = "https://cnivcnexsqobipvqxero.supabase.co/functions/v1/mercadolibre-oauth";
+const WEBHOOK_URI = "https://cnivcnexsqobipvqxero.supabase.co/functions/v1/mercadolibre-webhook";
 const ADMIN_RETURN = "https://spenceralejandro10.github.io/pokemon-card-inventory/admin.html";
 const AUTH_BASE = "https://auth.mercadolibre.com.co/authorization";
+const EXPECTED_SITE_ID = "MCO";
+const MAX_BODY_BYTES = 25 * 1024;
 const allowedOrigins = new Set([
   "https://spenceralejandro10.github.io",
   "https://cardnest.co",
@@ -33,11 +36,33 @@ async function sha256Hex(value: string) {
 function randomUrlSafe(size: number) {
   return b64url(crypto.getRandomValues(new Uint8Array(size)));
 }
+async function readLimitedBody(req: Request) {
+  if (!req.body) return new Uint8Array();
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > MAX_BODY_BYTES) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const joined = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    joined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return joined;
+}
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
-  const allow = allowedOrigins.has(origin) ? origin : "https://spenceralejandro10.github.io";
-  return {
-    "Access-Control-Allow-Origin": allow,
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Headers": "content-type, apikey, x-admin-token",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Cache-Control": "no-store",
@@ -47,6 +72,8 @@ function cors(req: Request) {
     "X-Frame-Options": "DENY",
     "Vary": "Origin"
   };
+  if (allowedOrigins.has(origin)) headers["Access-Control-Allow-Origin"] = origin;
+  return headers;
 }
 function json(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: cors(req) });
@@ -59,7 +86,11 @@ function redirectStatus(status: string) {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors(req) });
+  const requestOrigin = req.headers.get("origin") ?? "";
+  if ((req.method === "POST" || req.method === "OPTIONS") && requestOrigin && !allowedOrigins.has(requestOrigin)) {
+    return json(req, { ok: false, error: "ORIGIN_NOT_ALLOWED" }, 403);
+  }
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
   if (!SUPABASE_URL || !SERVICE_ROLE || !CLIENT_ID || !CLIENT_SECRET) {
     return json(req, { ok: false, error: "SERVER_CONFIG" }, 503);
   }
@@ -101,6 +132,59 @@ Deno.serve(async (req: Request) => {
     if (error) console.error("ml audit failed", error.code);
   }
 
+  async function readiness() {
+    const clientIdOk = /^\d+$/.test(CLIENT_ID) && Number.isSafeInteger(Number(CLIENT_ID)) && Number(CLIENT_ID) > 0;
+    const { data: connection, error: connectionError } = await db
+      .from("mercadolibre_connection")
+      .select("user_id,site_id,nickname,scope,access_secret_id,refresh_secret_id,expires_at,connected_at,last_refresh_at,updated_at,status,last_error")
+      .eq("id", 1)
+      .maybeSingle();
+
+    const hasConnectionValues = !!(
+      connection?.user_id || connection?.site_id || connection?.access_secret_id || connection?.refresh_secret_id
+    );
+    const completeConnection = !!(
+      connection?.user_id && connection?.access_secret_id && connection?.refresh_secret_id
+    );
+    const storageOk = !connectionError && (
+      !connection || (!hasConnectionValues && connection.status === "disconnected") || completeConnection
+    );
+    const siteOk = !connection?.site_id || connection.site_id === EXPECTED_SITE_ID;
+
+    let webhookOk = false;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5_000);
+    try {
+      const response = await fetch(WEBHOOK_URI, {
+        headers: { accept: "application/json" },
+        signal: controller.signal
+      });
+      const health = await response.json().catch(() => ({}));
+      webhookOk = response.ok && health?.ok === true && health?.configured === true;
+    } catch {
+      webhookOk = false;
+    } finally {
+      clearTimeout(timer);
+    }
+
+    const checks = [
+      { key: "configuration", label: "Credenciales y App ID configurados", ok: clientIdOk && CLIENT_SECRET.length >= 8 },
+      { key: "secure_storage", label: "Almacenamiento cifrado consistente", ok: storageOk },
+      { key: "webhook", label: "Webhook disponible y configurado", ok: webhookOk },
+      { key: "site", label: "Cuenta compatible con Mercado Libre Colombia", ok: siteOk }
+    ];
+
+    return {
+      ready: checks.every((check) => check.ok),
+      checks,
+      connection,
+      redirect_uri: REDIRECT_URI,
+      webhook_uri: WEBHOOK_URI,
+      expected_site_id: EXPECTED_SITE_ID,
+      checked_at: new Date().toISOString()
+    };
+  }
+
   const url = new URL(req.url);
 
   if (req.method === "GET") {
@@ -110,8 +194,15 @@ Deno.serve(async (req: Request) => {
     const code = clean(url.searchParams.get("code"));
     const state = clean(url.searchParams.get("state"));
     if (!code || !state) {
-      return json(req, { ok: true, service: "CardNest Mercado Libre OAuth", configured: true });
+      return json(req, {
+        ok: true,
+        service: "CardNest Mercado Libre OAuth",
+        configured: true,
+        redirect_uri: REDIRECT_URI,
+        webhook_uri: WEBHOOK_URI
+      });
     }
+    if (code.length > 2_048 || state.length > 512) return redirectStatus("invalid_state");
 
     const stateHash = await sha256Hex(state);
     const now = new Date().toISOString();
@@ -153,9 +244,12 @@ Deno.serve(async (req: Request) => {
     });
 
     const tokenData = await tokenRes.json().catch(() => ({}));
-    if (!tokenRes.ok || !tokenData?.access_token) {
+    if (!tokenRes.ok || !tokenData?.access_token || !tokenData?.refresh_token) {
       console.error("mercadolibre token exchange failed", tokenRes.status);
-      await audit(session.admin_user_id, "mercadolibre_oauth_failed", { http_status: tokenRes.status });
+      await audit(session.admin_user_id, "mercadolibre_oauth_failed", {
+        http_status: tokenRes.status,
+        reason: !tokenData?.refresh_token ? "missing_refresh_token" : "token_exchange"
+      });
       return redirectStatus("token_error");
     }
 
@@ -163,18 +257,29 @@ Deno.serve(async (req: Request) => {
       headers: { Authorization: `Bearer ${tokenData.access_token}`, accept: "application/json" }
     });
     const me = meRes.ok ? await meRes.json().catch(() => ({})) : {};
+    const tokenUserId = Number(tokenData.user_id ?? 0);
+    const profileUserId = Number(me?.id ?? 0);
+    const siteId = clean(me?.site_id);
 
-    const userId = Number(tokenData.user_id ?? me?.id ?? 0);
-    if (!Number.isFinite(userId) || userId <= 0) {
+    if (!meRes.ok || !Number.isSafeInteger(tokenUserId) || tokenUserId <= 0 || tokenUserId !== profileUserId) {
       await audit(session.admin_user_id, "mercadolibre_oauth_failed", { reason: "invalid_user_id" });
       return redirectStatus("token_error");
     }
+    if (siteId !== EXPECTED_SITE_ID) {
+      await audit(session.admin_user_id, "mercadolibre_oauth_failed", {
+        reason: "wrong_site",
+        received_site_id: siteId || null
+      });
+      return redirectStatus("wrong_site");
+    }
+
+    const userId = tokenUserId;
 
     const { error: storeError } = await db.rpc("mercadolibre_store_tokens", {
       p_access_token: String(tokenData.access_token),
-      p_refresh_token: String(tokenData.refresh_token ?? ""),
+      p_refresh_token: String(tokenData.refresh_token),
       p_user_id: userId,
-      p_site_id: clean(me?.site_id) || null,
+      p_site_id: siteId,
       p_nickname: clean(me?.nickname) || null,
       p_token_type: clean(tokenData.token_type) || "bearer",
       p_scope: clean(tokenData.scope),
@@ -189,7 +294,7 @@ Deno.serve(async (req: Request) => {
 
     await audit(session.admin_user_id, "mercadolibre_connected", {
       user_id: userId,
-      site_id: clean(me?.site_id) || null,
+      site_id: siteId,
       nickname: clean(me?.nickname) || null
     });
 
@@ -203,9 +308,16 @@ Deno.serve(async (req: Request) => {
 
   if (req.method !== "POST") return json(req, { ok: false, error: "METHOD_NOT_ALLOWED" }, 405);
 
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > MAX_BODY_BYTES) return json(req, { ok: false, error: "PAYLOAD_TOO_LARGE" }, 413);
+
   let body: Record<string, unknown>;
   try {
-    body = await req.json();
+    const raw = await readLimitedBody(req);
+    if (!raw) return json(req, { ok: false, error: "PAYLOAD_TOO_LARGE" }, 413);
+    const parsed = JSON.parse(new TextDecoder().decode(raw) || "{}");
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") throw new Error("invalid");
+    body = parsed as Record<string, unknown>;
   } catch {
     return json(req, { ok: false, error: "INVALID_JSON" }, 400);
   }
@@ -215,17 +327,19 @@ Deno.serve(async (req: Request) => {
 
   const action = clean(body.action);
 
-  if (action === "status") {
-    const { data } = await db
-      .from("mercadolibre_connection")
-      .select("user_id,site_id,nickname,scope,expires_at,connected_at,last_refresh_at,updated_at,status,last_error")
-      .eq("id", 1)
-      .maybeSingle();
-
-    const connected = data?.status === "connected" && !!data?.user_id;
+  if (action === "status" || action === "preflight") {
+    const result = await readiness();
+    const data = result.connection;
+    const connected = data?.status === "connected" && !!data?.user_id && !!data?.access_secret_id && !!data?.refresh_secret_id;
     return json(req, {
       ok: true,
       connected,
+      ready: result.ready,
+      checks: result.checks,
+      redirect_uri: result.redirect_uri,
+      webhook_uri: result.webhook_uri,
+      expected_site_id: result.expected_site_id,
+      checked_at: result.checked_at,
       connection: data ? {
         status: data.status,
         user_id: data.user_id,
@@ -241,6 +355,19 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action === "start") {
+    const result = await readiness();
+    if (!result.ready) {
+      const failedChecks = result.checks.filter((check) => !check.ok).map((check) => check.key);
+      await audit(auth.user.id, "mercadolibre_oauth_preflight_failed", { failed_checks: failedChecks });
+      return json(req, {
+        ok: false,
+        error: "PREFLIGHT_FAILED",
+        message: "La revisión previa no está completa. No se inició la autorización.",
+        ready: false,
+        checks: result.checks
+      }, 409);
+    }
+
     const verifier = randomUrlSafe(64);
     const challenge = b64url(await sha256Bytes(verifier));
     const state = randomUrlSafe(32);

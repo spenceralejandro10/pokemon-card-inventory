@@ -117,6 +117,19 @@ check("Funciones Edge sin secretos incrustados",function(){
  assert(!/SUPABASE_SERVICE_ROLE_KEY/.test(app+adminApp),"El frontend no puede acceder a la clave de servicio");
 });
 
+check("Defensas críticas de Mercado Libre activas",function(){
+ const oauth=edgeFunctions.find(function(entry){return entry.file.includes("mercadolibre-oauth")})?.source||"";
+ const webhook=edgeFunctions.find(function(entry){return entry.file.includes("mercadolibre-webhook")})?.source||"";
+ assert(oauth.includes('action === "preflight"'),"OAuth debe exponer la revisión previa");
+ assert(oauth.includes('code_challenge_method", "S256"'),"OAuth debe exigir PKCE S256");
+ assert(oauth.includes('siteId !== EXPECTED_SITE_ID'),"OAuth debe rechazar cuentas fuera de MCO");
+ assert(oauth.includes('!tokenData?.refresh_token'),"OAuth debe exigir refresh token");
+ assert(webhook.includes('applicationId !== Number(CLIENT_ID)'),"El webhook debe validar application_id");
+ assert(webhook.includes('Number(tokens.user_id) !== userId'),"El webhook debe validar user_id");
+ assert(webhook.includes('url.pathname.startsWith(prefix)'),"El webhook debe limitar rutas de recursos");
+ assert(webhook.includes('readLimitedBody(req)'),"El webhook debe limitar el cuerpo por bytes");
+});
+
 if(failures.length){
  console.error("\n"+failures.length+" verificación(es) fallaron:");
  failures.forEach(function(failure){console.error("- "+failure)});
