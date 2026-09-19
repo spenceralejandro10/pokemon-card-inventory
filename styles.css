@@ -2791,3 +2791,63 @@ dialog.image-viewer::backdrop{background:rgba(3,12,20,.78);backdrop-filter:blur(
   min-width:72px!important;
  }
 }
+
+
+/* Compact collaborator services below primary catalog controls */
+.services-hub{
+ margin:10px 0 12px!important;
+ padding:10px 12px!important;
+ border-radius:13px!important;
+ box-shadow:0 4px 14px rgba(26,45,61,.045)!important;
+}
+.services-hub-head{
+ padding:0 0 8px!important;
+ align-items:center!important;
+}
+.services-hub-head strong{
+ font-size:14px!important;
+}
+.services-hub-head>span{
+ font-size:9.5px!important;
+}
+.services-hub-grid{
+ gap:8px!important;
+ padding-top:8px!important;
+}
+.service-card{
+ min-height:0!important;
+ grid-template-columns:44px minmax(0,1fr)!important;
+ gap:10px!important;
+ padding:10px!important;
+}
+.service-card-icon{
+ width:44px!important;
+ height:44px!important;
+ border-radius:9px!important;
+}
+.service-card-kicker{
+ font-size:7px!important;
+}
+.service-card h2{
+ font-size:13px!important;
+}
+.service-card p{
+ margin:4px 0 7px!important;
+ font-size:9.5px!important;
+ line-height:1.35!important;
+}
+.service-card-actions{
+ gap:7px!important;
+}
+.service-primary{
+ min-height:28px!important;
+ padding:5px 9px!important;
+ font-size:8.5px!important;
+}
+.service-link{
+ font-size:8.5px!important;
+}
+.search-panel{
+ margin-top:10px!important;
+ margin-bottom:10px!important;
+}
