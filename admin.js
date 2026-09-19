@@ -362,6 +362,8 @@ function renderActivity(){
   change_password:"Contraseña actualizada",
   profile_photo_updated:"Foto de perfil actualizada",
   profile_updated:"Datos de perfil actualizados",
+  credentials_updated:"Credenciales actualizadas",
+  certificate_generated:"Certificado interno generado",
   chat_message_sent:"Comunicación interna histórica"
  };
  box.innerHTML=state.activity.map(a=>{
@@ -434,6 +436,17 @@ async function fileToDataUrl(file,maxBytes){
   reader.readAsDataURL(file);
  });
 }
+function downloadBase64File(base64,mime,filename){
+ const binary=atob(base64);
+ const bytes=new Uint8Array(binary.length);
+ for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+ const blob=new Blob([bytes],{type:mime||"application/octet-stream"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download=filename||"archivo";
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
 
 async function heartbeat(){
  if(!state.token)return;
@@ -456,7 +469,7 @@ async function loadDashboard(renderProductsToo=true){
 
 $("#logoutBtn").addEventListener("click",async()=>{
  try{await api("logout")}catch{}
- sessionStorage.removeItem(TOKEN_KEY);state.token="";state.user=null;stopTimers();showLogin();
+ sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem(TOKEN_KEY);state.token="";state.user=null;stopTimers();showLogin();
 });
 
 $$(".nav-item").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
@@ -514,12 +527,12 @@ $('input[name="profileFrame"]').forEach(input=>input.addEventListener("change",(
 $("#avatarFile").addEventListener("change",async function(){
  const file=this.files?.[0]||null;state.selectedAvatar=file;
  $("#saveAvatar").disabled=!file;
- if(!file){$("#avatarFileName").textContent="JPG, PNG o WebP · máximo 5 MB";renderProfilePage();return}
+ if(!file){$("#avatarFileName").textContent="JPG, PNG, WebP o GIF · máximo 10 MB · se muestra completa sin recortes";renderProfilePage();return}
  $("#avatarFileName").textContent=file.name+" · "+Math.ceil(file.size/1024)+" KB";
  try{
-  if(file.size>5*1024*1024)throw new Error("La foto supera 5 MB.");
-  if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error("Usa JPG, PNG o WebP.");
-  const data=await fileToDataUrl(file,5*1024*1024);
+  if(file.size>10*1024*1024)throw new Error("La foto supera 10 MB.");
+  if(!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type))throw new Error("Usa JPG, PNG, WebP o GIF.");
+  const data=await fileToDataUrl(file,10*1024*1024);
   const preview=$("#profilePreview");preview.innerHTML='<img src="'+safe(data)+'" alt="Vista previa">';
   setStatus($("#avatarStatus"),"Vista previa lista. Pulsa “Guardar foto” para conservarla.","");
  }catch(e){
@@ -530,16 +543,33 @@ $("#saveAvatar").addEventListener("click",async function(){
  if(!state.selectedAvatar)return;
  const btn=this;btn.disabled=true;btn.textContent="Guardando…";setStatus($("#avatarStatus"),"");
  try{
-  const dataUrl=await fileToDataUrl(state.selectedAvatar,5*1024*1024);
+  const dataUrl=await fileToDataUrl(state.selectedAvatar,10*1024*1024);
   const data=await api("upload_avatar",{file:{name:state.selectedAvatar.name,mime:state.selectedAvatar.type,data:dataUrl}});
   const me=state.profiles.find(p=>p.id===state.user.id);
   if(me){me.avatar_url=data.avatar_url;me.avatar_path=data.avatar_path}
   state.user.avatar_url=data.avatar_url;state.user.avatar_path=data.avatar_path;
-  state.selectedAvatar=null;$("#avatarFile").value="";$("#avatarFileName").textContent="JPG, PNG o WebP · máximo 5 MB";
+  state.selectedAvatar=null;$("#avatarFile").value="";$("#avatarFileName").textContent="JPG, PNG, WebP o GIF · máximo 10 MB · se muestra completa sin recortes";
   renderProfilePage();renderPartnerPresence();showPanel();
   setStatus($("#avatarStatus"),"Foto guardada. Quedará asociada a tu perfil en próximos inicios de sesión.","success");
  }catch(e){setStatus($("#avatarStatus"),e.message,"error")}
  finally{btn.disabled=!state.selectedAvatar;btn.textContent="Guardar foto"}
+});
+
+$("#downloadRoleCertificate")?.addEventListener("click",async function(){
+ const btn=this;
+ const status=$("#certificateStatus");
+ setStatus(status,"");
+ btn.disabled=true;btn.textContent="Generando certificado…";
+ try{
+  const data=await api("certificate");
+  if(!data?.data)throw new Error("No se recibió el certificado.");
+  downloadBase64File(data.data,data.mime||"application/pdf",data.filename||"CardNest-Certificado-DEMO.pdf");
+  setStatus(status,"Certificado DEMO generado y descargado correctamente.","success");
+ }catch(err){
+  setStatus(status,err.message||"No fue posible generar el certificado.","error");
+ }finally{
+  btn.disabled=false;btn.textContent="Descargar certificado PDF";
+ }
 });
 
 $("#loadMoreActivity").addEventListener("click",async function(){
