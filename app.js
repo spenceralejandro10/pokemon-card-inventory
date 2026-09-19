@@ -160,15 +160,14 @@ async function loadProducts(){
  const headers={apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY};
  const results=await Promise.allSettled([
   fetchSupabaseTable("cards",headers),
-  fetchJson("data/demo-products.json?v=20260918-3"),
+  fetchJson("data/demo-products.json?v=20260919-1"),
   fetchSupabaseTable("electronics_products",headers),
-  fetchJson("data/cards.json?v=20260918-1"),
+  fetchJson("data/cards.json?v=20260919-1"),
   fetchSupabaseTable("products",headers,"category_code=eq.misc")
  ]);
  const remoteCards=results[0].status==="fulfilled"&&Array.isArray(results[0].value)?results[0].value:[];
  const localCards=results[3].status==="fulfilled"&&Array.isArray(results[3].value)?results[3].value:[];
  const pokemonSource=remoteCards.length?remoteCards:localCards;
- if(!pokemonSource.length)throw new Error("No fue posible cargar el inventario principal.");
  const pokemon=pokemonSource.map(normalizePokemonRecord);
  const demo=results[1].status==="fulfilled"&&Array.isArray(results[1].value)?results[1].value:[];
  const electronicsRaw=results[2].status==="fulfilled"&&Array.isArray(results[2].value)?results[2].value:[];
