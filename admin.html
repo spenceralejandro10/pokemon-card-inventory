@@ -8,7 +8,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://cnivcnexsqobipvqxero.supabase.co; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; upgrade-insecure-requests">
   <title>CardNest · Centro de mando</title>
   <script src="frame-guard.js?v=20260919-1"></script>
-  <link rel="stylesheet" href="admin.css?v=20260919-21">
+  <link rel="stylesheet" href="admin.css?v=20260919-25">
 </head>
 <body>
   <main class="admin-shell">
@@ -332,10 +332,15 @@
             <div id="mlConnectionStatus" class="form-status" role="status" hidden></div>
           </article>
 
-          <div class="toolbar">
-            <input id="productSearch" type="search" placeholder="Buscar producto, ID o referencia">
-            <select id="channelFilter">
-              <option value="all">Todos</option>
+          <div class="toolbar product-admin-toolbar">
+            <input id="productSearch" type="search" placeholder="Buscar por ID, nombre o referencia">
+            <select id="availabilityFilter" aria-label="Filtrar por disponibilidad">
+              <option value="all">Toda disponibilidad</option>
+              <option value="available">Disponibles</option>
+              <option value="sold_out">Sin disponibilidad</option>
+            </select>
+            <select id="channelFilter" aria-label="Filtrar por canal">
+              <option value="all">Todos los canales</option>
               <option value="selected">Preparados para ML</option>
               <option value="cardnest">Solo CardNest</option>
             </select>
@@ -420,6 +425,6 @@
       </div>
     </section>
   </main>
-  <script src="admin-runtime-20260919-15.js?v=20260919-24"></script>
+  <script src="admin-runtime-20260919-15.js?v=20260919-25"></script>
 </body>
 </html>
