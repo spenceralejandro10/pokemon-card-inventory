@@ -1218,3 +1218,215 @@ button,a{transition:.18s ease}
  .frame-picker-actions{align-items:stretch;flex-direction:column}
  #applyProfileFrame{width:100%}
 }
+
+
+/* ===== Shared profile frames: each admin sees the other user's saved frame ===== */
+.partner-presence{
+ min-width:230px!important;
+ padding:9px 12px!important;
+ overflow:visible!important;
+ position:relative;
+ isolation:isolate;
+}
+.partner-avatar-wrap{
+ position:relative;
+ width:72px;
+ height:88px;
+ min-width:72px;
+ display:grid;
+ place-items:center;
+ overflow:visible;
+ isolation:isolate;
+}
+.partner-avatar{
+ width:58px!important;
+ height:74px!important;
+ min-width:58px!important;
+ border-radius:19px!important;
+ position:relative;
+ z-index:4;
+ background:#0d1e2a!important;
+ overflow:hidden!important;
+}
+.partner-avatar img{
+ width:100%!important;
+ height:100%!important;
+ object-fit:contain!important;
+ object-position:center!important;
+ border-radius:15px!important;
+ background:#0d1e2a!important;
+}
+.partner-frame-flare,
+.partner-profile-frame-flare{
+ position:absolute;
+ z-index:2;
+ pointer-events:none;
+ opacity:0;
+}
+
+/* CEO Inferno seen by the other administrator - compact header */
+.partner-avatar-wrap.frame-ceo-inferno:before{
+ content:"";
+ position:absolute;
+ inset:-4px;
+ border-radius:27px;
+ z-index:1;
+ background:
+  radial-gradient(ellipse at 10% 82%,rgba(255,69,0,.98) 0 7%,transparent 25%),
+  radial-gradient(ellipse at 35% 101%,rgba(255,190,0,.96) 0 7%,transparent 25%),
+  radial-gradient(ellipse at 68% 99%,rgba(255,76,0,.94) 0 7%,transparent 24%),
+  radial-gradient(ellipse at 94% 74%,rgba(255,210,45,.94) 0 6%,transparent 24%),
+  conic-gradient(from 0deg,rgba(255,196,0,.12),rgba(255,66,0,.95),rgba(255,218,64,.98),rgba(255,55,0,.88),rgba(255,196,0,.12));
+ filter:blur(8px);
+ opacity:.98;
+ animation:ownerInfernoOrbit 4s linear infinite;
+}
+.partner-avatar-wrap.frame-ceo-inferno:after{
+ content:"";
+ position:absolute;
+ inset:7px;
+ border-radius:23px;
+ z-index:2;
+ box-shadow:0 0 20px rgba(255,199,32,.95),0 0 38px rgba(255,73,0,.58),inset 0 0 13px rgba(255,232,144,.28);
+ animation:ownerInfernoBreath 1.2s ease-in-out infinite alternate;
+}
+.partner-avatar.frame-ceo-inferno{
+ border:3px solid #fff!important;
+ outline:3px solid #e0b72f!important;
+ box-shadow:0 0 0 5px rgba(255,211,59,.19),0 0 20px rgba(255,190,0,.95),0 0 38px rgba(255,75,0,.53),0 12px 22px rgba(75,39,0,.24)!important;
+ animation:ownerInfernoPulse 1.15s ease-in-out infinite alternate;
+}
+.partner-avatar-wrap.frame-ceo-inferno .partner-frame-flare{
+ opacity:.98;
+ width:24px;
+ height:54px;
+ border-radius:58% 42% 65% 35%;
+ background:linear-gradient(180deg,#fff1ab 0%,#ffd000 20%,#ff6500 70%,transparent 100%);
+ filter:blur(2.5px);
+ animation:ownerFlameDance .88s ease-in-out infinite alternate;
+}
+.partner-frame-flare-a{left:-1px;bottom:5px;transform:rotate(-15deg)}
+.partner-frame-flare-b{right:-1px;top:8px;transform:rotate(18deg);animation-delay:.18s!important}
+.partner-presence.frame-ceo-inferno{
+ border-color:rgba(224,183,47,.88)!important;
+ background:radial-gradient(circle at 18% 50%,rgba(255,177,0,.14),transparent 34%),linear-gradient(135deg,#fffdf5,#fff 68%,#fff8e8)!important;
+ box-shadow:0 0 26px rgba(255,177,0,.23),0 10px 24px rgba(35,50,60,.08)!important;
+}
+
+/* Larger partner card: same saved frame identity, not a plain thumbnail */
+.partner-profile-avatar-wrap{
+ position:relative;
+ width:174px;
+ height:232px;
+ min-width:174px;
+ display:grid;
+ place-items:center;
+ overflow:visible;
+ isolation:isolate;
+}
+.partner-profile-avatar{
+ width:148px!important;
+ height:204px!important;
+ min-width:148px!important;
+ border-radius:32px!important;
+ position:relative;
+ z-index:4;
+ background:#0d1e2a!important;
+ overflow:hidden!important;
+}
+.partner-profile-avatar img{
+ width:100%!important;
+ height:100%!important;
+ object-fit:contain!important;
+ object-position:center!important;
+ border-radius:27px!important;
+ background:#0d1e2a!important;
+}
+.partner-profile-card{
+ overflow:visible!important;
+ min-height:270px;
+}
+.partner-profile-avatar-wrap.frame-ceo-inferno:before{
+ content:"";
+ position:absolute;
+ inset:-5px;
+ border-radius:46px;
+ z-index:1;
+ background:
+  radial-gradient(ellipse at 10% 83%,rgba(255,69,0,.98) 0 6%,transparent 23%),
+  radial-gradient(ellipse at 31% 101%,rgba(255,190,0,.96) 0 6%,transparent 23%),
+  radial-gradient(ellipse at 64% 100%,rgba(255,73,0,.94) 0 6%,transparent 22%),
+  radial-gradient(ellipse at 94% 76%,rgba(255,211,45,.94) 0 5%,transparent 22%),
+  conic-gradient(from 0deg,rgba(255,196,0,.12),rgba(255,66,0,.95),rgba(255,218,64,.98),rgba(255,55,0,.88),rgba(255,196,0,.12));
+ filter:blur(12px);
+ opacity:.98;
+ animation:ownerInfernoOrbit 4s linear infinite;
+}
+.partner-profile-avatar-wrap.frame-ceo-inferno:after{
+ content:"";
+ position:absolute;
+ inset:16px;
+ border-radius:39px;
+ z-index:2;
+ box-shadow:0 0 28px rgba(255,199,32,.95),0 0 56px rgba(255,73,0,.58),inset 0 0 18px rgba(255,232,144,.28);
+ animation:ownerInfernoBreath 1.2s ease-in-out infinite alternate;
+}
+.partner-profile-avatar.frame-ceo-inferno{
+ border:5px solid #fff!important;
+ outline:4px solid #e0b72f!important;
+ box-shadow:0 0 0 7px rgba(255,211,59,.19),0 0 28px rgba(255,190,0,.95),0 0 58px rgba(255,75,0,.53),0 20px 34px rgba(75,39,0,.24)!important;
+ animation:ownerInfernoPulse 1.15s ease-in-out infinite alternate;
+}
+.partner-profile-avatar-wrap.frame-ceo-inferno .partner-profile-frame-flare{
+ opacity:.98;
+ width:36px;
+ height:78px;
+ border-radius:58% 42% 65% 35%;
+ background:linear-gradient(180deg,#fff1ab 0%,#ffd000 20%,#ff6500 70%,transparent 100%);
+ filter:blur(3px);
+ animation:ownerFlameDance .88s ease-in-out infinite alternate;
+}
+.partner-profile-frame-flare-a{left:0;bottom:13px;transform:rotate(-15deg)}
+.partner-profile-frame-flare-b{right:0;top:15px;transform:rotate(18deg);animation-delay:.18s!important}
+
+/* Shared non-CEO frame decorations */
+.partner-avatar-wrap.frame-silver:before,
+.partner-profile-avatar-wrap.frame-silver:before{
+ content:"✦";position:absolute;right:1px;top:2px;z-index:6;color:#9aaab5;text-shadow:0 0 11px #fff
+}
+.partner-avatar-wrap.frame-hearts:before,
+.partner-profile-avatar-wrap.frame-hearts:before{
+ content:"♥  ♡";position:absolute;top:0;left:0;right:0;z-index:6;color:#e64f87;text-align:center;letter-spacing:10px
+}
+.partner-avatar-wrap.frame-cats:before,
+.partner-profile-avatar-wrap.frame-cats:before{
+ content:"🐱";position:absolute;left:-2px;top:1px;z-index:6;filter:drop-shadow(0 4px 6px rgba(0,0,0,.14))
+}
+.partner-avatar-wrap.frame-paws:before,
+.partner-profile-avatar-wrap.frame-paws:before{
+ content:"🐾";position:absolute;left:-2px;bottom:3px;z-index:6;transform:rotate(-17deg)
+}
+.partner-avatar-wrap.frame-stars:before,
+.partner-profile-avatar-wrap.frame-stars:before{
+ content:"★  ✦";position:absolute;top:0;left:0;right:0;z-index:6;text-align:center;color:#725ad0;letter-spacing:9px;text-shadow:0 0 9px rgba(136,104,255,.4)
+}
+.partner-avatar-wrap.frame-neon:before,
+.partner-profile-avatar-wrap.frame-neon:before{
+ content:"";position:absolute;inset:1px;border-radius:34px;z-index:1;background:conic-gradient(#4ee7ff,#9c5cff,#4ee7ff,#18ffbf,#4ee7ff);filter:blur(8px);opacity:.52;animation:neonFrameOrbit 4s linear infinite
+}
+.partner-presence.frame-hearts,.partner-profile-card.frame-hearts{border-color:#efbfd0!important;background:linear-gradient(135deg,#fff,#fff6f9)!important}
+.partner-presence.frame-cats,.partner-profile-card.frame-cats{border-color:#ddc2a3!important;background:linear-gradient(135deg,#fff,#fffaf2)!important}
+.partner-presence.frame-paws,.partner-profile-card.frame-paws{border-color:#d2c0e9!important;background:linear-gradient(135deg,#fff,#faf7ff)!important}
+.partner-presence.frame-stars,.partner-profile-card.frame-stars{border-color:#c8bdf0!important;background:linear-gradient(135deg,#fff,#f9f7ff)!important}
+.partner-presence.frame-neon,.partner-profile-card.frame-neon{border-color:#77d9e9!important;background:linear-gradient(135deg,#f9feff,#fbf8ff)!important}
+.partner-presence.frame-silver,.partner-profile-card.frame-silver{border-color:#c4d0d7!important}
+
+@media(max-width:1050px){
+ .partner-presence{min-width:200px!important}
+ .partner-avatar-wrap{width:62px;height:78px;min-width:62px}
+ .partner-avatar{width:50px!important;height:64px!important;min-width:50px!important}
+}
+@media(max-width:760px){
+ .partner-profile-avatar-wrap{width:148px;height:200px;min-width:148px}
+ .partner-profile-avatar{width:126px!important;height:176px!important;min-width:126px!important}
+}

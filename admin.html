@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>CardNest · Centro de mando</title>
-  <link rel="stylesheet" href="admin.css?v=20260919-7">
+  <link rel="stylesheet" href="admin.css?v=20260919-8">
 </head>
 <body>
   <main class="admin-shell">
@@ -49,8 +49,12 @@
                 <small id="headerTitle">—</small>
               </div>
             </div>
-            <div id="partnerPresence" class="partner-presence" aria-label="Estado del otro administrador">
-              <div id="partnerAvatar" class="partner-avatar">—</div>
+            <div id="partnerPresence" class="partner-presence frame-standard" aria-label="Estado del otro administrador">
+              <div id="partnerAvatarWrap" class="partner-avatar-wrap frame-standard">
+                <span class="partner-frame-flare partner-frame-flare-a" aria-hidden="true"></span>
+                <span class="partner-frame-flare partner-frame-flare-b" aria-hidden="true"></span>
+                <div id="partnerAvatar" class="partner-avatar frame-standard">—</div>
+              </div>
               <div class="partner-copy">
                 <strong id="partnerName">—</strong>
                 <span id="partnerStatus"><i></i> Comprobando estado…</span>
@@ -242,8 +246,12 @@
               </div>
             </article>
 
-            <article id="partnerProfileCard" class="partner-profile-card rank-standard">
-              <div id="profilePartnerAvatar" class="partner-profile-avatar rank-standard">—</div>
+            <article id="partnerProfileCard" class="partner-profile-card frame-standard">
+              <div id="profilePartnerAvatarWrap" class="partner-profile-avatar-wrap frame-standard">
+                <span class="partner-profile-frame-flare partner-profile-frame-flare-a" aria-hidden="true"></span>
+                <span class="partner-profile-frame-flare partner-profile-frame-flare-b" aria-hidden="true"></span>
+                <div id="profilePartnerAvatar" class="partner-profile-avatar frame-standard">—</div>
+              </div>
               <div>
                 <small>OTRO ADMINISTRADOR</small>
                 <h3 id="profilePartnerName">—</h3>
@@ -361,6 +369,6 @@
       </div>
     </section>
   </main>
-  <script src="admin-runtime-20260919-12.js"></script>
+  <script src="admin-runtime-20260919-13.js"></script>
 </body>
 </html>
