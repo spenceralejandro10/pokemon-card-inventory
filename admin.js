@@ -332,7 +332,7 @@ function renderProfilePage(){
  const frameStyle=profileFrameStyle(me);
  const frameSection=$("#profileFrameSection");
  const frameHelp=$("#profileFrameHelp");
- $("[data-frame-option]").forEach(option=>{
+ document.querySelectorAll("[data-frame-option]").forEach(option=>{
   const input=option.querySelector('input[name="profileFrame"]');
   const value=input?.value||"";
   const isCeoFrame=value==="ceo_inferno";
