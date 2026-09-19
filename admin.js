@@ -515,7 +515,7 @@ $("#profileEditForm")?.addEventListener("submit",async function(e){
  }
 });
 
-$('input[name="profileFrame"]').forEach(input=>input.addEventListener("change",()=>{
+document.querySelectorAll('input[name="profileFrame"]').forEach(input=>input.addEventListener("change",()=>{
  const me=selfProfile();
  const selected=document.querySelector('input[name="profileFrame"]:checked')?.value||profileFrameStyle(me);
  const owner=me?.role==="owner";
