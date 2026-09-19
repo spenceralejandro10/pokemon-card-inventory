@@ -3,9 +3,10 @@ const SUPABASE_KEY="sb_publishable_6UjwLuM-op0-OBKWlbusTw_qmLNZVfU";
 const ADMIN_API=SUPABASE_URL+"/functions/v1/admin-control";
 const TOKEN_KEY="cardnestAdminToken";
 const REMEMBER_KEY="cardnestRememberedUsername";
+const REMEMBER_ACCESS_KEY="cardnestRememberAccess";
 
 const state={
- token:sessionStorage.getItem(TOKEN_KEY)||"",
+ token:sessionStorage.getItem(TOKEN_KEY)||localStorage.getItem(TOKEN_KEY)||"",
  user:null,
  products:[],
  activity:[],
@@ -51,7 +52,7 @@ async function api(action,payload={}){
  const data=await res.json().catch(()=>({}));
  if(!res.ok){
   if(res.status===401&&action!=="login"){
-   sessionStorage.removeItem(TOKEN_KEY);state.token="";state.user=null;stopTimers();showLogin();
+   sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(REMEMBER_ACCESS_KEY);state.token="";state.user=null;stopTimers();showLogin();
   }
   throw new Error(data.message||"No fue posible completar la operación.");
  }
@@ -345,7 +346,15 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
  const btn=e.currentTarget.querySelector("button");btn.disabled=true;btn.textContent="Validando…";
  try{
   const data=await api("login",{username,password:$("#adminPassword").value});
-  if(remember)localStorage.setItem(REMEMBER_KEY,username);else localStorage.removeItem(REMEMBER_KEY);
+  if(remember){
+   localStorage.setItem(REMEMBER_KEY,username);
+   localStorage.setItem(REMEMBER_ACCESS_KEY,"true");
+   localStorage.setItem(TOKEN_KEY,data.token);
+  }else{
+   localStorage.removeItem(REMEMBER_KEY);
+   localStorage.removeItem(REMEMBER_ACCESS_KEY);
+   localStorage.removeItem(TOKEN_KEY);
+  }
   state.token=data.token;state.user=data.user;sessionStorage.setItem(TOKEN_KEY,state.token);$("#adminPassword").value="";
   await loadDashboard();switchView("overview");
  }catch(err){setStatus(status,err.message,"error")}
@@ -449,7 +458,9 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.tok
 
 (async function init(){
  const remembered=localStorage.getItem(REMEMBER_KEY)||"";
- if(remembered){$("#adminUsername").value=remembered;$("#rememberUsername").checked=true}
+ const persistAccess=localStorage.getItem(REMEMBER_ACCESS_KEY)==="true";
+ if(remembered)$("#adminUsername").value=remembered;
+ $("#rememberUsername").checked=!!remembered||persistAccess
  if(!state.token){showLogin();return}
- try{await loadDashboard();switchView("overview")}catch{sessionStorage.removeItem(TOKEN_KEY);state.token="";showLogin()}
+ try{await loadDashboard();switchView("overview")}catch{sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(REMEMBER_ACCESS_KEY);state.token="";showLogin()}
 })();
