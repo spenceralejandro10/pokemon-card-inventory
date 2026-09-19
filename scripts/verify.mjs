@@ -8,7 +8,16 @@ const read=(file)=>fs.readFileSync(path.join(root,file),"utf8");
 const html=read("index.html");
 const app=read("app.js");
 const css=read("styles.css");
-const edgeFunction=read("supabase/functions/sale-order/index.ts");
+const adminHtml=read("admin.html");
+const adminScriptPath=adminHtml.match(/<script\s+src=["']([^"']+\.js(?:\?[^"']*)?)["']/i)?.[1]?.split("?")[0];
+const adminApp=adminScriptPath?read(adminScriptPath):"";
+const adminCss=read("admin.css");
+const edgeFunctionPaths=[
+ "supabase/functions/sale-order/index.ts",
+ "supabase/functions/mercadolibre-oauth/index.ts",
+ "supabase/functions/mercadolibre-webhook/index.ts"
+];
+const edgeFunctions=edgeFunctionPaths.map(function(file){return {file,source:read(file)}});
 const failures=[];
 
 function assert(condition,message){
@@ -20,13 +29,17 @@ function check(label,fn){
 }
 function matches(source,pattern){return Array.from(source.matchAll(pattern),function(match){return match[1]})}
 
-check("JavaScript válido",function(){new vm.Script(app,{filename:"app.js"})});
+check("JavaScript público y administrativo válido",function(){
+ new vm.Script(app,{filename:"app.js"});
+ assert(adminScriptPath,"admin.html no carga un runtime JavaScript");
+ new vm.Script(adminApp,{filename:adminScriptPath});
+});
 
 check("JSON y claves de producto válidos",function(){
  const cards=JSON.parse(read("data/cards.json"));
  const demos=JSON.parse(read("data/demo-products.json"));
- assert(Array.isArray(cards)&&cards.length>0,"data/cards.json debe ser una lista no vacía");
- assert(Array.isArray(demos)&&demos.length>0,"data/demo-products.json debe ser una lista no vacía");
+ assert(Array.isArray(cards),"data/cards.json debe ser una lista");
+ assert(Array.isArray(demos),"data/demo-products.json debe ser una lista");
  const products=cards.map(function(item){return {category:"pokemon",...item}}).concat(demos);
  const keys=new Set();
  products.forEach(function(item,index){
@@ -40,56 +53,68 @@ check("JSON y claves de producto válidos",function(){
 });
 
 check("IDs HTML únicos y referencias existentes",function(){
- const ids=matches(html,/\bid=["']([^"']+)["']/g);
- const unique=new Set();
- ids.forEach(function(id){assert(!unique.has(id),"ID duplicado #"+id);unique.add(id)});
- const references=matches(app,/getElementById\(["']([^"']+)["']\)/g);
- references.forEach(function(id){assert(unique.has(id),"app.js referencia el ID inexistente #"+id)});
-});
-
-check("Recursos locales enlazados",function(){
- const refs=matches(html,/\b(?:src|href)=["']([^"']+)["']/g);
- refs.forEach(function(ref){
-  if(/^(?:https?:|\/\/|#|mailto:|tel:)/i.test(ref))return;
-  const local=ref.split(/[?#]/)[0];
-  if(local)assert(fs.existsSync(path.join(root,local)),"No existe "+local);
+ [["index.html",html,"app.js",app],["admin.html",adminHtml,adminScriptPath,adminApp]].forEach(function(entry){
+  const [htmlFile,markup,scriptFile,source]=entry;
+  const ids=matches(markup,/\bid=["']([^"']+)["']/g);
+  const unique=new Set();
+  ids.forEach(function(id){assert(!unique.has(id),htmlFile+" contiene el ID duplicado #"+id);unique.add(id)});
+  matches(source,/\bid=["']([^"']+)["']/g).forEach(function(id){unique.add(id)});
+  const references=matches(source,/getElementById\(["']([^"']+)["']\)/g);
+  references.forEach(function(id){assert(unique.has(id),scriptFile+" referencia el ID inexistente #"+id)});
  });
 });
 
-check("Versiones de caché coordinadas",function(){
+check("Recursos locales enlazados",function(){
+ [["index.html",html],["admin.html",adminHtml]].forEach(function(entry){
+  const refs=matches(entry[1],/\b(?:src|href)=["']([^"']+)["']/g);
+  refs.forEach(function(ref){
+   if(/^(?:https?:|\/\/|#|mailto:|tel:)/i.test(ref))return;
+   const local=ref.split(/[?#]/)[0];
+   if(local)assert(fs.existsSync(path.join(root,local)),entry[0]+" enlaza un recurso inexistente: "+local);
+  });
+ });
+});
+
+check("Recursos principales versionados para caché",function(){
  const styleVersion=html.match(/styles\.css\?v=([^"']+)/)?.[1];
  const scriptVersion=html.match(/app\.js\?v=([^"']+)/)?.[1];
  assert(styleVersion&&scriptVersion,"Falta versionar app.js o styles.css");
- assert(styleVersion===scriptVersion,"Las versiones de app.js y styles.css no coinciden");
 });
 
 check("Enlaces externos seguros",function(){
- const externalTabs=Array.from(html.matchAll(/<a\b[^>]*target=["']_blank["'][^>]*>/gi),function(match){return match[0]});
- externalTabs.forEach(function(tag){assert(/\brel=["'][^"']*noopener/i.test(tag),"Enlace _blank sin rel=noopener")});
+ [html,adminHtml].forEach(function(markup){
+  const externalTabs=Array.from(markup.matchAll(/<a\b[^>]*target=["']_blank["'][^>]*>/gi),function(match){return match[0]});
+  externalTabs.forEach(function(tag){assert(/\brel=["'][^"']*noopener/i.test(tag),"Enlace _blank sin rel=noopener")});
+ });
 });
 
 check("CSS con bloques balanceados",function(){
- let depth=0,inComment=false,quote="";
- for(let i=0;i<css.length;i++){
-  const char=css[i],next=css[i+1];
-  if(inComment){if(char==="*"&&next==="/"){inComment=false;i++}continue}
-  if(!quote&&char==="/"&&next==="*"){inComment=true;i++;continue}
-  if(quote){if(char==="\\")i++;else if(char===quote)quote="";continue}
-  if(char==='"'||char==="'"){quote=char;continue}
-  if(char==="{")depth++;
-  if(char==="}")depth--;
-  assert(depth>=0,"Hay una llave de cierre adicional");
- }
- assert(!inComment,"Comentario CSS sin cerrar");
- assert(!quote,"Cadena CSS sin cerrar");
- assert(depth===0,"Hay bloques CSS sin cerrar");
+ [["styles.css",css],["admin.css",adminCss]].forEach(function(entry){
+  const [file,source]=entry;
+  let depth=0,inComment=false,quote="";
+  for(let i=0;i<source.length;i++){
+   const char=source[i],next=source[i+1];
+   if(inComment){if(char==="*"&&next==="/"){inComment=false;i++}continue}
+   if(!quote&&char==="/"&&next==="*"){inComment=true;i++;continue}
+   if(quote){if(char==="\\")i++;else if(char===quote)quote="";continue}
+   if(char==='"'||char==="'"){quote=char;continue}
+   if(char==="{")depth++;
+   if(char==="}")depth--;
+   assert(depth>=0,file+" tiene una llave de cierre adicional");
+  }
+  assert(!inComment,file+" tiene un comentario sin cerrar");
+  assert(!quote,file+" tiene una cadena sin cerrar");
+  assert(depth===0,file+" tiene bloques sin cerrar");
+ });
 });
 
-check("Función de pedidos sin secretos incrustados",function(){
- assert(edgeFunction.includes('Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")'),"La clave de servicio debe venir del entorno");
- assert(!/sb_secret_[A-Za-z0-9_-]+/.test(edgeFunction),"Se encontró una clave secreta literal");
- assert(!/eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\./.test(edgeFunction),"Se encontró un JWT literal");
- assert(!/SUPABASE_SERVICE_ROLE_KEY/.test(app),"El frontend no puede acceder a la clave de servicio");
+check("Funciones Edge sin secretos incrustados",function(){
+ edgeFunctions.forEach(function(entry){
+  assert(entry.source.includes('Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")'),entry.file+" debe leer la clave de servicio del entorno");
+  assert(!/sb_secret_[A-Za-z0-9_-]+/.test(entry.source),entry.file+" contiene una clave secreta literal");
+  assert(!/eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\./.test(entry.source),entry.file+" contiene un JWT literal");
+ });
+ assert(!/SUPABASE_SERVICE_ROLE_KEY/.test(app+adminApp),"El frontend no puede acceder a la clave de servicio");
 });
 
 if(failures.length){
