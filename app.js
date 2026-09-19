@@ -1008,6 +1008,7 @@ document.getElementById("createOrder").onclick=async function(){
   if(!data.ok||!validOrderResponse(data.order))throw new Error("El servidor devolvió una respuesta incompleta. No se generó el comprobante.");
   state.order=Object.assign({},data.order,{buyer:b});
   localStorage.setItem("cardnestPendingOrder",JSON.stringify(state.order));
+  refreshPendingOrderNotice();
   showReceipt();
   const pdfReady=downloadOrderPDF();
   setCodeStatus("success","Pedido generado correctamente. Conserva este código para seguimiento.");
@@ -1193,6 +1194,38 @@ document.getElementById("downloadReceipt").onclick=function(){
 };
 
 let receiptTimer=null;
+
+function resetCheckoutToCodeEntry(){
+ document.querySelector(".checkout-gate").hidden=false;
+ document.getElementById("checkoutInfo").hidden=false;
+ document.getElementById("checkoutUnlocked").hidden=true;
+ ["fillTestCheckout","deliveryDetails","toploaderDetails","shippingDetails","createOrder"].forEach(function(id){
+  const el=document.getElementById(id);if(el)el.hidden=false;
+ });
+ document.getElementById("orderReceipt").hidden=true;
+ document.getElementById("shippingTitle").textContent="Finaliza tu compra";
+ const lead=document.querySelector("#shippingModal > .modal-lead");
+ if(lead)lead.textContent="Para continuar debes validar el código de venta que te entrega el analista después de acordar tu compra por WhatsApp.";
+ const fab=document.getElementById("shippingFab"),fabCopy=fab.querySelector("span"),fabHint=fab.querySelector("small");
+ if(fabCopy&&fabCopy.firstChild)fabCopy.firstChild.nodeValue="Programa tu envío";
+ if(fabHint)fabHint.textContent="Paga los productos al recibir";
+ clearValidatedCode();
+ moveCheckoutInfoInitial();
+ const codeInput=document.getElementById("saleCode");
+ codeInput.value="";
+ setCodeStatus("","Valida tu código para continuar.");
+ codeInput.focus();
+}
+function refreshPendingOrderNotice(){
+ const notice=document.getElementById("pendingOrderNotice");
+ const label=document.getElementById("pendingOrderLabel");
+ if(!notice||!label)return;
+ const valid=validStoredOrder(state.order);
+ notice.hidden=!valid;
+ if(valid){
+  label.textContent=(state.order.sale_code||state.order.id)+" · vence "+new Date(state.order.expires_at).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
+ }
+}
 function showCompletedCheckout(){
  document.querySelector(".checkout-gate").hidden=true;
  document.getElementById("checkoutInfo").hidden=true;
@@ -1234,16 +1267,30 @@ function showReceipt(){
   ". Total del envío: "+cop(o.shipping_total)+" COP. Adjunto el comprobante y el PDF."
  );
 }
+
+const viewPendingOrderBtn=document.getElementById("viewPendingOrder");
+if(viewPendingOrderBtn)viewPendingOrderBtn.onclick=function(){
+ if(validStoredOrder(state.order))showReceipt();
+ else{
+  localStorage.removeItem("cardnestPendingOrder");
+  state.order=null;
+  refreshPendingOrderNotice();
+  setCodeStatus("error","El pedido pendiente ya no está disponible.");
+ }
+};
+const startAnotherOrderBtn=document.getElementById("startAnotherOrder");
+if(startAnotherOrderBtn)startAnotherOrderBtn.onclick=function(){
+ resetCheckoutToCodeEntry();
+ refreshPendingOrderNotice();
+};
 moveCheckoutInfoInitial();
 document.getElementById("checkoutUnlocked").hidden=true;
 try{
  const saved=JSON.parse(localStorage.getItem("cardnestPendingOrder")||"null");
- if(validStoredOrder(saved)){
-  state.order=saved;
-  showReceipt();
-  setCheckoutStatus("Recuperamos el pedido pendiente guardado en este dispositivo.","success");
- }else localStorage.removeItem("cardnestPendingOrder");
+ if(validStoredOrder(saved))state.order=saved;
+ else localStorage.removeItem("cardnestPendingOrder");
 }catch(e){}
+refreshPendingOrderNotice();
 function openImageViewer(src,p){
  const v=document.getElementById("imageViewer");if(!src||!v)return;
  document.getElementById("viewerImage").src=src;
