@@ -1539,3 +1539,17 @@ body.panel-open{overflow:hidden}
 .collab-register a{display:inline-block;color:#075e54!important;font-size:13px;font-weight:850;text-decoration:none}.collab-demo-notice{margin:14px 0 0;padding:10px;border-radius:8px;background:#fff5e5;color:#8a4b00!important;font-size:12px;font-weight:700}
 @media(max-width:1000px){.footer-inner{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.utility-inner{align-items:flex-start;padding:7px 14px}.utility-nav{gap:12px;flex-wrap:wrap}.utility-nav a{font-size:11px}.collaborator-login-link{font-size:11px;white-space:nowrap}.footer-inner{grid-template-columns:1fr;padding:38px 20px}.footer-bottom{flex-direction:column;padding:18px 20px}.site-footer{margin-top:45px}}
+
+/* Ensure corporate utility bar is visible above the light site header */
+header.site-utility{
+ background:#0b2033!important;
+ border-bottom:1px solid #203b50!important;
+ color:#fff!important;
+ min-height:40px!important;
+ display:block!important;
+}
+header.site-utility .utility-inner{min-height:40px!important}
+header.site-utility .utility-nav a{color:#dce8f1!important}
+header.site-utility .utility-nav a:hover{color:#fff!important}
+header.site-utility .collaborator-login-link{color:#ffd35a!important}
+header.site-utility .collaborator-login-link:hover{color:#ffe48a!important}
