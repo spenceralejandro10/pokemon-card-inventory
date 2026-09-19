@@ -471,7 +471,8 @@ function renderActivity(){
   profile_updated:"Datos de perfil actualizados",
   credentials_updated:"Credenciales actualizadas",
   certificate_generated:"Certificado interno generado",
-  chat_message_sent:"Comunicación interna histórica"
+  chat_message_sent:"Comunicación interna histórica",
+  product_updated:"Producto actualizado"
  };
  box.innerHTML=state.activity.map(a=>{
   const actor=a.admin_users?.display_name||a.admin_users?.username||"Sistema";
