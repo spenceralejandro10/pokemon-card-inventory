@@ -132,7 +132,8 @@ Deno.serve(async (req: Request) => {
   }
 
   async function refreshTokenIfNeeded(row: any) {
-    if (!row?.access_token || !["connected", "error"].includes(row.status) || row.site_id !== EXPECTED_SITE_ID) return null;
+    const retryableRefreshError = row?.status === "error" && clean(row?.last_error).startsWith("refresh_");
+    if (!row?.access_token || (row.status !== "connected" && !retryableRefreshError) || row.site_id !== EXPECTED_SITE_ID) return null;
     const expires = row.expires_at ? new Date(row.expires_at).getTime() : 0;
     if (expires > Date.now() + 5 * 60 * 1000) return row.access_token;
     if (!row.refresh_token || !CLIENT_ID || !CLIENT_SECRET) return null;
@@ -164,7 +165,17 @@ Deno.serve(async (req: Request) => {
         body
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.access_token) {
+      const accessToken = clean(data?.access_token);
+      const refreshToken = clean(data?.refresh_token);
+      const tokenType = clean(data?.token_type).toLowerCase();
+      const scope = clean(data?.scope);
+      const scopes = new Set(scope.toLowerCase().split(/[\s,]+/).filter(Boolean));
+      const expiresIn = Number(data?.expires_in);
+      const validTokenResponse = accessToken.length >= 10 && accessToken.length <= 4096 &&
+        refreshToken.length >= 10 && refreshToken.length <= 4096 && tokenType === "bearer" &&
+        scopes.has("offline_access") && scopes.has("read") && scopes.has("write") &&
+        Number.isSafeInteger(expiresIn) && expiresIn >= 60 && expiresIn <= 86400;
+      if (!res.ok || !validTokenResponse) {
         await db.rpc("mercadolibre_release_refresh_lock", { p_error: `refresh_http_${res.status}` });
         return null;
       }
@@ -176,20 +187,20 @@ Deno.serve(async (req: Request) => {
       }
 
       const { error } = await db.rpc("mercadolibre_store_tokens", {
-        p_access_token: String(data.access_token),
-        p_refresh_token: String(data.refresh_token ?? row.refresh_token),
+        p_access_token: accessToken,
+        p_refresh_token: refreshToken,
         p_user_id: refreshedUserId,
         p_site_id: row.site_id ?? null,
         p_nickname: row.nickname ?? null,
-        p_token_type: clean(data.token_type) || "bearer",
-        p_scope: clean(data.scope) || clean(row.scope),
-        p_expires_in: Number(data.expires_in) || 21600
+        p_token_type: tokenType,
+        p_scope: scope,
+        p_expires_in: expiresIn
       });
       if (error) {
         await db.rpc("mercadolibre_release_refresh_lock", { p_error: "refresh_storage_failed" });
         return null;
       }
-      return String(data.access_token);
+      return accessToken;
     } catch {
       await db.rpc("mercadolibre_release_refresh_lock", { p_error: "refresh_request_failed" });
       return null;
@@ -242,6 +253,10 @@ Deno.serve(async (req: Request) => {
       status = 0;
     } finally {
       clearTimeout(timer);
+    }
+
+    if ([401, 403, 429].includes(status)) {
+      await db.rpc("mercadolibre_mark_connection_error", { p_error: `api_http_${status}` });
     }
 
     await db.from("mercadolibre_webhook_events").update({

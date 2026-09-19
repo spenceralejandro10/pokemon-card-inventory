@@ -296,7 +296,12 @@ Deno.serve(async (req: Request) => {
     }
 
     const tokenData = await tokenRes.json().catch(() => ({}));
-    if (!tokenRes.ok || !tokenData?.access_token) {
+    const accessToken = clean(tokenData?.access_token);
+    const refreshToken = clean(tokenData?.refresh_token);
+    const tokenType = clean(tokenData?.token_type).toLowerCase();
+    const expiresIn = Number(tokenData?.expires_in);
+    if (!tokenRes.ok || accessToken.length < 10 || accessToken.length > 4096 ||
+      tokenType !== "bearer" || !Number.isSafeInteger(expiresIn) || expiresIn < 60 || expiresIn > 86400) {
       console.error("mercadolibre token exchange failed", tokenRes.status);
       await audit(session.admin_user_id, "mercadolibre_oauth_failed", {
         http_status: tokenRes.status,
@@ -304,13 +309,13 @@ Deno.serve(async (req: Request) => {
       });
       return redirectStatus("token_error");
     }
-    if (!tokenData?.refresh_token) {
+    if (refreshToken.length < 10 || refreshToken.length > 4096) {
       await audit(session.admin_user_id, "mercadolibre_oauth_failed", { reason: "missing_refresh_token" });
       return redirectStatus("token_error");
     }
     const scope = clean(tokenData.scope);
     const scopes = new Set(scope.toLowerCase().split(/[\s,]+/).filter(Boolean));
-    if (!scopes.has("read") || !scopes.has("write")) {
+    if (!scopes.has("offline_access") || !scopes.has("read") || !scopes.has("write")) {
       await audit(session.admin_user_id, "mercadolibre_oauth_failed", { reason: "insufficient_scope" });
       return redirectStatus("insufficient_scope");
     }
@@ -318,7 +323,7 @@ Deno.serve(async (req: Request) => {
     let meRes: Response;
     try {
       meRes = await timedFetch("https://api.mercadolibre.com/users/me", {
-        headers: { Authorization: `Bearer ${tokenData.access_token}`, accept: "application/json" }
+        headers: { Authorization: `Bearer ${accessToken}`, accept: "application/json" }
       });
     } catch {
       await audit(session.admin_user_id, "mercadolibre_oauth_failed", { reason: "profile_request_failed" });
@@ -344,14 +349,14 @@ Deno.serve(async (req: Request) => {
     const userId = tokenUserId;
 
     const { error: storeError } = await db.rpc("mercadolibre_store_tokens", {
-      p_access_token: String(tokenData.access_token),
-      p_refresh_token: String(tokenData.refresh_token),
+      p_access_token: accessToken,
+      p_refresh_token: refreshToken,
       p_user_id: userId,
       p_site_id: siteId,
       p_nickname: clean(me?.nickname) || null,
-      p_token_type: clean(tokenData.token_type) || "bearer",
+      p_token_type: tokenType,
       p_scope: scope,
-      p_expires_in: Number(tokenData.expires_in) || 21600
+      p_expires_in: expiresIn
     });
 
     if (storeError) {

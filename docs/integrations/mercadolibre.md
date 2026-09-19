@@ -88,6 +88,8 @@ La integración de Mercado Libre ya tiene:
 - Validación cruzada del usuario devuelto por el token y `/users/me`, además de rechazo de cuentas que no sean `MCO`.
 - Validación posterior al consentimiento de que el token incluya los scopes `read` y `write`.
 - Rechazo de autorizaciones sin refresh token y rotación serializada con recuperación después de fallos transitorios.
+- Validación estricta de `token_type`, `expires_in`, `offline_access`, `read`, `write` y del refresh token nuevo en cada rotación.
+- Corte automático de llamadas autenticadas después de respuestas `401`, `403` o `429`; exige revisión antes de volver a consumir la API y evita acumular errores 4xx.
 - Cada intento OAuth queda ligado a la sesión administrativa que lo inició; cerrar sesión o desconectar invalida callbacks pendientes.
 - Interruptor servidor de habilitación productiva. La autorización permanece bloqueada aunque el frontend sea manipulado mientras `MERCADOLIBRE_AUTHORIZATION_ENABLED` no sea exactamente `true`.
 
