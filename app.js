@@ -208,13 +208,14 @@ function detailsByProduct(rows){
  map.forEach(function(items){items.sort(function(a,b){return Number(a.position||0)-Number(b.position||0)})});
  return map;
 }
-function normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap,detailsMap){
+function normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap,detailsMap,authenticityMap){
  const category=p.category_code||"misc";
  const a=p.attributes&&typeof p.attributes==="object"?p.attributes:{};
  const misc=miscMap.get(String(p.id))||{};
  const book=bookMap.get(String(p.id))||{};
  const electronics=electronicsMap.get(String(p.id))||{};
  const card=cardMap.get(String(p.id))||{};
+ const authenticity=authenticityMap.get(String(p.id))||{};
  let setName=[p.brand,p.model].filter(Boolean).join(" · ");
  let variant=p.description||"";
  if(category==="books"){
@@ -243,6 +244,10 @@ function normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMa
   primary_image_url:p.primary_image_url||"",
   media:mediaMap.get(String(p.id))||[],
   details:detailsMap.get(String(p.id))||[],
+  authenticity_type:authenticity.authenticity_type||"unverified",
+  authenticity_brand:authenticity.brand_name||"",
+  authenticity_notes:authenticity.notes||"",
+  authenticity_verified_at:authenticity.verified_at||null,
   stock_quantity:p.stock_quantity,sale_status:p.sale_status,demo:!!p.demo,
   validation_status:p.validation_status||"",
   condition:p.condition_label||"",
@@ -281,7 +286,8 @@ async function loadProducts(){
   fetchSupabaseTable("book_details",headers,"","product_id"),
   fetchSupabaseTable("electronics_details",headers,"","product_id"),
   fetchSupabaseTable("trading_card_details",headers,"","product_id"),
-  fetchSupabaseTable("product_details",headers,"","id")
+  fetchSupabaseTable("product_details",headers,"","id"),
+  fetchSupabaseTable("product_authenticity",headers,"","product_id")
  ]);
  const remoteCards=results[0].status==="fulfilled"&&Array.isArray(results[0].value)?results[0].value:[];
  const localCards=results[3].status==="fulfilled"&&Array.isArray(results[3].value)?results[3].value:[];
@@ -309,7 +315,8 @@ async function loadProducts(){
  const electronicsMap=mapByProduct(results[8].status==="fulfilled"?results[8].value:[]);
  const cardMap=mapByProduct(results[9].status==="fulfilled"?results[9].value:[]);
  const detailsMap=detailsByProduct(results[10].status==="fulfilled"?results[10].value:[]);
- const master=masterRaw.map(function(p){return normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap,detailsMap)});
+ const authenticityMap=mapByProduct(results[11].status==="fulfilled"?results[11].value:[]);
+ const master=masterRaw.map(function(p){return normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap,detailsMap,authenticityMap)});
  const byKey=new Map();
  legacyPokemon.concat(demo,legacyElectronics,master).forEach(function(p){byKey.set(productKey(p),p)});
  state.products=mixCatalog(Array.from(byKey.values()));
@@ -319,6 +326,7 @@ async function loadProducts(){
  if(!masterRaw.length&&results[4].status!=="fulfilled")partial.push("inventario maestro");
  if(results[5].status!=="fulfilled")partial.push("galerías de imágenes");
  if(results[10].status!=="fulfilled")partial.push("detalles de productos");
+ if(results[11].status!=="fulfilled")partial.push("autenticidad");
  if(!remoteCards.length&&localCards.length)partial.push("inventario Pokémon local");
  if(results[1].status!=="fulfilled")partial.push("categorías de demostración");
  setCatalogStatus(partial.length?"Catálogo parcial: no fue posible actualizar "+partial.join(" y ")+".":"",partial.length?"warning":"");
@@ -328,7 +336,7 @@ async function loadProducts(){
 }
 function matches(p,q,language,rarity){
  const detailSearch=(Array.isArray(p.details)?p.details:[]).map(function(d){return [d.section,d.label,d.value].join(" ")}).join(" ");
- const hay=[p.id,p.canonical_name,p.name_original,p.product_type,p.card_number,p.set_name,p.set_code,p.language,p.rarity_detected,p.rarity_verified,p.variant,p.category_label,p.electronics_brand,p.electronics_model,p.electronics_type,p.electronics_specs,p.electronics_compatibility,p.electronics_power,p.electronics_color,p.generic_brand,p.generic_model,p.generic_description,p.misc_type,p.misc_theme,p.misc_material,p.misc_dimensions,p.misc_details,detailSearch].map(normalize).join(" ");
+ const hay=[p.id,p.canonical_name,p.name_original,p.product_type,p.card_number,p.set_name,p.set_code,p.language,p.rarity_detected,p.rarity_verified,p.variant,p.category_label,p.electronics_brand,p.electronics_model,p.electronics_type,p.electronics_specs,p.electronics_compatibility,p.electronics_power,p.electronics_color,p.generic_brand,p.generic_model,p.generic_description,p.misc_type,p.misc_theme,p.misc_material,p.misc_dimensions,p.misc_details,p.authenticity_type,p.authenticity_brand,p.authenticity_notes,detailSearch].map(normalize).join(" ");
  const terms=normalize(q).split(/\s+/).filter(Boolean);
  return terms.every(function(term){return hay.includes(term)})&&(!language||p.language===language)&&(!rarity||(p.category==="pokemon"&&rarityGroup(p)===rarity));
 }
@@ -347,6 +355,9 @@ function displayInfo(value){
  const text=String(value==null?"":value).trim();
  return text||"Sin información";
 }
+function authenticityPublicLabel(value){
+ return {original:"Original",generic:"Genérico",other_brand:"Otra marca",unverified:"Por verificar"}[String(value||"")]||"Por verificar";
+}
 function renderExtendedDetails(container,p){
  if(!container)return;
  container.innerHTML="";
@@ -354,6 +365,8 @@ function renderExtendedDetails(container,p){
   ["Tipo de producto",p.product_type||p.misc_type||p.electronics_type||p.rarity_detected],
   ["Marca",p.generic_brand||p.electronics_brand],
   ["Modelo",p.generic_model||p.electronics_model],
+  ["Autenticidad",authenticityPublicLabel(p.authenticity_type)],
+  ["Marca asociada",p.authenticity_brand||p.generic_brand||p.electronics_brand],
   ["Descripción",p.generic_description||p.variant]
  ];
  const used=new Set(general.map(function(row){return normalize(row[0])}));
