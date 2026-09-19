@@ -15,6 +15,7 @@ const adminSource=read("admin.js");
 const adminCss=read("admin.css");
 const edgeFunctionPaths=[
  "supabase/functions/sale-order/index.ts",
+ "supabase/functions/admin-control/index.ts",
  "supabase/functions/mercadolibre-oauth/index.ts",
  "supabase/functions/mercadolibre-webhook/index.ts"
 ];
