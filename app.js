@@ -14,6 +14,11 @@ const CATEGORY_LABELS={
  accessories:"Accesorios",sealed:"Producto sellado",books:"Libros",electronics:"Electrónica",misc:"Coleccionables y más"
 };
 const CARD_CATEGORIES=new Set(["pokemon","yugioh","digimon","dragonball","naruto","other_cards"]);
+const SECTION_LABELS={
+ pokemon:"Pokémon",yugioh:"Yu-Gi-Oh!",digimon:"Digimon",dragonball:"Dragon Ball",naruto:"Naruto",
+ other_cards:"Otras cartas TCG",accessories:"Accesorios",sealed:"Producto sellado",books:"Libros",
+ electronics:"Electrónica",misc:"Coleccionables y más"
+};
 const SHIPPING_ZONES=new Set(["L","R","N","Z","O","E"]);
 const PAYMENT_METHODS=new Set(["Nequi","Bre-B / llave bancaria","Bancolombia","Daviplata"]);
 const TOP_LOADER_PREFERENCES=new Set(["one_per_card","up_to_three","send_loose","custom"]);
@@ -439,7 +444,7 @@ function render(){
    img.hidden=true;wrap.classList.add("image-pending");wrap.setAttribute("data-label",CATEGORY_LABELS[p.category]||"Producto");
   }
   const categoryTag=n.querySelector(".card-category-tag");
-  categoryTag.textContent=CATEGORY_LABELS[p.category]||"Producto";
+  categoryTag.textContent="Sección: "+(SECTION_LABELS[p.category]||CATEGORY_LABELS[p.category]||"Producto");
   categoryTag.dataset.category=p.category;
   const demo=n.querySelector(".demo-badge");demo.hidden=!p.demo;
   n.querySelector(".card-name").textContent=productName(p);
@@ -464,9 +469,9 @@ function render(){
   if(p.category==="misc"){
    n.querySelector(".card-number").closest("div").querySelector("dt").textContent="Referencia";
    n.querySelector(".card-set").closest("div").querySelector("dt").textContent="Tipo / tema";
-   n.querySelector(".card-rarity").closest("div").querySelector("dt").textContent="Detalles";
+   n.querySelector(".card-rarity").closest("div").querySelector("dt").textContent="Tipo";
    n.querySelector(".card-set").textContent=[p.misc_type,p.misc_theme].filter(Boolean).join(" · ")||"Coleccionable";
-   n.querySelector(".card-rarity").textContent=[p.misc_material,p.misc_dimensions,p.misc_details].filter(Boolean).join(" · ")||"Información pendiente";
+   n.querySelector(".card-rarity").textContent=p.misc_type||p.product_type||"Coleccionable";
    n.querySelector(".card-status").textContent=p.condition||productStatus(p);
    n.querySelector(".original-name").textContent=[p.generic_brand,p.misc_type].filter(Boolean).join(" · ");
   }
