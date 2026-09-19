@@ -122,10 +122,9 @@ function renderPresence(){
  const box=$("#presenceGrid");if(!box)return;
  if(!state.profiles.length){box.innerHTML='<span class="muted">Sin perfiles disponibles.</span>';return}
  box.innerHTML=state.profiles.map(p=>
-  '<article class="presence-person">'+
-   '<div class="presence-avatar">'+(p.avatar_url?'<img src="'+safe(p.avatar_url)+'" alt="">':safe(initials(p.display_name)))+'</div>'+
-   '<div><strong>'+safe(p.display_name||"Administrador")+'</strong><small>'+safe(p.corporate_title||"Administración")+'</small></div>'+
+  '<article class="presence-person presence-person-compact">'+
    '<span class="presence-dot '+(p.online?"online":"offline")+'"></span>'+
+   '<div><strong>'+safe(p.display_name||"Administrador")+'</strong><small>'+safe(p.corporate_title||"Administración")+'</small></div>'+
    '<em>'+(p.online?"En línea":"Desconectado")+'</em>'+
   '</article>'
  ).join("");
