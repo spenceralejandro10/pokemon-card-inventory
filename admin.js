@@ -13,15 +13,9 @@ const state={
  activityHasMore:true,
  profiles:[],
  summary:{},
- unread:0,
  currentView:"overview",
- chatPartnerId:"",
- chatLastId:0,
- chatMessages:[],
  heartbeatTimer:null,
- chatTimer:null,
- selectedAvatar:null,
- selectedChatFile:null
+ selectedAvatar:null
 };
 
 const $=(s)=>document.querySelector(s);
@@ -84,31 +78,24 @@ function showPanel(){
  if(headerTitle)headerTitle.textContent=[me?.corporate_title,me?.professional_title].filter(Boolean).join(" · ")||"Administración";
  setAvatar($("#headerAvatar"),me);
  if(passwordWarning)passwordWarning.hidden=!state.user?.must_change_password;
- updateChatBadge();
  startTimers();
 }
 function stopTimers(){
  if(state.heartbeatTimer)clearInterval(state.heartbeatTimer);
- if(state.chatTimer)clearInterval(state.chatTimer);
- state.heartbeatTimer=null;state.chatTimer=null;
+ state.heartbeatTimer=null;
 }
 function startTimers(){
  stopTimers();
- state.heartbeatTimer=setInterval(()=>heartbeat().catch(()=>{}),30000);
- state.chatTimer=setInterval(()=>{if(state.currentView==="chat")loadChat(false).catch(()=>{})},5000);
+ state.heartbeatTimer=setInterval(()=>heartbeat().catch(()=>{}),15000);
 }
 function switchView(name){
  state.currentView=name;
  $$(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
  $$(".admin-view").forEach(p=>p.classList.toggle("active",p.dataset.panel===name));
- const labels={overview:"Resumen",team:"Equipo",chat:"Chat interno",mercadolibre:"Mercado Libre",integrations:"Integraciones",activity:"Histórico",security:"Seguridad"};
+ const labels={overview:"Resumen",team:"Perfil",mercadolibre:"Mercado Libre",integrations:"Integraciones",activity:"Histórico",security:"Seguridad"};
  $("#viewTitle").textContent=labels[name]||"Centro de mando";
  if(name==="mercadolibre")renderProducts();
- if(name==="team")renderTeam();
- if(name==="chat"){
-  populateRecipients();
-  loadChat(true).catch(e=>setStatus($("#chatStatus"),e.message,"error"));
- }
+ if(name==="team")renderProfilePage();
  if(name==="activity")renderActivity();
  window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -126,42 +113,45 @@ function renderSummary(){
  $("#statMlActive").textContent=state.summary.ml_active??0;
  $("#statSoldOut").textContent=state.summary.sold_out??0;
 }
-function renderPresence(){
- const box=$("#presenceGrid");if(!box)return;
- if(!state.profiles.length){box.innerHTML='<span class="muted">Sin perfiles disponibles.</span>';return}
- box.innerHTML=state.profiles.map(p=>
-  '<article class="presence-person presence-person-compact">'+
-   '<span class="presence-dot '+(p.online?"online":"offline")+'"></span>'+
-   '<div><strong>'+safe(p.display_name||"Administrador")+'</strong><small>'+safe(p.corporate_title||"Administración")+'</small></div>'+
-   '<em>'+(p.online?"En línea":"Desconectado")+'</em>'+
-  '</article>'
- ).join("");
+function otherProfile(){
+ return state.profiles.find(p=>p.id!==state.user?.id)||null;
 }
-function renderTeam(){
- const box=$("#teamProfiles");if(!box)return;
- box.innerHTML=state.profiles.map(p=>{
-  const mine=p.id===state.user?.id;
-  return '<article class="team-profile-card '+(mine?"mine":"")+'">'+
-   '<div class="profile-hero">'+
-    '<div class="large-avatar">'+(p.avatar_url?'<img src="'+safe(p.avatar_url)+'" alt="">':safe(initials(p.display_name)))+'</div>'+
-    '<span class="presence-dot '+(p.online?"online":"offline")+'"></span>'+
-   '</div>'+
-   '<div class="profile-info">'+
-    '<div class="profile-flags"><span>'+safe(p.role==="owner"?"Propietario":"Administración")+'</span>'+(mine?'<b>Tu perfil</b>':'')+'</div>'+
-    '<h3>'+safe(p.display_name||"Administrador")+'</h3>'+
-    '<strong>'+safe(p.corporate_title||"Administración")+'</strong>'+
-    '<p>'+safe(p.professional_title||"")+'</p>'+
-    '<dl><div><dt>Estado</dt><dd>'+(p.online?"En línea":"Desconectado")+'</dd></div><div><dt>Último acceso</dt><dd>'+safe(formatDate(p.last_login_at))+'</dd></div></dl>'+
-   '</div>'+
-  '</article>';
- }).join("");
+function onlineText(profile){
+ if(!profile)return "Sin información";
+ if(profile.online)return "En línea ahora";
+ return profile.last_seen_at ? "Desconectado · última actividad "+formatDate(profile.last_seen_at) : "Desconectado";
+}
+function renderPartnerPresence(){
+ const partner=otherProfile();
+ const avatar=$("#partnerAvatar");
+ const name=$("#partnerName");
+ const status=$("#partnerStatus");
+ if(avatar)setAvatar(avatar,partner);
+ if(name)name.textContent=partner?.display_name||"Otro administrador";
+ if(status){
+  status.className=partner?.online?"online":"offline";
+  status.innerHTML='<i></i> '+safe(onlineText(partner));
+ }
+ const pageAvatar=$("#profilePartnerAvatar");
+ const pageName=$("#profilePartnerName");
+ const pageStatus=$("#profilePartnerStatus");
+ if(pageAvatar)setAvatar(pageAvatar,partner);
+ if(pageName)pageName.textContent=partner?.display_name||"Otro administrador";
+ if(pageStatus){
+  pageStatus.className="profile-partner-status "+(partner?.online?"online":"offline");
+  pageStatus.innerHTML='<i></i> '+safe(onlineText(partner));
+ }
+}
+function renderProfilePage(){
  const me=selfProfile();
  setAvatar($("#profilePreview"),me);
-}
-function updateChatBadge(){
- const badge=$("#chatBadge");if(!badge)return;
- badge.hidden=!state.unread;
- badge.textContent=String(Math.min(99,state.unread||0));
+ const name=$("#profileDisplayName");
+ const title=$("#profileDisplayTitle");
+ const profession=$("#profileDisplayProfession");
+ if(name)name.textContent=me?.display_name||me?.username||"Administrador";
+ if(title)title.textContent=me?.corporate_title||"Administración";
+ if(profession)profession.textContent=me?.professional_title||"";
+ renderPartnerPresence();
 }
 function renderActivity(){
  const box=$("#activityList");if(!box)return;
@@ -249,88 +239,7 @@ async function heartbeat(){
  if(!state.token)return;
  const data=await api("heartbeat");
  state.profiles=data.profiles||state.profiles;
- state.unread=Number(data.unread)||0;
- renderPresence();renderTeam();updateChatBadge();populateRecipients(false);showPanel();
-}
-
-function populateRecipients(reset=true){
- const select=$("#chatRecipient");if(!select)return;
- const others=state.profiles.filter(p=>p.id!==state.user?.id);
- if(!others.length){select.innerHTML='<option value="">Sin otro administrador</option>';state.chatPartnerId="";return}
- const current=state.chatPartnerId||select.value||others[0].id;
- select.innerHTML=others.map(p=>'<option value="'+safe(p.id)+'">'+safe(p.display_name||"Administrador")+' · '+safe(p.corporate_title||"")+'</option>').join("");
- const valid=others.some(p=>p.id===current)?current:others[0].id;
- select.value=valid;
- if(reset||state.chatPartnerId!==valid){state.chatPartnerId=valid}
- updateRecipientStatus();
-}
-function updateRecipientStatus(){
- const p=profileById(state.chatPartnerId),label=$("#chatRecipientStatus");
- if(!label)return;
- label.textContent=p?(p.online?"En línea ahora":"Desconectado · último acceso "+formatDate(p.last_login_at)):"—";
- label.className="presence-label "+(p?.online?"online":"");
-}
-function renderChat(scroll=true){
- const box=$("#chatMessages");if(!box)return;
- if(!state.chatPartnerId){box.innerHTML='<div class="chat-empty">No hay otro administrador disponible.</div>';return}
- if(!state.chatMessages.length){box.innerHTML='<div class="chat-empty">Todavía no hay mensajes en esta conversación.</div>';return}
- const profiles=new Map(state.profiles.map(p=>[p.id,p]));
- box.innerHTML=state.chatMessages.map(m=>{
-  const mine=m.sender_id===state.user?.id;
-  const sender=profiles.get(m.sender_id);
-  let attachment="";
-  if(m.attachment_url){
-   const isImage=String(m.attachment_mime||"").startsWith("image/");
-   attachment=isImage
-    ?'<a class="chat-image-link" href="'+safe(m.attachment_url)+'" target="_blank" rel="noopener"><img src="'+safe(m.attachment_url)+'" alt="'+safe(m.attachment_name||"Imagen adjunta")+'"><span>'+safe(m.attachment_name||"Imagen")+'</span></a>'
-    :'<a class="chat-file-link" href="'+safe(m.attachment_url)+'" target="_blank" rel="noopener">Adjunto · '+safe(m.attachment_name||"Archivo")+'</a>';
-  }
-  return '<article class="chat-message '+(mine?"mine":"theirs")+'">'+
-   '<div class="chat-message-meta"><strong>'+safe(mine?"Tú":sender?.display_name||"Administrador")+'</strong><time>'+safe(formatDate(m.created_at))+'</time></div>'+
-   (m.body?'<div class="chat-bubble">'+safe(m.body).replace(/\n/g,"<br>")+'</div>':"")+
-   attachment+
-  '</article>';
- }).join("");
- if(scroll)box.scrollTop=box.scrollHeight;
-}
-async function loadChat(initial){
- if(!state.chatPartnerId)return;
- const data=await api("chat_list",{partner_id:state.chatPartnerId,after_id:initial?0:state.chatLastId});
- state.profiles=data.profiles||state.profiles;
- state.unread=Number(data.unread)||0;
- const incoming=data.messages||[];
- if(initial){
-  state.chatMessages=incoming;
- }else if(incoming.length){
-  const ids=new Set(state.chatMessages.map(m=>String(m.id)));
-  incoming.forEach(m=>{if(!ids.has(String(m.id)))state.chatMessages.push(m)});
- }
- state.chatLastId=state.chatMessages.reduce((n,m)=>Math.max(n,Number(m.id)||0),0);
- updateChatBadge();renderPresence();renderTeam();populateRecipients(false);renderChat(initial||incoming.length>0);
-}
-async function sendChat(){
- const partner=state.chatPartnerId;
- if(!partner)throw new Error("No hay destinatario disponible.");
- const message=$("#chatMessage").value.trim();
- let attachment=null;
- if(state.selectedChatFile){
-  const data=await fileToDataUrl(state.selectedChatFile,5*1024*1024);
-  attachment={name:state.selectedChatFile.name,mime:state.selectedChatFile.type||"application/octet-stream",data};
- }
- if(!message&&!attachment)throw new Error("Escribe un mensaje o adjunta un archivo.");
- const out=await api("chat_send",{recipient_id:partner,message,attachment});
- $("#chatMessage").value="";
- $("#chatFile").value="";
- state.selectedChatFile=null;
- $("#chatAttachmentPreview").hidden=true;
- $("#chatAttachmentPreview").innerHTML="";
- $("#chatFileName").textContent="Imagen, PDF o documento · máximo 5 MB";
- if(out.message){
-  const exists=state.chatMessages.some(m=>String(m.id)===String(out.message.id));
-  if(!exists)state.chatMessages.push(out.message);
-  state.chatLastId=Math.max(state.chatLastId,Number(out.message.id)||0);
- }
- renderChat(true);
+ renderPartnerPresence();renderProfilePage();showPanel();
 }
 
 async function loadDashboard(renderProductsToo=true){
@@ -341,8 +250,7 @@ async function loadDashboard(renderProductsToo=true){
  state.activityHasMore=state.activity.length>=25;
  state.profiles=data.profiles||[];
  state.summary=data.summary||{};
- state.unread=Number(data.unread)||0;
- showPanel();renderSummary();renderPresence();renderTeam();renderActivity();populateRecipients(false);updateChatBadge();
+ showPanel();renderSummary();renderPartnerPresence();renderProfilePage();renderActivity();
  if(renderProductsToo)renderProducts();
 }
 
@@ -361,55 +269,32 @@ $("#channelFilter").addEventListener("change",renderProducts);
 $("#avatarFile").addEventListener("change",async function(){
  const file=this.files?.[0]||null;state.selectedAvatar=file;
  $("#saveAvatar").disabled=!file;
- if(!file){$("#avatarFileName").textContent="JPG, PNG o WebP · máximo 3 MB";renderTeam();return}
+ if(!file){$("#avatarFileName").textContent="JPG, PNG o WebP · máximo 5 MB";renderProfilePage();return}
  $("#avatarFileName").textContent=file.name+" · "+Math.ceil(file.size/1024)+" KB";
  try{
-  if(file.size>3*1024*1024)throw new Error("La foto supera 3 MB.");
+  if(file.size>5*1024*1024)throw new Error("La foto supera 5 MB.");
   if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error("Usa JPG, PNG o WebP.");
-  const data=await fileToDataUrl(file,3*1024*1024);
+  const data=await fileToDataUrl(file,5*1024*1024);
   const preview=$("#profilePreview");preview.innerHTML='<img src="'+safe(data)+'" alt="Vista previa">';
   setStatus($("#avatarStatus"),"Vista previa lista. Pulsa “Guardar foto” para conservarla.","");
  }catch(e){
-  state.selectedAvatar=null;this.value="";$("#saveAvatar").disabled=true;setStatus($("#avatarStatus"),e.message,"error");renderTeam();
+  state.selectedAvatar=null;this.value="";$("#saveAvatar").disabled=true;setStatus($("#avatarStatus"),e.message,"error");renderProfilePage();
  }
 });
 $("#saveAvatar").addEventListener("click",async function(){
  if(!state.selectedAvatar)return;
  const btn=this;btn.disabled=true;btn.textContent="Guardando…";setStatus($("#avatarStatus"),"");
  try{
-  const dataUrl=await fileToDataUrl(state.selectedAvatar,3*1024*1024);
+  const dataUrl=await fileToDataUrl(state.selectedAvatar,5*1024*1024);
   const data=await api("upload_avatar",{file:{name:state.selectedAvatar.name,mime:state.selectedAvatar.type,data:dataUrl}});
   const me=state.profiles.find(p=>p.id===state.user.id);
   if(me){me.avatar_url=data.avatar_url;me.avatar_path=data.avatar_path}
   state.user.avatar_url=data.avatar_url;state.user.avatar_path=data.avatar_path;
-  state.selectedAvatar=null;$("#avatarFile").value="";$("#avatarFileName").textContent="JPG, PNG o WebP · máximo 3 MB";
-  renderTeam();renderPresence();showPanel();
+  state.selectedAvatar=null;$("#avatarFile").value="";$("#avatarFileName").textContent="JPG, PNG o WebP · máximo 5 MB";
+  renderProfilePage();renderPartnerPresence();showPanel();
   setStatus($("#avatarStatus"),"Foto guardada. Quedará asociada a tu perfil en próximos inicios de sesión.","success");
  }catch(e){setStatus($("#avatarStatus"),e.message,"error")}
  finally{btn.disabled=!state.selectedAvatar;btn.textContent="Guardar foto"}
-});
-
-$("#chatRecipient").addEventListener("change",function(){
- state.chatPartnerId=this.value;state.chatLastId=0;state.chatMessages=[];updateRecipientStatus();
- loadChat(true).catch(e=>setStatus($("#chatStatus"),e.message,"error"));
-});
-$("#chatFile").addEventListener("change",function(){
- const file=this.files?.[0]||null;state.selectedChatFile=file;
- const preview=$("#chatAttachmentPreview");
- if(!file){preview.hidden=true;preview.innerHTML="";$("#chatFileName").textContent="Imagen, PDF o documento · máximo 5 MB";return}
- if(file.size>5*1024*1024){
-  state.selectedChatFile=null;this.value="";setStatus($("#chatStatus"),"El archivo debe pesar máximo 5 MB.","error");return;
- }
- $("#chatFileName").textContent=file.name+" · "+Math.ceil(file.size/1024)+" KB";
- preview.hidden=false;
- if(file.type.startsWith("image/")){
-  const reader=new FileReader();reader.onload=()=>{preview.innerHTML='<img src="'+safe(String(reader.result||""))+'" alt=""><span>'+safe(file.name)+'</span>'};reader.readAsDataURL(file);
- }else preview.innerHTML='<span>Adjunto listo: '+safe(file.name)+'</span>';
-});
-$("#chatForm").addEventListener("submit",async e=>{
- e.preventDefault();const btn=e.currentTarget.querySelector('button[type="submit"]');btn.disabled=true;btn.textContent="Enviando…";setStatus($("#chatStatus"),"");
- try{await sendChat()}catch(err){setStatus($("#chatStatus"),err.message,"error")}
- finally{btn.disabled=false;btn.textContent="Enviar mensaje"}
 });
 
 $("#loadMoreActivity").addEventListener("click",async function(){
