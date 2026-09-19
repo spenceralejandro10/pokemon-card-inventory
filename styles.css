@@ -1494,3 +1494,19 @@ body.panel-open{overflow:hidden}
  .empty{grid-template-columns:1fr!important;justify-items:start!important;padding:26px!important;gap:14px!important}
  .empty button{width:100%!important}
 }
+
+/* CardNest primary header logo */
+.brand-home.brand-home-logo{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ width:auto!important;max-width:min(420px,82vw)!important;padding:0!important;
+ border:0!important;background:transparent!important;box-shadow:none!important;
+ cursor:pointer!important;overflow:visible!important;
+}
+.brand-home.brand-home-logo img{
+ display:block!important;width:auto!important;height:74px!important;max-width:100%!important;
+ object-fit:contain!important;object-position:left center!important;border:0!important;
+ filter:none!important;
+}
+@media(max-width:760px){
+ .brand-home.brand-home-logo img{height:58px!important}
+}
