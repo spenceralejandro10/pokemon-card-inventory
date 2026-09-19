@@ -1468,6 +1468,13 @@ function setCollaboratorModal(open){
  }
 }
 restoreCollaboratorAccess();
+const collaboratorParams=new URLSearchParams(location.search);
+if(collaboratorParams.get("collab")==="1"){
+ setCollaboratorModal(true);
+ collaboratorParams.delete("collab");
+ const cleanQuery=collaboratorParams.toString();
+ history.replaceState(null,"",location.pathname+(cleanQuery?"?"+cleanQuery:"")+location.hash);
+}
 ["openCollaboratorLogin","footerCollaboratorLogin"].forEach(id=>document.getElementById(id)?.addEventListener("click",()=>setCollaboratorModal(true)));
 document.getElementById("closeCollaboratorLogin")?.addEventListener("click",()=>setCollaboratorModal(false));
 document.getElementById("collaboratorBackdrop")?.addEventListener("click",()=>setCollaboratorModal(false));
