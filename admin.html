@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>CardNest · Centro de mando</title>
-  <link rel="stylesheet" href="admin.css?v=20260919-3">
+  <link rel="stylesheet" href="admin.css?v=20260919-4">
 </head>
 <body>
   <main class="admin-shell">
@@ -159,6 +159,54 @@
                     <option value="Diseñadora"></option>
                     <option value="Profesional en Marketing"></option>
                   </datalist>
+
+                  <fieldset id="profileFrameSection" class="profile-frame-section">
+                    <legend>Marco del perfil</legend>
+                    <p id="profileFrameHelp">Elige el estilo que quieres mostrar en tu foto. El marco CEO es único y no se puede seleccionar en otras cuentas.</p>
+                    <div class="frame-picker">
+                      <label class="frame-option" data-frame-option="ceo_inferno">
+                        <input type="radio" name="profileFrame" value="ceo_inferno">
+                        <span class="frame-swatch frame-ceo-inferno"><b>🔥</b></span>
+                        <strong>Inferno CEO</strong><small>Exclusivo</small>
+                      </label>
+                      <label class="frame-option" data-frame-option="silver">
+                        <input type="radio" name="profileFrame" value="silver">
+                        <span class="frame-swatch frame-silver"><b>✦</b></span>
+                        <strong>Plata ejecutiva</strong><small>Elegante</small>
+                      </label>
+                      <label class="frame-option" data-frame-option="hearts">
+                        <input type="radio" name="profileFrame" value="hearts">
+                        <span class="frame-swatch frame-hearts"><b>♥</b></span>
+                        <strong>Corazones</strong><small>Divertido</small>
+                      </label>
+                      <label class="frame-option" data-frame-option="cats">
+                        <input type="radio" name="profileFrame" value="cats">
+                        <span class="frame-swatch frame-cats"><b>🐱</b></span>
+                        <strong>Gatitos</strong><small>Divertido</small>
+                      </label>
+                      <label class="frame-option" data-frame-option="paws">
+                        <input type="radio" name="profileFrame" value="paws">
+                        <span class="frame-swatch frame-paws"><b>🐾</b></span>
+                        <strong>Huellitas</strong><small>Divertido</small>
+                      </label>
+                      <label class="frame-option" data-frame-option="stars">
+                        <input type="radio" name="profileFrame" value="stars">
+                        <span class="frame-swatch frame-stars"><b>★</b></span>
+                        <strong>Estrellas</strong><small>Brillante</small>
+                      </label>
+                      <label class="frame-option" data-frame-option="neon">
+                        <input type="radio" name="profileFrame" value="neon">
+                        <span class="frame-swatch frame-neon"><b>⚡</b></span>
+                        <strong>Neón</strong><small>Energía</small>
+                      </label>
+                      <label class="frame-option" data-frame-option="standard">
+                        <input type="radio" name="profileFrame" value="standard">
+                        <span class="frame-swatch frame-standard"><b>CN</b></span>
+                        <strong>Clásico</strong><small>Sin efectos</small>
+                      </label>
+                    </div>
+                  </fieldset>
+
                   <div class="profile-edit-actions">
                     <span id="ceoExclusiveNote">CEO & Fundador es un cargo exclusivo de Picard.</span>
                     <button id="saveProfileInfo" type="submit">Guardar datos del perfil</button>
@@ -253,24 +301,40 @@
 
         <section class="admin-view" data-panel="security">
           <div class="security-grid">
-            <article class="panel-card">
-              <div class="panel-card-head"><div><small>CUENTA</small><h2>Cambiar contraseña</h2></div></div>
-              <p>Las credenciales iniciales son temporales. Usa una contraseña distinta para cada administrador.</p>
-              <form id="passwordForm" class="password-form">
-                <label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="12" required></label>
-                <label>Repetir contraseña<input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required></label>
-                <small>Mínimo 12 caracteres con mayúscula, minúscula, número y símbolo.</small>
-                <button type="submit">Actualizar contraseña</button>
+            <article class="panel-card security-credentials-card">
+              <div class="panel-card-head">
+                <div><small>CUENTA</small><h2>Usuario y contraseña</h2></div>
+                <span class="status locked">Verificación requerida</span>
+              </div>
+              <p>Puedes cambiar tu usuario, tu contraseña o ambos. Para autorizar cualquier cambio solo debes confirmar tu contraseña actual.</p>
+              <form id="credentialsForm" class="credentials-form">
+                <label>Usuario de acceso
+                  <input id="securityUsername" type="text" maxlength="40" autocomplete="username" required>
+                  <small>4 a 40 caracteres: letras minúsculas, números o guion bajo.</small>
+                </label>
+                <label>Contraseña actual
+                  <input id="currentPassword" type="password" autocomplete="current-password" required>
+                  <small>Se usa únicamente para verificar que eres tú.</small>
+                </label>
+                <label>Nueva contraseña <em>opcional</em>
+                  <input id="newPassword" type="password" autocomplete="new-password" minlength="12">
+                </label>
+                <label>Repetir nueva contraseña
+                  <input id="confirmPassword" type="password" autocomplete="new-password" minlength="12">
+                </label>
+                <small class="security-password-rule">Si cambias la contraseña: mínimo 12 caracteres con mayúscula, minúscula, número y símbolo.</small>
+                <button type="submit">Guardar credenciales</button>
               </form>
-              <div id="passwordStatus" class="form-status" role="alert" hidden></div>
+              <div id="credentialsStatus" class="form-status" role="alert" hidden></div>
             </article>
             <article class="panel-card">
               <div class="panel-card-head"><div><small>PROTECCIÓN</small><h2>Cómo está protegido</h2></div></div>
               <ul class="security-list">
-                <li>Las contraseñas no se guardan en texto plano.</li>
-                <li>Las fotos y adjuntos internos se guardan en almacenamiento privado.</li>
+                <li>La contraseña actual se verifica antes de modificar el usuario o la clave.</li>
+                <li>Las contraseñas se almacenan con hash, nunca en texto plano.</li>
+                <li>Las fotos de perfil se guardan en almacenamiento privado.</li>
                 <li>Las tablas administrativas no tienen acceso público.</li>
-                <li>La sesión administrativa vence automáticamente.</li>
+                <li>Las demás sesiones de la cuenta se cierran después de cambiar credenciales.</li>
                 <li>El histórico de acciones es inmutable desde la base de datos.</li>
                 <li>Las claves privadas de integraciones nunca van al navegador.</li>
               </ul>
@@ -280,6 +344,6 @@
       </div>
     </section>
   </main>
-  <script src="admin.js?v=20260919-3"></script>
+  <script src="admin.js?v=20260919-4"></script>
 </body>
 </html>
