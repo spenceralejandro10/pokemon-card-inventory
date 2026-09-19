@@ -339,6 +339,7 @@ Deno.serve(async(req)=>{
       {data:details,error:dErr},
       {data:authenticity,error:aErr},
       {data:categories,error:catErr},
+      {data:interestCounts,error:iErr},
       {data:logs,error:lErr}
     ]=await Promise.all([
       db.from("products").select("id,category_code,name,original_name,product_type,brand,model,reference_code,language,condition_label,description,stock_quantity,sale_status,validation_status,primary_image_url,source_image_url,demo,updated_at").order("category_code").order("name"),
@@ -347,6 +348,7 @@ Deno.serve(async(req)=>{
       db.from("product_details").select("id,product_id,section,label,value,position,is_public,source").order("product_id").order("position"),
       db.from("product_authenticity").select("product_id,authenticity_type,brand_name,notes,verified_at,updated_at"),
       db.from("catalog_categories").select("code,name,family,active").eq("active",true).order("name"),
+      db.from("product_interest_counts").select("product_id,interest_count,updated_at"),
       db.from("admin_audit_log").select("id,admin_user_id,action,entity_type,entity_id,details,created_at").order("id",{ascending:false}).limit(25)
     ]);
 
@@ -357,6 +359,7 @@ Deno.serve(async(req)=>{
     const safeDetails=dErr?[]:(details||[]);
     const safeAuthenticity=aErr?[]:(authenticity||[]);
     const safeCategories=catErr?[]:(categories||[]);
+    const safeInterestCounts=iErr?[]:(interestCounts||[]);
     const safeLogs=lErr?[]:(logs||[]);
     const actorMap=new Map((profiles||[]).map((p:any)=>[p.id,p]));
     const activity=safeLogs.map((row:any)=>({
@@ -370,6 +373,7 @@ Deno.serve(async(req)=>{
 
     const channelMap=new Map(safeChannels.map((c:any)=>[c.product_id,c]));
     const authenticityMap=new Map(safeAuthenticity.map((a:any)=>[a.product_id,a]));
+    const interestMap=new Map(safeInterestCounts.map((i:any)=>[i.product_id,Number(i.interest_count||0)]));
     const mediaMap=new Map<string,any[]>();
     const detailMap=new Map<string,any[]>();
 
@@ -394,7 +398,8 @@ Deno.serve(async(req)=>{
         brand_name:p.brand||null,
         notes:null,
         verified_at:null
-      }
+      },
+      interest_count:interestMap.get(p.id)||0
     }));
     const self=(profiles||[]).find((p:any)=>p.id===auth.user.id)||auth.user;
     return json(req,{
@@ -723,6 +728,42 @@ Deno.serve(async(req)=>{
     await audit(auth.user.id,"chat_message_sent","admin_user",recipientId,{message_id:created.id,has_attachment:!!attachmentPath,attachment_name:attachmentName});
     const out={...created,attachment_url:attachmentPath?await signedUrl(attachmentPath,1800):null};
     return json(req,{ok:true,message:out});
+  }
+
+  if(action==="set_product_availability"){
+    const productId=clean(body.product_id);
+    const availability=clean(body.availability);
+    if(!productId)return json(req,{error:"PRODUCT_REQUIRED",message:"Falta el ID del producto."},400);
+    if(!new Set(["available","sold_out"]).has(availability)){
+      return json(req,{error:"INVALID_AVAILABILITY",message:"Selecciona Disponible o Sin disponibilidad."},400);
+    }
+
+    const {data:before,error:beforeError}=await db.from("products")
+      .select("id,name,stock_quantity,sale_status")
+      .eq("id",productId)
+      .maybeSingle();
+    if(beforeError||!before)return json(req,{error:"PRODUCT_NOT_FOUND",message:"El producto no existe."},404);
+
+    const stockQuantity=availability==="sold_out"?0:Math.max(1,Number(before.stock_quantity)||1);
+    const {data:updated,error:updateError}=await db.from("products").update({
+      sale_status:availability,
+      stock_quantity:stockQuantity,
+      updated_at:new Date().toISOString()
+    }).eq("id",productId)
+      .select("id,name,stock_quantity,sale_status,updated_at")
+      .single();
+
+    if(updateError||!updated){
+      return json(req,{error:"AVAILABILITY_UPDATE_FAILED",message:"No fue posible actualizar la disponibilidad."},500);
+    }
+
+    await audit(auth.user.id,"product_availability_updated","product",productId,{
+      previous_sale_status:before.sale_status,
+      previous_stock_quantity:before.stock_quantity,
+      sale_status:updated.sale_status,
+      stock_quantity:updated.stock_quantity
+    });
+    return json(req,{ok:true,product:updated});
   }
 
   if(action==="save_product"){
