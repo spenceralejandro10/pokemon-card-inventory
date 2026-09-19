@@ -414,6 +414,41 @@ function selectedCatalogCategory(){
  if(fromUi&&VALID_CATEGORIES.has(fromUi))return fromUi;
  return VALID_CATEGORIES.has(state.category)?state.category:"all";
 }
+function openProductInfo(card,p){
+ const panel=document.getElementById("productInfoPanel"),backdrop=document.getElementById("productInfoBackdrop"),content=document.getElementById("productInfoContent"),title=document.getElementById("productInfoTitle");
+ if(!panel||!backdrop||!content||!title)return;
+ title.textContent=productName(p);
+ const source=card.querySelector(".product-data-source");
+ content.innerHTML="";
+ if(source){
+  const clone=source.cloneNode(true);
+  clone.hidden=false;
+  clone.classList.remove("product-data-source");
+  clone.classList.add("product-info-data");
+  content.appendChild(clone);
+ }
+ backdrop.hidden=false;
+ panel.hidden=false;
+ panel.removeAttribute("inert");
+ panel.setAttribute("aria-hidden","false");
+ requestAnimationFrame(function(){panel.classList.add("open");backdrop.classList.add("open")});
+ document.body.classList.add("product-info-open");
+}
+function closeProductInfo(){
+ const panel=document.getElementById("productInfoPanel"),backdrop=document.getElementById("productInfoBackdrop");
+ if(!panel||!backdrop)return;
+ panel.classList.remove("open");backdrop.classList.remove("open");
+ panel.setAttribute("aria-hidden","true");
+ panel.setAttribute("inert","");
+ document.body.classList.remove("product-info-open");
+ setTimeout(function(){panel.hidden=true;backdrop.hidden=true},180);
+}
+const closeProductInfoBtn=document.getElementById("closeProductInfo");
+if(closeProductInfoBtn)closeProductInfoBtn.onclick=closeProductInfo;
+const productInfoBackdrop=document.getElementById("productInfoBackdrop");
+if(productInfoBackdrop)productInfoBackdrop.onclick=closeProductInfo;
+document.addEventListener("keydown",function(e){if(e.key==="Escape")closeProductInfo()});
+
 function render(){
  const grid=document.getElementById("cardsGrid"),tpl=document.getElementById("cardTemplate");
  const q=document.getElementById("searchInput").value;
@@ -512,14 +547,8 @@ function render(){
   n.querySelector(".card-stock-detail").textContent=sold?"Sin unidades disponibles":String(Number(p.stock_quantity)||1)+" unidad"+((Number(p.stock_quantity)||1)===1?"":"es")+" disponible"+((Number(p.stock_quantity)||1)===1?"":"s");
   n.querySelector(".card-validation-detail").textContent=p.validation_status==="verified"?"Información verificada":(p.validation_status?"Pendiente de verificación":"Sin información");
   renderExtendedDetails(n.querySelector(".extended-details"),p);
-  n.querySelectorAll(".product-accordion").forEach(function(detail){
-   detail.addEventListener("toggle",function(){
-    if(!detail.open)return;
-    document.querySelectorAll(".product-accordion[open]").forEach(function(other){
-     if(other!==detail)other.open=false;
-    });
-   });
-  });
+  const infoBtn=n.querySelector(".product-info-btn");
+  if(infoBtn)infoBtn.onclick=function(){openProductInfo(card,p)};
 
   const fav=n.querySelector(".favorite-btn"),selected=state.favorites.has(productKey(p));
   if(sold){fav.disabled=true;fav.textContent="No disponible"}else{fav.textContent=selected?"♥ Seleccionado":"♡ Me interesa";fav.classList.toggle("selected",selected)}
@@ -531,16 +560,6 @@ function render(){
  document.getElementById(id).addEventListener("input",function(){state.visibleLimit=CATALOG_PAGE_SIZE;render()});
 });
 document.getElementById("loadMore").onclick=function(){state.visibleLimit+=CATALOG_PAGE_SIZE;render()};
-document.addEventListener("click",function(e){
- const target=e.target instanceof Element?e.target:null;
- if(!target)return;
- if(target.closest(".product-accordion"))return;
- const clickedCard=target.closest(".card");
- document.querySelectorAll(".product-accordion[open]").forEach(function(openDetail){
-  const owner=openDetail.closest(".card");
-  if(!clickedCard||owner!==clickedCard)openDetail.open=false;
- });
-});
 document.querySelectorAll(".catalog-tab").forEach(function(btn){
  btn.addEventListener("click",function(){selectCategory(btn.dataset.category)});
 });
