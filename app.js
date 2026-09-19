@@ -263,7 +263,7 @@ async function loadProducts(){
   fetchSupabaseTable("electronics_products",headers),
   fetchJson("data/cards.json?v=20260919-1"),
   fetchSupabaseTable("products",headers),
-  fetchSupabaseTable("product_media",headers,"","position"),
+  fetchSupabaseTable("product_media",headers,"","id"),
   fetchSupabaseTable("misc_details",headers,"","product_id"),
   fetchSupabaseTable("book_details",headers,"","product_id"),
   fetchSupabaseTable("electronics_details",headers,"","product_id"),
