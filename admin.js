@@ -39,16 +39,22 @@ function setAvatar(el,profile){
 }
 function profileById(id){return state.profiles.find(p=>p.id===id)||null}
 function selfProfile(){return profileById(state.user?.id)||state.user||null}
-function rankTier(title){
- const value=String(title||"").trim();
- if(value==="CEO & Fundador")return "rank-ceo";
- if(/Gerente|COO|CTO|CFO|CMO|Director/i.test(value))return "rank-management";
- return "rank-standard";
+const FRAME_CLASSES=["frame-ceo-inferno","frame-silver","frame-hearts","frame-cats","frame-paws","frame-stars","frame-neon","frame-standard"];
+function profileFrameStyle(profile){
+ if(profile?.role==="owner")return "ceo_inferno";
+ const style=String(profile?.profile_frame_style||"").trim();
+ return ["silver","hearts","cats","paws","stars","neon","standard"].includes(style)?style:"standard";
 }
-function applyRankAura(el,title){
+function applyProfileFrame(el,profile){
  if(!el)return;
- el.classList.remove("rank-ceo","rank-management","rank-standard");
- el.classList.add(rankTier(title));
+ FRAME_CLASSES.forEach(cls=>el.classList.remove(cls));
+ el.classList.add("frame-"+profileFrameStyle(profile).replaceAll("_","-"));
+}
+function applyFrameValue(el,value,isOwner=false){
+ if(!el)return;
+ FRAME_CLASSES.forEach(cls=>el.classList.remove(cls));
+ const style=isOwner?"ceo_inferno":String(value||"standard");
+ el.classList.add("frame-"+style.replaceAll("_","-"));
 }
 
 async function api(action,payload={}){
@@ -107,8 +113,10 @@ function showPanel(){
  if(headerName)headerName.textContent=me?.display_name||me?.username||"Administrador";
  if(headerTitle)headerTitle.textContent=[me?.corporate_title,me?.professional_title].filter(Boolean).join(" · ")||"Administración";
  setAvatar($("#headerAvatar"),me);
- applyRankAura($(".executive-header-profile"),me?.corporate_title);
- applyRankAura($("#headerAvatar"),me?.corporate_title);
+ applyProfileFrame($(".executive-header-profile"),me);
+ applyProfileFrame($("#headerAvatar"),me);
+ const securityUsername=$("#securityUsername");
+ if(securityUsername)securityUsername.value=me?.username||"";
  if(passwordWarning)passwordWarning.hidden=!state.user?.must_change_password;
  startTimers();
 }
@@ -266,7 +274,7 @@ function renderPartnerPresence(){
  const status=$("#partnerStatus");
  if(avatar){
   setAvatar(avatar,partner);
-  applyRankAura(avatar,partner?.corporate_title);
+  applyProfileFrame(avatar,partner);
  }
  if(name)name.textContent=partner?.display_name||"Otro administrador";
  if(status){
@@ -278,9 +286,9 @@ function renderPartnerPresence(){
  const pageStatus=$("#profilePartnerStatus");
  if(pageAvatar){
   setAvatar(pageAvatar,partner);
-  applyRankAura(pageAvatar,partner?.corporate_title);
+  applyProfileFrame(pageAvatar,partner);
  }
- applyRankAura($("#partnerProfileCard"),partner?.corporate_title);
+ applyProfileFrame($("#partnerProfileCard"),partner);
  if(pageName)pageName.textContent=partner?.display_name||"Otro administrador";
  if(pageStatus){
   pageStatus.className="profile-partner-status "+(partner?.online?"online":"offline");
@@ -290,9 +298,9 @@ function renderPartnerPresence(){
 function renderProfilePage(){
  const me=selfProfile();
  setAvatar($("#profilePreview"),me);
- applyRankAura($("#profilePreview"),me?.corporate_title);
- applyRankAura($("#profilePhotoWrap"),me?.corporate_title);
- applyRankAura($("#profileMainCard"),me?.corporate_title);
+ applyProfileFrame($("#profilePreview"),me);
+ applyProfileFrame($("#profilePhotoWrap"),me);
+ applyProfileFrame($("#profileMainCard"),me);
 
  const name=$("#profileDisplayName");
  const title=$("#profileDisplayTitle");
@@ -302,7 +310,7 @@ function renderProfilePage(){
  const professionInput=$("#profileProfessionInput");
  const ceoOption=titleSelect?.querySelector('option[value="CEO & Fundador"]');
  const ceoNote=$("#ceoExclusiveNote");
- const canBeCeo=me?.username==="gatocomandante36";
+ const canBeCeo=me?.role==="owner";
 
  if(name)name.textContent=me?.display_name||me?.username||"Administrador";
  if(title)title.textContent=me?.corporate_title||"Sin cargo";
@@ -320,6 +328,24 @@ function renderProfilePage(){
   titleSelect.value=me?.corporate_title||"";
  }
  if(professionInput)professionInput.value=me?.professional_title||"";
+
+ const frameStyle=profileFrameStyle(me);
+ const frameSection=$("#profileFrameSection");
+ const frameHelp=$("#profileFrameHelp");
+ $("[data-frame-option]").forEach(option=>{
+  const input=option.querySelector('input[name="profileFrame"]');
+  const value=input?.value||"";
+  const isCeoFrame=value==="ceo_inferno";
+  option.hidden=canBeCeo?!isCeoFrame:isCeoFrame;
+  if(input){
+   input.disabled=canBeCeo?!isCeoFrame:isCeoFrame;
+   input.checked=value===frameStyle;
+  }
+ });
+ if(frameSection)frameSection.classList.toggle("owner-locked",canBeCeo);
+ if(frameHelp)frameHelp.textContent=canBeCeo
+  ?"Tu marco Inferno CEO es único, exclusivo y permanente para la cuenta propietaria."
+  :"Elige el marco que quieras. Puedes cambiarlo cuando quieras sin afectar tu cargo.";
  if(ceoNote)ceoNote.textContent=canBeCeo
   ?"CEO & Fundador está reservado exclusivamente para tu cuenta."
   :"CEO & Fundador es exclusivo de Picard. Puedes elegir cualquiera de los demás cargos.";
@@ -449,6 +475,7 @@ $("#profileEditForm")?.addEventListener("submit",async function(e){
  const displayName=String($("#profileNameInput")?.value||"").trim();
  const corporateTitle=String($("#profileTitleSelect")?.value||"").trim();
  const professionalTitle=String($("#profileProfessionInput")?.value||"").trim();
+ const selectedFrame=document.querySelector('input[name="profileFrame"]:checked')?.value||"standard";
  setStatus(status,"");
  if(!displayName){setStatus(status,"Escribe un nombre visible.","error");return}
  if(!corporateTitle){setStatus(status,"Selecciona un cargo.","error");return}
@@ -457,7 +484,8 @@ $("#profileEditForm")?.addEventListener("submit",async function(e){
   const data=await api("save_profile",{
    display_name:displayName,
    corporate_title:corporateTitle,
-   professional_title:professionalTitle
+   professional_title:professionalTitle,
+   profile_frame_style:selectedFrame
   });
   state.user={...state.user,...data.user};
   const idx=state.profiles.findIndex(p=>p.id===state.user.id);
@@ -473,6 +501,15 @@ $("#profileEditForm")?.addEventListener("submit",async function(e){
   btn.disabled=false;btn.textContent="Guardar datos del perfil";
  }
 });
+
+$('input[name="profileFrame"]').forEach(input=>input.addEventListener("change",()=>{
+ const me=selfProfile();
+ const selected=document.querySelector('input[name="profileFrame"]:checked')?.value||profileFrameStyle(me);
+ const owner=me?.role==="owner";
+ applyFrameValue($("#profilePreview"),selected,owner);
+ applyFrameValue($("#profilePhotoWrap"),selected,owner);
+ applyFrameValue($("#profileMainCard"),selected,owner);
+}));
 
 $("#avatarFile").addEventListener("change",async function(){
  const file=this.files?.[0]||null;state.selectedAvatar=file;
@@ -518,18 +555,43 @@ $("#loadMoreActivity").addEventListener("click",async function(){
  finally{btn.disabled=false;btn.textContent="Cargar registros anteriores"}
 });
 
-$("#passwordForm").addEventListener("submit",async e=>{
- e.preventDefault();const a=$("#newPassword").value,b=$("#confirmPassword").value,status=$("#passwordStatus");
+$("#credentialsForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();
+ const status=$("#credentialsStatus");
+ const btn=e.currentTarget.querySelector('button[type="submit"]');
+ const currentPassword=String($("#currentPassword")?.value||"");
+ const newUsername=String($("#securityUsername")?.value||"").trim().toLowerCase();
+ const newPassword=String($("#newPassword")?.value||"");
+ const confirmPassword=String($("#confirmPassword")?.value||"");
  setStatus(status,"");
- if(a!==b){setStatus(status,"Las contraseñas no coinciden.","error");return}
- const btn=e.currentTarget.querySelector("button");btn.disabled=true;
+ if(!currentPassword){setStatus(status,"Escribe tu contraseña actual para autorizar el cambio.","error");return}
+ if(newPassword!==confirmPassword){setStatus(status,"Las nuevas contraseñas no coinciden.","error");return}
+ if(!newUsername){setStatus(status,"Escribe un usuario válido.","error");return}
+ btn.disabled=true;btn.textContent="Verificando y guardando…";
  try{
-  await api("change_password",{new_password:a});
-  state.user.must_change_password=false;$("#passwordWarning").hidden=true;$("#newPassword").value="";$("#confirmPassword").value="";
-  setStatus(status,"Contraseña actualizada correctamente.","success");
-  await loadDashboard(false);
- }catch(err){setStatus(status,err.message,"error")}
- finally{btn.disabled=false}
+  const data=await api("update_credentials",{
+   current_password:currentPassword,
+   new_username:newUsername,
+   new_password:newPassword
+  });
+  state.user={...state.user,...data.user};
+  const idx=state.profiles.findIndex(p=>p.id===state.user.id);
+  if(idx>=0)state.profiles[idx]={...state.profiles[idx],...data.user};
+  if(localStorage.getItem(REMEMBER_KEY)||localStorage.getItem(REMEMBER_ACCESS_KEY)==="true"){
+   localStorage.setItem(REMEMBER_KEY,data.user.username);
+  }
+  $("#currentPassword").value="";
+  $("#newPassword").value="";
+  $("#confirmPassword").value="";
+  $("#securityUsername").value=data.user.username;
+  if($("#passwordWarning"))$("#passwordWarning").hidden=!data.user.must_change_password;
+  showPanel();renderProfilePage();renderPartnerPresence();
+  setStatus(status,"Credenciales actualizadas correctamente.","success");
+ }catch(err){
+  setStatus(status,err.message||"No fue posible actualizar las credenciales.","error");
+ }finally{
+  btn.disabled=false;btn.textContent="Guardar credenciales";
+ }
 });
 
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.token)heartbeat().catch(()=>{})});
