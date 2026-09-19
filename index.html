@@ -7,7 +7,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://cnivcnexsqobipvqxero.supabase.co; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; upgrade-insecure-requests">
   <title>CardNest</title>
   <script src="frame-guard.js?v=20260919-1"></script>
-  <link rel="stylesheet" href="styles.css?v=20260919-38">
+  <link rel="stylesheet" href="styles.css?v=20260919-39">
   <link rel="stylesheet" href="mercadolibre-channel.css?v=20260919-1">
 </head>
 <body>
@@ -62,6 +62,29 @@
   </div>
 </nav>
 </details>
+<section class="search-panel">
+  <input id="searchInput" type="search" autocomplete="off" spellcheck="false" aria-label="Buscar productos" placeholder="Busca por nombre, número, colección o referencia">
+  <select id="languageFilter" aria-label="Filtrar por idioma">
+    <option value="">Todos los idiomas</option>
+    <option value="English">English</option><option value="Spanish">Spanish</option><option value="Japanese">Japanese</option><option value="Chinese">Chinese</option>
+  </select>
+  <div id="rarityFilterWrap" class="filter-field">
+    <select id="rarityFilter" aria-label="Filtrar por rareza o tipo">
+      <option value="">Rareza / tipo</option>
+      <option value="fullart">Arte completo</option>
+      <option value="holo">Holo / Brillo</option>
+      <option value="ex">EX</option>
+      <option value="general">General</option>
+    </select>
+  </div>
+  <select id="sortFilter" aria-label="Ordenar productos">
+    <option value="featured">Orden: destacados</option>
+    <option value="name">Nombre A–Z</option>
+    <option value="category">Categoría</option>
+    <option value="id">ID / referencia</option>
+  </select>
+  <button id="resetFilters" class="reset-filters" type="button">Restablecer filtros</button>
+</section>
 <section id="colaboradores-destacados" class="services-hub" aria-label="Colaboradores destacados y servicios de CardNest">
   <header class="services-hub-head">
     <div>
@@ -104,29 +127,6 @@
 
 
   </div>
-</section>
-<section class="search-panel">
-  <input id="searchInput" type="search" autocomplete="off" spellcheck="false" aria-label="Buscar productos" placeholder="Busca por nombre, número, colección o referencia">
-  <select id="languageFilter" aria-label="Filtrar por idioma">
-    <option value="">Todos los idiomas</option>
-    <option value="English">English</option><option value="Spanish">Spanish</option><option value="Japanese">Japanese</option><option value="Chinese">Chinese</option>
-  </select>
-  <div id="rarityFilterWrap" class="filter-field">
-    <select id="rarityFilter" aria-label="Filtrar por rareza o tipo">
-      <option value="">Rareza / tipo</option>
-      <option value="fullart">Arte completo</option>
-      <option value="holo">Holo / Brillo</option>
-      <option value="ex">EX</option>
-      <option value="general">General</option>
-    </select>
-  </div>
-  <select id="sortFilter" aria-label="Ordenar productos">
-    <option value="featured">Orden: destacados</option>
-    <option value="name">Nombre A–Z</option>
-    <option value="category">Categoría</option>
-    <option value="id">ID / referencia</option>
-  </select>
-  <button id="resetFilters" class="reset-filters" type="button">Restablecer filtros</button>
 </section>
 
     <section class="stats">
