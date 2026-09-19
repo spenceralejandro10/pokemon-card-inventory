@@ -7,7 +7,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://cnivcnexsqobipvqxero.supabase.co; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; upgrade-insecure-requests">
   <title>CardNest</title>
   <script src="frame-guard.js?v=20260919-1"></script>
-  <link rel="stylesheet" href="styles.css?v=20260919-40">
+  <link rel="stylesheet" href="styles.css?v=20260919-41">
   <link rel="stylesheet" href="mercadolibre-channel.css?v=20260919-1">
 </head>
 <body>
@@ -277,36 +277,25 @@
         </div>
         <p class="original-name"></p>
 
-        <details class="product-accordion product-details-accordion">
-          <summary>
-            <span>Detalles del producto</span>
-            <small class="details-summary">Ver información</small>
-          </summary>
-          <div class="product-accordion-body">
-            <dl class="meta">
-              <div><dt>ID</dt><dd class="card-id"></dd></div>
-              <div><dt>Número / Ref.</dt><dd class="card-number"></dd></div>
-              <div><dt>Colección / Set</dt><dd class="card-set"></dd></div>
-              <div class="card-hp-row"><dt>HP</dt><dd class="card-hp"></dd></div>
-              <div><dt>Rareza / Tipo</dt><dd class="card-rarity"></dd></div>
-            </dl>
-            <div class="extended-details"></div>
-          </div>
-        </details>
-
-        <details class="product-accordion product-status-accordion">
-          <summary>
-            <span class="card-status-summary">Estado: Disponible</span>
-            <small>Ver estado</small>
-          </summary>
-          <div class="product-accordion-body">
-            <dl class="meta status-meta">
-              <div><dt>Estado</dt><dd class="card-status"></dd></div>
-              <div><dt>Stock</dt><dd class="card-stock-detail"></dd></div>
-              <div><dt>Verificación</dt><dd class="card-validation-detail"></dd></div>
-            </dl>
-          </div>
-        </details>
+        <div class="product-quick-actions">
+          <button class="product-info-btn" type="button">Ver información</button>
+          <span class="card-status-summary">Disponible</span>
+        </div>
+        <div class="product-data-source" hidden>
+          <dl class="meta">
+            <div><dt>ID</dt><dd class="card-id"></dd></div>
+            <div><dt>Número / Ref.</dt><dd class="card-number"></dd></div>
+            <div><dt>Colección / Set</dt><dd class="card-set"></dd></div>
+            <div class="card-hp-row"><dt>HP</dt><dd class="card-hp"></dd></div>
+            <div><dt>Rareza / Tipo</dt><dd class="card-rarity"></dd></div>
+          </dl>
+          <div class="extended-details"></div>
+          <dl class="meta status-meta">
+            <div><dt>Estado</dt><dd class="card-status"></dd></div>
+            <div><dt>Stock</dt><dd class="card-stock-detail"></dd></div>
+            <div><dt>Verificación</dt><dd class="card-validation-detail"></dd></div>
+          </dl>
+        </div>
 
         <div class="card-actions">
           <button class="favorite-btn" type="button">♡ Me interesa</button>
@@ -316,7 +305,15 @@
     </article>
   </template>
 
-  <div id="cartViewerBtn" class="cart-viewer-btn" role="group" aria-label="Productos seleccionados" hidden><div class="selected-mascot" aria-hidden="true"><span class="mascot-flame"></span><span class="mascot-head">🐲</span></div><button id="thumbPrev" class="thumb-nav" type="button" aria-label="Productos anteriores">‹</button><div id="cartViewerThumbs" class="cart-viewer-thumbs"></div><button id="thumbNext" class="thumb-nav" type="button" aria-label="Productos siguientes">›</button><button id="openCartViewer" class="cart-viewer-meta" type="button" aria-expanded="false"><strong><span>♡</span> <span id="cartViewerCount">0</span></strong><small>Ver selección</small></button></div>
+  <div id="productInfoBackdrop" class="product-info-backdrop" hidden></div>
+<aside id="productInfoPanel" class="product-info-panel" role="dialog" aria-modal="true" aria-labelledby="productInfoTitle" aria-hidden="true" inert>
+  <header class="product-info-head">
+    <div><small>INFORMACIÓN DEL PRODUCTO</small><h2 id="productInfoTitle">Producto</h2></div>
+    <button id="closeProductInfo" type="button" aria-label="Cerrar información">×</button>
+  </header>
+  <div id="productInfoContent" class="product-info-content"></div>
+</aside>
+<div id="cartViewerBtn" class="cart-viewer-btn" role="group" aria-label="Productos seleccionados" hidden><div class="selected-mascot" aria-hidden="true"><span class="mascot-flame"></span><span class="mascot-head">🐲</span></div><button id="thumbPrev" class="thumb-nav" type="button" aria-label="Productos anteriores">‹</button><div id="cartViewerThumbs" class="cart-viewer-thumbs"></div><button id="thumbNext" class="thumb-nav" type="button" aria-label="Productos siguientes">›</button><button id="openCartViewer" class="cart-viewer-meta" type="button" aria-expanded="false"><strong><span>♡</span> <span id="cartViewerCount">0</span></strong><small>Ver selección</small></button></div>
 <div id="cartViewerBackdrop" class="cart-viewer-backdrop" hidden></div>
 <aside id="cartViewer" class="cart-viewer" role="dialog" aria-modal="true" aria-labelledby="cartViewerTitle" aria-hidden="true" inert><div class="cart-viewer-head"><div><strong id="cartViewerTitle">Productos guardados</strong><small id="cartViewerSubtitle"></small></div><button id="closeCartViewer" type="button" aria-label="Cerrar selección">×</button></div><div id="cartViewerGrid" class="cart-viewer-grid"></div></aside>
 <div id="favoritesBar" class="favorites-bar" hidden><span><strong id="favoriteCountBar">0</strong> productos seleccionados</span><button id="reviewFavorites" type="button">Ver y proponer precio</button><button id="clearFavorites" type="button">Limpiar</button></div>
@@ -390,6 +387,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="app.js?v=20260919-11"></script>
+<script src="app.js?v=20260919-12"></script>
 </body>
 </html>
