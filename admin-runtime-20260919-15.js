@@ -87,7 +87,10 @@ async function mlApi(action,payload={}){
   if(res.status===401){
    sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(REMEMBER_ACCESS_KEY);state.token="";state.user=null;stopTimers();showLogin();
   }
-  throw new Error(data.message||"No fue posible completar la conexión con Mercado Libre.");
+  const error=new Error(data.message||"No fue posible completar la conexión con Mercado Libre.");
+  error.code=data.error||"MERCADOLIBRE_ERROR";
+  error.data=data;
+  throw error;
  }
  return data;
 }
@@ -162,9 +165,43 @@ function renderSummary(){
  $("#statSoldOut").textContent=state.summary.sold_out??0;
 }
 
+function renderMlPreflight(info){
+ const box=$("#mlPreflight");
+ const badge=$("#mlPreflightState");
+ const list=$("#mlPreflightChecks");
+ const redirect=$("#mlRedirectUri");
+ const webhook=$("#mlWebhookUri");
+ const ready=info?.ready===true;
+ const checking=state.mlLoading;
+ const checks=Array.isArray(info?.checks)?info.checks:[];
+ if(box){
+  box.classList.toggle("ready",!checking&&ready);
+  box.classList.toggle("failed",!checking&&!!info&&!ready);
+ }
+ if(badge){
+  badge.textContent=checking?"Comprobando…":ready?"Aprobada":info?"Bloqueada":"Pendiente";
+  badge.className="status "+(!checking&&ready?"ok":"pending");
+ }
+ if(list){
+  list.replaceChildren();
+  const visibleChecks=checks.length?checks:[{label:"Consultando configuración segura…",ok:null}];
+  visibleChecks.forEach(check=>{
+   const item=document.createElement("li");
+   item.className=check.ok===true?"ok":check.ok===false?"failed":"pending";
+   const dot=document.createElement("i");dot.setAttribute("aria-hidden","true");
+   item.append(dot,document.createTextNode(String(check.label||"Comprobación técnica")));
+   list.appendChild(item);
+  });
+ }
+ if(redirect)redirect.textContent=info?.redirect_uri||"No confirmado";
+ if(webhook)webhook.textContent=info?.webhook_uri||"No confirmado";
+}
+
 function renderMlConnection(){
  const info=state.mlConnection;
  const connected=!!info?.connected;
+ const ready=info?.ready===true;
+ const attention=connected&&!ready&&!state.mlLoading;
  const connection=info?.connection||null;
  const overview=$("#mlOverviewStatus");
  const integration=$("#mlIntegrationStatus");
@@ -174,19 +211,21 @@ function renderMlConnection(){
  const meta=$("#mlAccountMeta");
  const connect=$("#mlConnectBtn");
  const disconnect=$("#mlDisconnectBtn");
+ const refresh=$("#mlRefreshCheckBtn");
 
  if(overview){
-  overview.textContent=connected?"Conectado":"Por conectar";
-  overview.className="status "+(connected?"ok":"pending");
+  overview.textContent=connected?(attention?"Revisar conexión":"Conectado"):(ready?"Listo para autorizar":"Por conectar");
+  overview.className="status "+(connected&&!attention?"ok":"pending");
  }
  if(integration){
-  integration.textContent=connected?"Conectado":"Pendiente de autorización";
-  integration.className="status "+(connected?"ok":"pending");
+  integration.textContent=connected?(attention?"Revisión requerida":"Conectado"):(ready?"Lista para autorizar":"Pendiente de revisión");
+  integration.className="status "+(connected&&!attention?"ok":"pending");
  }
  if(stateBox){
-  stateBox.classList.toggle("connected",connected);
+  stateBox.classList.toggle("connected",connected&&!attention);
+  stateBox.classList.toggle("attention",attention);
  }
- if(stateLabel)stateLabel.textContent=connected?"Cuenta autorizada":"Integración pendiente";
+ if(stateLabel)stateLabel.textContent=state.mlLoading?"Comprobando conexión…":connected?(attention?"Conexión requiere revisión":"Cuenta autorizada"):(ready?"Lista para autorizar":"Integración bloqueada");
  if(text){
   text.textContent=connected
    ?"CardNest está autorizado para operar con esta cuenta de Mercado Libre."
@@ -207,13 +246,16 @@ function renderMlConnection(){
   }
  }
  if(connect){
-  connect.disabled=state.mlLoading;
+  connect.disabled=state.mlLoading||!ready;
   connect.textContent=connected?"Reautorizar cuenta":"Autorizar cuenta";
+  connect.title=ready?"":"Completa primero la revisión previa obligatoria.";
  }
  if(disconnect){
   disconnect.hidden=!connected;
   disconnect.disabled=state.mlLoading;
  }
+ if(refresh)refresh.disabled=state.mlLoading;
+ renderMlPreflight(info);
 }
 
 async function loadMlConnection(){
@@ -225,23 +267,62 @@ async function loadMlConnection(){
   state.mlConnection=data;
   renderMlConnection();
   return data;
+ }catch(error){
+  state.mlConnection={connected:false,ready:false,checks:[]};
+  renderMlConnection();
+  throw error;
  }finally{
   state.mlLoading=false;
   renderMlConnection();
  }
 }
 
+function validMlAuthorizationUrl(value){
+ try{
+  const url=new URL(String(value||""));
+  return url.protocol==="https:"&&url.hostname==="auth.mercadolibre.com.co"&&url.pathname==="/authorization"&&
+   url.searchParams.get("response_type")==="code"&&/^\d+$/.test(url.searchParams.get("client_id")||"")&&
+   url.searchParams.get("redirect_uri")===MERCADOLIBRE_API&&(url.searchParams.get("state")||"").length>=32&&
+   (url.searchParams.get("code_challenge")||"").length>=43&&url.searchParams.get("code_challenge_method")==="S256";
+ }catch{return false}
+}
+
 async function startMlConnection(){
  const btn=$("#mlConnectBtn");
- if(btn){btn.disabled=true;btn.textContent="Preparando autorización…"}
+ state.mlLoading=true;
+ renderMlConnection();
+ if(btn)btn.textContent="Ejecutando revisión…";
  setStatus($("#mlConnectionStatus"),"");
  try{
+  const preflight=await mlApi("preflight");
+  state.mlConnection=preflight;
+  renderMlConnection();
+  if(!preflight.ready)throw new Error("La revisión previa no fue aprobada. No se inició la autorización.");
+  const confirmed=confirm("Confirma que iniciarás sesión con la cuenta principal de Mercado Libre Colombia (MCO). Esta autorización no publicará productos automáticamente.");
+  if(!confirmed){
+   setStatus($("#mlConnectionStatus"),"Autorización cancelada antes de salir de CardNest.");
+   return;
+  }
+  if(btn)btn.textContent="Preparando autorización…";
   const data=await mlApi("start");
-  if(!data.authorization_url)throw new Error("Mercado Libre no devolvió una URL de autorización.");
+  if(!validMlAuthorizationUrl(data.authorization_url))throw new Error("La URL de autorización no superó la validación de seguridad.");
   location.assign(data.authorization_url);
  }catch(e){
+  if(Array.isArray(e.data?.checks))state.mlConnection={...state.mlConnection,...e.data};
   setStatus($("#mlConnectionStatus"),e.message,"error");
-  if(btn){btn.disabled=false;btn.textContent=state.mlConnection?.connected?"Reautorizar cuenta":"Autorizar cuenta"}
+ }finally{
+  state.mlLoading=false;
+  renderMlConnection();
+ }
+}
+
+async function refreshMlPreflight(){
+ setStatus($("#mlConnectionStatus"),"");
+ try{
+  const data=await loadMlConnection();
+  setStatus($("#mlConnectionStatus"),data?.ready?"Revisión previa aprobada. Ya puedes autorizar la cuenta.":"La autorización sigue bloqueada: revisa las comprobaciones pendientes.",data?.ready?"success":"error");
+ }catch(e){
+  setStatus($("#mlConnectionStatus"),e.message,"error");
  }
 }
 
@@ -252,7 +333,7 @@ async function disconnectMlConnection(){
  setStatus($("#mlConnectionStatus"),"");
  try{
   await mlApi("disconnect");
-  state.mlConnection={connected:false,connection:null};
+  state.mlConnection=await mlApi("status");
   renderMlConnection();
   setStatus($("#mlConnectionStatus"),"Cuenta de Mercado Libre desconectada correctamente.","success");
  }catch(e){
@@ -487,6 +568,7 @@ $$("[data-go-security]").forEach(b=>b.addEventListener("click",()=>switchView("s
 $("#productSearch").addEventListener("input",renderProducts);
 $("#channelFilter").addEventListener("change",renderProducts);
 $("#mlConnectBtn")?.addEventListener("click",startMlConnection);
+$("#mlRefreshCheckBtn")?.addEventListener("click",refreshMlPreflight);
 $("#mlDisconnectBtn")?.addEventListener("click",disconnectMlConnection);
 
 $("#profileEditForm")?.addEventListener("submit",async function(e){
@@ -654,6 +736,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.tok
     denied:["La autorización fue cancelada en Mercado Libre.","error"],
     invalid_state:["La autorización venció o no corresponde a esta sesión. Inténtalo de nuevo.","error"],
     token_error:["Mercado Libre no pudo completar la autorización. Inténtalo de nuevo.","error"],
+    wrong_site:["Se rechazó la autorización porque la cuenta no pertenece a Mercado Libre Colombia (MCO). No se guardaron tokens.","error"],
     storage_error:["La autorización llegó, pero no fue posible guardar los tokens de forma segura.","error"]
    };
    const msg=messages[mlResult]||["No fue posible completar la autorización de Mercado Libre.","error"];

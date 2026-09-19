@@ -602,13 +602,43 @@ button,a{transition:.18s ease}
  font-size:11px;
  font-weight:800;
 }
+.ml-preflight{
+ margin-top:16px;
+ max-width:780px;
+ border:1px solid #dce6eb;
+ border-radius:14px;
+ padding:15px;
+ background:#f8fafb;
+ display:grid;
+ gap:12px;
+}
+.ml-preflight.ready{border-color:#bcdcca;background:#f3faf6}
+.ml-preflight.failed{border-color:#efd1d3;background:#fff8f8}
+.ml-preflight-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ml-preflight-head>div{display:grid;gap:3px}
+.ml-preflight-head small{font-size:9px;color:#7c8d97;letter-spacing:.12em;font-weight:900}
+.ml-preflight-head strong{font-size:13px;color:#233f50}
+.ml-preflight-checks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ml-preflight-checks li{display:flex;align-items:center;gap:8px;min-height:38px;padding:8px 10px;border:1px solid #e1e8ec;border-radius:10px;background:#fff;color:#617480;font-size:11px;font-weight:750}
+.ml-preflight-checks i{width:9px;height:9px;min-width:9px;border-radius:50%;background:#d1a331;box-shadow:0 0 0 3px rgba(209,163,49,.13)}
+.ml-preflight-checks li.ok{color:#226d50;border-color:#d2e8dc}
+.ml-preflight-checks li.ok i{background:#259568;box-shadow:0 0 0 3px rgba(37,149,104,.12)}
+.ml-preflight-checks li.failed{color:#963b42;border-color:#f0d5d7}
+.ml-preflight-checks li.failed i{background:#b84d54;box-shadow:0 0 0 3px rgba(184,77,84,.11)}
+.ml-endpoints{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ml-endpoints label{display:grid;gap:5px;color:#6c7d88;font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.04em;min-width:0}
+.ml-endpoints code{display:block;overflow-wrap:anywhere;text-transform:none;letter-spacing:0;border:1px solid #e1e8ec;border-radius:9px;padding:8px;background:#fff;color:#3d5869;font-size:10px;line-height:1.45}
+.ml-preflight-note{margin:0!important;color:#657984!important;font-size:10px!important;line-height:1.55!important}
 .ml-state.connected{color:#1b6a4c;background:var(--green-bg);border-color:#cfe8dc}
 .ml-state.connected span{background:#1d9b6c}
+.ml-state.attention{color:#913b42;background:#fff0f1;border-color:#efd1d3}
+.ml-state.attention span{background:#b84d54}
 .integration-card .text-action{margin-top:8px}
 #mlConnectionStatus{grid-column:1/-1;margin-top:0}
 @media(max-width:780px){
  .ml-connection-card{grid-template-columns:1fr}
  .ml-connection-actions{justify-content:flex-start}
+ .ml-preflight-checks,.ml-endpoints{grid-template-columns:1fr}
 }
 
 

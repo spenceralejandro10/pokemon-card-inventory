@@ -11,6 +11,7 @@ const css=read("styles.css");
 const adminHtml=read("admin.html");
 const adminScriptPath=adminHtml.match(/<script\s+src=["']([^"']+\.js(?:\?[^"']*)?)["']/i)?.[1]?.split("?")[0];
 const adminApp=adminScriptPath?read(adminScriptPath):"";
+const adminSource=read("admin.js");
 const adminCss=read("admin.css");
 const edgeFunctionPaths=[
  "supabase/functions/sale-order/index.ts",
@@ -33,6 +34,7 @@ check("JavaScript público y administrativo válido",function(){
  new vm.Script(app,{filename:"app.js"});
  assert(adminScriptPath,"admin.html no carga un runtime JavaScript");
  new vm.Script(adminApp,{filename:adminScriptPath});
+ new vm.Script(adminSource,{filename:"admin.js"});
 });
 
 check("JSON y claves de producto válidos",function(){
@@ -114,7 +116,7 @@ check("Funciones Edge sin secretos incrustados",function(){
   assert(!/sb_secret_[A-Za-z0-9_-]+/.test(entry.source),entry.file+" contiene una clave secreta literal");
   assert(!/eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\./.test(entry.source),entry.file+" contiene un JWT literal");
  });
- assert(!/SUPABASE_SERVICE_ROLE_KEY/.test(app+adminApp),"El frontend no puede acceder a la clave de servicio");
+ assert(!/SUPABASE_SERVICE_ROLE_KEY/.test(app+adminApp+adminSource),"El frontend no puede acceder a la clave de servicio");
 });
 
 check("Defensas críticas de Mercado Libre activas",function(){
@@ -128,6 +130,10 @@ check("Defensas críticas de Mercado Libre activas",function(){
  assert(webhook.includes('Number(tokens.user_id) !== userId'),"El webhook debe validar user_id");
  assert(webhook.includes('url.pathname.startsWith(prefix)'),"El webhook debe limitar rutas de recursos");
  assert(webhook.includes('readLimitedBody(req)'),"El webhook debe limitar el cuerpo por bytes");
+ assert(/id=["']mlConnectBtn["'][^>]*\bdisabled\b/.test(adminHtml),"El botón OAuth debe iniciar bloqueado");
+ assert(adminHtml.includes('id="mlPreflightChecks"'),"El panel debe mostrar la revisión previa");
+ assert(adminApp.includes('mlApi("preflight")'),"El frontend debe repetir el preflight antes de autorizar");
+ assert(adminApp.includes("validMlAuthorizationUrl"),"El frontend debe validar la URL de autorización");
 });
 
 if(failures.length){

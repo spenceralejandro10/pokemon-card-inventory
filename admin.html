@@ -292,9 +292,24 @@
               <h2>Cuenta de Mercado Libre</h2>
               <p id="mlConnectionText">Verificando el estado de autorización…</p>
               <div id="mlAccountMeta" class="ml-account-meta" hidden></div>
+              <div id="mlPreflight" class="ml-preflight" aria-live="polite">
+                <div class="ml-preflight-head">
+                  <div><small>REVISIÓN PREVIA OBLIGATORIA</small><strong>Seguridad antes de autorizar</strong></div>
+                  <span id="mlPreflightState" class="status pending">Comprobando…</span>
+                </div>
+                <ul id="mlPreflightChecks" class="ml-preflight-checks">
+                  <li class="pending"><i aria-hidden="true"></i> Consultando configuración segura…</li>
+                </ul>
+                <div class="ml-endpoints">
+                  <label>Redirect URI autorizado<code id="mlRedirectUri">Comprobando…</code></label>
+                  <label>Callback de notificaciones<code id="mlWebhookUri">Comprobando…</code></label>
+                </div>
+                <p class="ml-preflight-note">La autorización permanece bloqueada hasta aprobar todas las comprobaciones. Usa únicamente la cuenta principal de Mercado Libre Colombia (MCO).</p>
+              </div>
             </div>
             <div class="ml-connection-actions">
-              <button id="mlConnectBtn" type="button">Autorizar cuenta</button>
+              <button id="mlRefreshCheckBtn" class="secondary-button" type="button">Revisar de nuevo</button>
+              <button id="mlConnectBtn" type="button" disabled>Autorizar cuenta</button>
               <button id="mlDisconnectBtn" class="secondary-button" type="button" hidden>Desconectar</button>
             </div>
             <div id="mlConnectionStatus" class="form-status" role="status" hidden></div>
@@ -388,6 +403,6 @@
       </div>
     </section>
   </main>
-  <script src="admin-runtime-20260919-15.js"></script>
+  <script src="admin-runtime-20260919-15.js?v=20260919-16"></script>
 </body>
 </html>
