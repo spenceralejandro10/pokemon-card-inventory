@@ -409,9 +409,6 @@ function compactStatusLabel(p,sold){
  return sold?"Estado: No disponible":"Estado: Disponible";
 }
 function selectedCatalogCategory(){
- const active=document.querySelector(".catalog-tab.active[data-category]");
- const fromUi=active&&String(active.dataset.category||"").trim();
- if(fromUi&&VALID_CATEGORIES.has(fromUi))return fromUi;
  return VALID_CATEGORIES.has(state.category)?state.category:"all";
 }
 function openProductInfo(card,p){
@@ -560,8 +557,12 @@ function render(){
  document.getElementById(id).addEventListener("input",function(){state.visibleLimit=CATALOG_PAGE_SIZE;render()});
 });
 document.getElementById("loadMore").onclick=function(){state.visibleLimit+=CATALOG_PAGE_SIZE;render()};
-document.querySelectorAll(".catalog-tab").forEach(function(btn){
- btn.addEventListener("click",function(){selectCategory(btn.dataset.category)});
+document.addEventListener("click",function(e){
+ const btn=e.target instanceof Element?e.target.closest(".catalog-tab[data-category]"):null;
+ if(!btn)return;
+ e.preventDefault();
+ e.stopPropagation();
+ selectCategory(btn.dataset.category);
 });
 document.querySelectorAll("[data-go-category]").forEach(function(btn){
  btn.addEventListener("click",function(){selectCategory(btn.dataset.goCategory)});
