@@ -1446,26 +1446,57 @@ loadProducts().catch(function(e){
  console.error(e);document.getElementById("cardsGrid").innerHTML='<div class="empty">No fue posible cargar el catálogo.</div>';
 });
 
+const COLLAB_USER_KEY="cardnestRememberedUsername";
+const COLLAB_TOKEN_KEY="cardnestAdminToken";
+const COLLAB_PERSIST_KEY="cardnestRememberAccess";
+
+function restoreCollaboratorAccess(){
+ const user=document.getElementById("collabUsername"),remember=document.getElementById("collabRemember");
+ if(!user||!remember)return;
+ const remembered=localStorage.getItem(COLLAB_USER_KEY)||"";
+ const persist=localStorage.getItem(COLLAB_PERSIST_KEY)==="true";
+ if(remembered)user.value=remembered;
+ remember.checked=persist;
+}
 function setCollaboratorModal(open){
  const modal=document.getElementById("collaboratorModal"),backdrop=document.getElementById("collaboratorBackdrop");if(!modal||!backdrop)return;
  modal.setAttribute("aria-hidden",open?"false":"true");modal.inert=!open;backdrop.hidden=!open;
- if(open)setTimeout(()=>modal.querySelector("input")?.focus(),20);
+ if(open){
+  restoreCollaboratorAccess();
+  const user=document.getElementById("collabUsername"),pass=document.getElementById("collabPassword");
+  setTimeout(()=>((user?.value?pass:user)||modal.querySelector("input"))?.focus(),20);
+ }
 }
+restoreCollaboratorAccess();
 ["openCollaboratorLogin","footerCollaboratorLogin"].forEach(id=>document.getElementById(id)?.addEventListener("click",()=>setCollaboratorModal(true)));
 document.getElementById("closeCollaboratorLogin")?.addEventListener("click",()=>setCollaboratorModal(false));
 document.getElementById("collaboratorBackdrop")?.addEventListener("click",()=>setCollaboratorModal(false));
 document.getElementById("collaboratorForm")?.addEventListener("submit",async function(e){
  e.preventDefault();
- const form=e.currentTarget,inputs=form.querySelectorAll("input"),notice=document.getElementById("collabDemoNotice"),button=form.querySelector("button");
- const username=String(inputs[0]?.value||"").trim(),password=String(inputs[1]?.value||"");
- notice.hidden=false;notice.textContent="Validando acceso…";button.disabled=true;
+ const form=e.currentTarget;
+ const username=String(document.getElementById("collabUsername")?.value||"").trim();
+ const password=String(document.getElementById("collabPassword")?.value||"");
+ const remember=!!document.getElementById("collabRemember")?.checked;
+ const notice=document.getElementById("collabDemoNotice"),button=form.querySelector("button");
+ notice.hidden=false;notice.className="collab-demo-notice";notice.textContent="Validando acceso seguro…";button.disabled=true;
  try{
   const res=await fetch(ADMIN_API,{method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE_KEY},body:JSON.stringify({action:"login",username:username,password:password})});
   const data=await res.json().catch(function(){return {}});
   if(!res.ok||!data.token)throw new Error(data.message||"Usuario o contraseña incorrectos.");
-  sessionStorage.setItem("cardnestAdminToken",data.token);
+  sessionStorage.setItem(COLLAB_TOKEN_KEY,data.token);
+  if(remember){
+   localStorage.setItem(COLLAB_TOKEN_KEY,data.token);
+   localStorage.setItem(COLLAB_USER_KEY,username);
+   localStorage.setItem(COLLAB_PERSIST_KEY,"true");
+  }else{
+   localStorage.removeItem(COLLAB_TOKEN_KEY);
+   localStorage.removeItem(COLLAB_USER_KEY);
+   localStorage.removeItem(COLLAB_PERSIST_KEY);
+  }
+  notice.classList.add("success");notice.textContent="Acceso autorizado. Abriendo centro de mando…";
   location.href="admin.html";
  }catch(error){
+  notice.classList.add("error");
   notice.textContent=error.message||"No fue posible iniciar sesión.";
   button.disabled=false;
  }
