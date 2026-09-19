@@ -561,3 +561,52 @@ button,a{transition:.18s ease}
  .profile-preview-large{width:138px!important;height:138px!important}
  .partner-profile-card{padding:18px}
 }
+
+
+/* Mercado Libre secure connection */
+.ml-connection-card{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) auto;
+ gap:18px;
+ align-items:center;
+ margin-bottom:14px;
+ border-color:#e2e7ea;
+ background:linear-gradient(135deg,#fff 0%,#fbfcfd 100%);
+}
+.ml-connection-card h2{margin:4px 0 5px}
+.ml-connection-card p{margin:0;max-width:760px}
+.ml-connection-actions{display:flex;align-items:center;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+#mlConnectBtn{
+ border:0;
+ border-radius:11px;
+ min-height:42px;
+ padding:0 16px;
+ background:#17384d;
+ color:#fff;
+ font-size:12px;
+ font-weight:850;
+ cursor:pointer;
+}
+#mlConnectBtn:hover{background:#244f69;transform:translateY(-1px)}
+#mlConnectBtn:disabled,#mlDisconnectBtn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.ml-account-meta{
+ margin-top:9px;
+ display:inline-flex;
+ align-items:center;
+ gap:7px;
+ border:1px solid #dce6eb;
+ border-radius:999px;
+ padding:7px 10px;
+ background:#f6f9fa;
+ color:#536a79;
+ font-size:11px;
+ font-weight:800;
+}
+.ml-state.connected{color:#1b6a4c;background:var(--green-bg);border-color:#cfe8dc}
+.ml-state.connected span{background:#1d9b6c}
+.integration-card .text-action{margin-top:8px}
+#mlConnectionStatus{grid-column:1/-1;margin-top:0}
+@media(max-width:780px){
+ .ml-connection-card{grid-template-columns:1fr}
+ .ml-connection-actions{justify-content:flex-start}
+}
