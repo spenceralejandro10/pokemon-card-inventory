@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>CardNest · Centro de mando</title>
-  <link rel="stylesheet" href="admin.css?v=20260918-7">
+  <link rel="stylesheet" href="admin.css?v=20260919-1">
 </head>
 <body>
   <main class="admin-shell">
@@ -77,7 +77,7 @@
               <a href="index.html" target="_blank" rel="noopener">Abrir tienda</a>
             </article>
             <article class="panel-card channel-card">
-              <div class="panel-card-head"><div><small>CANAL ADICIONAL</small><h2>Mercado Libre</h2></div><span class="status pending">Por conectar</span></div>
+              <div class="panel-card-head"><div><small>CANAL ADICIONAL</small><h2>Mercado Libre</h2></div><span id="mlOverviewStatus" class="status pending">Comprobando…</span></div>
               <p>Selecciona qué productos queremos preparar para Mercado Libre y define un precio exclusivo para ese canal.</p>
               <button type="button" data-go-ml>Configurar productos</button>
             </article>
@@ -130,9 +130,24 @@
 
         <section class="admin-view" data-panel="mercadolibre">
           <div class="section-intro">
-            <div><small>CANAL DE VENTA</small><h2>Productos para Mercado Libre</h2><p>Activar aquí significa “preparar para Mercado Libre”. Todavía no publica nada hasta que conectemos y autoricemos la cuenta.</p></div>
-            <div class="ml-state"><span></span><strong>Integración pendiente</strong></div>
+            <div><small>CANAL DE VENTA</small><h2>Productos para Mercado Libre</h2><p>CardNest mantiene el inventario maestro. Aquí preparas productos y administras la conexión oficial con Mercado Libre.</p></div>
+            <div id="mlConnectionState" class="ml-state"><span></span><strong>Comprobando conexión…</strong></div>
           </div>
+
+          <article class="panel-card ml-connection-card">
+            <div>
+              <small>CONEXIÓN OFICIAL</small>
+              <h2>Cuenta de Mercado Libre</h2>
+              <p id="mlConnectionText">Verificando el estado de autorización…</p>
+              <div id="mlAccountMeta" class="ml-account-meta" hidden></div>
+            </div>
+            <div class="ml-connection-actions">
+              <button id="mlConnectBtn" type="button">Autorizar cuenta</button>
+              <button id="mlDisconnectBtn" class="secondary-button" type="button" hidden>Desconectar</button>
+            </div>
+            <div id="mlConnectionStatus" class="form-status" role="status" hidden></div>
+          </article>
+
           <div class="toolbar">
             <input id="productSearch" type="search" placeholder="Buscar producto, ID o referencia">
             <select id="channelFilter">
@@ -149,8 +164,8 @@
           <div class="integration-grid">
             <article class="panel-card integration-card">
               <div class="integration-logo ml">ML</div>
-              <div><small>CANAL EXTERNO</small><h2>Mercado Libre</h2><p>OAuth, publicaciones, fotos, stock y notificaciones de ventas.</p></div>
-              <span class="status pending">Pendiente de autorización</span>
+              <div><small>CANAL EXTERNO</small><h2>Mercado Libre</h2><p id="mlIntegrationText">OAuth con PKCE, tokens cifrados, webhook y sincronización segura.</p><button class="text-action" type="button" data-go-ml>Administrar conexión</button></div>
+              <span id="mlIntegrationStatus" class="status pending">Comprobando…</span>
             </article>
             <article class="panel-card integration-card">
               <div class="integration-logo db">DB</div>
@@ -205,6 +220,6 @@
       </div>
     </section>
   </main>
-  <script src="admin.js?v=20260918-9"></script>
+  <script src="admin.js?v=20260919-1"></script>
 </body>
 </html>
