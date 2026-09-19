@@ -29,6 +29,16 @@ function json(body: unknown, status = 200) {
 }
 const clean = (v: unknown) => String(v ?? "").trim();
 
+async function timedFetch(url: string, init: RequestInit = {}, timeoutMs = 8_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function readLimitedBody(req: Request) {
   if (!req.body) return new Uint8Array();
   const reader = req.body.getReader();
@@ -145,7 +155,7 @@ Deno.serve(async (req: Request) => {
         client_secret: CLIENT_SECRET,
         refresh_token: row.refresh_token
       });
-      const res = await fetch("https://api.mercadolibre.com/oauth/token", {
+      const res = await timedFetch("https://api.mercadolibre.com/oauth/token", {
         method: "POST",
         headers: {
           "accept": "application/json",
@@ -244,6 +254,8 @@ Deno.serve(async (req: Request) => {
 
   // Mercado Libre expects a very fast 200 response. Process securely in background.
   // @ts-ignore EdgeRuntime is provided by Supabase.
-  EdgeRuntime.waitUntil(processEvent());
+  EdgeRuntime.waitUntil(processEvent().catch((error) => {
+    console.error("mercadolibre webhook background failure", error instanceof Error ? error.name : "unknown");
+  }));
   return json({ ok: true });
 });

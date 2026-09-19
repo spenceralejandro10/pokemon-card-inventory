@@ -754,6 +754,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.tok
     denied:["La autorización fue cancelada en Mercado Libre.","error"],
     invalid_state:["La autorización venció o no corresponde a esta sesión. Inténtalo de nuevo.","error"],
     token_error:["Mercado Libre no pudo completar la autorización. Inténtalo de nuevo.","error"],
+    insufficient_scope:["La cuenta no concedió los permisos Read y Write requeridos. No se guardaron tokens.","error"],
     wrong_site:["Se rechazó la autorización porque la cuenta no pertenece a Mercado Libre Colombia (MCO). No se guardaron tokens.","error"],
     storage_error:["La autorización llegó, pero no fue posible guardar los tokens de forma segura.","error"]
    };

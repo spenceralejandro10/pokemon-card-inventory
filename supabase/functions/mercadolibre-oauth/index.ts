@@ -33,6 +33,15 @@ async function sha256Bytes(value: string) {
 async function sha256Hex(value: string) {
   return hex(await sha256Bytes(value));
 }
+async function timedFetch(url: string, init: RequestInit = {}, timeoutMs = 10_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 function randomUrlSafe(size: number) {
   return b64url(crypto.getRandomValues(new Uint8Array(size)));
 }
@@ -189,10 +198,24 @@ Deno.serve(async (req: Request) => {
 
   if (req.method === "GET") {
     const providerError = url.searchParams.get("error");
-    if (providerError) return redirectStatus("denied");
+    const callbackState = clean(url.searchParams.get("state"));
+    if (providerError) {
+      if (callbackState && callbackState.length <= 512) {
+        const deniedStateHash = await sha256Hex(callbackState);
+        const { data: deniedSession } = await db
+          .from("mercadolibre_oauth_sessions")
+          .update({ used_at: new Date().toISOString() })
+          .eq("state_hash", deniedStateHash)
+          .is("used_at", null)
+          .select("admin_user_id")
+          .maybeSingle();
+        if (deniedSession) await audit(deniedSession.admin_user_id, "mercadolibre_oauth_denied");
+      }
+      return redirectStatus("denied");
+    }
 
     const code = clean(url.searchParams.get("code"));
-    const state = clean(url.searchParams.get("state"));
+    const state = callbackState;
     if (!code || !state) {
       return json(req, {
         ok: true,
@@ -208,7 +231,7 @@ Deno.serve(async (req: Request) => {
     const now = new Date().toISOString();
     const { data: session } = await db
       .from("mercadolibre_oauth_sessions")
-      .select("id,admin_user_id,code_verifier,expires_at,used_at")
+      .select("id,admin_user_id,admin_session_id,code_verifier,expires_at,used_at")
       .eq("state_hash", stateHash)
       .is("used_at", null)
       .gt("expires_at", now)
@@ -225,6 +248,26 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     if (!claimed) return redirectStatus("invalid_state");
 
+    if (!session.admin_session_id) return redirectStatus("invalid_state");
+    const { data: boundAdminSession } = await db
+      .from("admin_sessions")
+      .select("id,admin_user_id")
+      .eq("id", session.admin_session_id)
+      .eq("admin_user_id", session.admin_user_id)
+      .is("revoked_at", null)
+      .gt("expires_at", now)
+      .maybeSingle();
+    const { data: activeAdmin } = await db
+      .from("admin_users")
+      .select("id")
+      .eq("id", session.admin_user_id)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (!boundAdminSession || !activeAdmin) {
+      await audit(session.admin_user_id, "mercadolibre_oauth_failed", { reason: "admin_session_inactive" });
+      return redirectStatus("invalid_state");
+    }
+
     const body = new URLSearchParams({
       grant_type: "authorization_code",
       client_id: CLIENT_ID,
@@ -234,28 +277,50 @@ Deno.serve(async (req: Request) => {
       code_verifier: session.code_verifier
     });
 
-    const tokenRes = await fetch("https://api.mercadolibre.com/oauth/token", {
-      method: "POST",
-      headers: {
-        "accept": "application/json",
-        "content-type": "application/x-www-form-urlencoded"
-      },
-      body
-    });
-
-    const tokenData = await tokenRes.json().catch(() => ({}));
-    if (!tokenRes.ok || !tokenData?.access_token || !tokenData?.refresh_token) {
-      console.error("mercadolibre token exchange failed", tokenRes.status);
-      await audit(session.admin_user_id, "mercadolibre_oauth_failed", {
-        http_status: tokenRes.status,
-        reason: !tokenData?.refresh_token ? "missing_refresh_token" : "token_exchange"
+    let tokenRes: Response;
+    try {
+      tokenRes = await timedFetch("https://api.mercadolibre.com/oauth/token", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        body
       });
+    } catch {
+      await audit(session.admin_user_id, "mercadolibre_oauth_failed", { reason: "token_request_failed" });
       return redirectStatus("token_error");
     }
 
-    const meRes = await fetch("https://api.mercadolibre.com/users/me", {
-      headers: { Authorization: `Bearer ${tokenData.access_token}`, accept: "application/json" }
-    });
+    const tokenData = await tokenRes.json().catch(() => ({}));
+    if (!tokenRes.ok || !tokenData?.access_token) {
+      console.error("mercadolibre token exchange failed", tokenRes.status);
+      await audit(session.admin_user_id, "mercadolibre_oauth_failed", {
+        http_status: tokenRes.status,
+        reason: "token_exchange"
+      });
+      return redirectStatus("token_error");
+    }
+    if (!tokenData?.refresh_token) {
+      await audit(session.admin_user_id, "mercadolibre_oauth_failed", { reason: "missing_refresh_token" });
+      return redirectStatus("token_error");
+    }
+    const scope = clean(tokenData.scope);
+    const scopes = new Set(scope.toLowerCase().split(/[\s,]+/).filter(Boolean));
+    if (!scopes.has("read") || !scopes.has("write")) {
+      await audit(session.admin_user_id, "mercadolibre_oauth_failed", { reason: "insufficient_scope" });
+      return redirectStatus("insufficient_scope");
+    }
+
+    let meRes: Response;
+    try {
+      meRes = await timedFetch("https://api.mercadolibre.com/users/me", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}`, accept: "application/json" }
+      });
+    } catch {
+      await audit(session.admin_user_id, "mercadolibre_oauth_failed", { reason: "profile_request_failed" });
+      return redirectStatus("token_error");
+    }
     const me = meRes.ok ? await meRes.json().catch(() => ({})) : {};
     const tokenUserId = Number(tokenData.user_id ?? 0);
     const profileUserId = Number(me?.id ?? 0);
@@ -282,7 +347,7 @@ Deno.serve(async (req: Request) => {
       p_site_id: siteId,
       p_nickname: clean(me?.nickname) || null,
       p_token_type: clean(tokenData.token_type) || "bearer",
-      p_scope: clean(tokenData.scope),
+      p_scope: scope,
       p_expires_in: Number(tokenData.expires_in) || 21600
     });
 
@@ -388,10 +453,16 @@ Deno.serve(async (req: Request) => {
     const stateHash = await sha256Hex(state);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    await db.from("mercadolibre_oauth_sessions").delete().lt("expires_at", new Date().toISOString());
+    const { error: cleanupError } = await db
+      .from("mercadolibre_oauth_sessions")
+      .delete()
+      .eq("admin_user_id", auth.user.id)
+      .is("used_at", null);
+    if (cleanupError) return json(req, { ok: false, error: "OAUTH_SESSION_FAILED" }, 500);
 
     const { error } = await db.from("mercadolibre_oauth_sessions").insert({
       admin_user_id: auth.user.id,
+      admin_session_id: auth.session.id,
       state_hash: stateHash,
       code_verifier: verifier,
       expires_at: expiresAt

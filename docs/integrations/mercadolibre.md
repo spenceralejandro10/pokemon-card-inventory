@@ -86,7 +86,9 @@ La integración de Mercado Libre ya tiene:
 - Persistencia de eventos de webhook sin guardar en bruto la respuesta del recurso, para minimizar datos personales.
 - Panel administrativo con preflight técnico, confirmaciones manuales, autorización bloqueada por defecto y desconexión.
 - Validación cruzada del usuario devuelto por el token y `/users/me`, además de rechazo de cuentas que no sean `MCO`.
+- Validación posterior al consentimiento de que el token incluya los scopes `read` y `write`.
 - Rechazo de autorizaciones sin refresh token y rotación serializada con recuperación después de fallos transitorios.
+- Cada intento OAuth queda ligado a la sesión administrativa que lo inició; cerrar sesión o desconectar invalida callbacks pendientes.
 
 ## Alcance funcional actual
 

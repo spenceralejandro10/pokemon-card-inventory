@@ -128,11 +128,14 @@ check("Defensas críticas de Mercado Libre activas",function(){
  assert(oauth.includes('code_challenge_method", "S256"'),"OAuth debe exigir PKCE S256");
  assert(oauth.includes('siteId !== EXPECTED_SITE_ID'),"OAuth debe rechazar cuentas fuera de MCO");
  assert(oauth.includes('!tokenData?.refresh_token'),"OAuth debe exigir refresh token");
+ assert(oauth.includes('scopes.has("read")')&&oauth.includes('scopes.has("write")'),"OAuth debe exigir scopes de lectura y escritura");
+ assert(oauth.includes("admin_session_id"),"OAuth debe ligar el state a la sesión administrativa");
  assert(oauth.includes('error: "MANUAL_CHECKS_REQUIRED"'),"OAuth debe exigir la confirmación de configuración externa");
  assert(webhook.includes('applicationId !== Number(CLIENT_ID)'),"El webhook debe validar application_id");
  assert(webhook.includes('Number(tokens.user_id) !== userId'),"El webhook debe validar user_id");
  assert(webhook.includes('url.pathname.startsWith(prefix)'),"El webhook debe limitar rutas de recursos");
  assert(webhook.includes('readLimitedBody(req)'),"El webhook debe limitar el cuerpo por bytes");
+ assert(webhook.includes("timedFetch"),"Las llamadas del webhook deben tener timeout");
  assert(/id=["']mlConnectBtn["'][^>]*\bdisabled\b/.test(adminHtml),"El botón OAuth debe iniciar bloqueado");
  assert(adminHtml.includes('id="mlPreflightChecks"'),"El panel debe mostrar la revisión previa");
  assert(adminApp.includes('mlApi("preflight")'),"El frontend debe repetir el preflight antes de autorizar");
