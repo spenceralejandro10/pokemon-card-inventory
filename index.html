@@ -4,9 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CardNest</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-19">
+  <link rel="stylesheet" href="styles.css?v=20260918-20">
 </head>
 <body>
+  <header class="site-utility">
+  <div class="utility-inner">
+    <nav class="utility-nav" aria-label="Información corporativa">
+      <a href="#aboutCardnest">Quiénes somos</a>
+      <a href="#serviceTerms">Términos y condiciones</a>
+      <a href="#workWithUs">Trabaja con nosotros</a>
+    </nav>
+    <button id="openCollaboratorLogin" class="collaborator-login-link" type="button">Acceso colaboradores</button>
+  </div>
+</header>
   <header class="topbar" id="pageTop">
     <button id="brandHome" class="brand-home brand-home-logo" type="button" aria-label="CardNest. Volver al inicio">
       <img src="https://drive.google.com/thumbnail?id=1CuK-mVNBoLMlk29qFYhu6_LO_KQSf4dX&sz=w1000" alt="CardNest · Más que cartas">
@@ -255,8 +265,35 @@
     <form method="dialog"><button id="closeImageViewer" type="submit" aria-label="Cerrar">×</button></form>
     <div class="viewer-content"><img id="viewerImage" alt=""><div id="viewerCaption"></div></div>
   </dialog>
+<footer class="site-footer">
+ <div class="footer-inner">
+  <section class="footer-brand">
+   <img src="https://drive.google.com/thumbnail?id=1CuK-mVNBoLMlk29qFYhu6_LO_KQSf4dX&sz=w600" alt="CardNest">
+   <p>Marketplace especializado en cartas, coleccionables, accesorios, producto sellado y tecnología. Atención y acompañamiento durante el proceso de compra.</p>
+  </section>
+  <section id="aboutCardnest" class="footer-section"><h3>CardNest</h3><p>Somos un catálogo especializado para coleccionistas. Nuestro modelo combina selección de productos, negociación asistida y seguimiento de cada envío.</p><a href="#pageTop">Volver al inicio</a></section>
+  <section class="footer-section"><h3>Contacto y soporte</h3><p><strong>WhatsApp:</strong> +57 312 521 4785</p><p><strong>Correo:</strong> soporte@cardnest.co</p><p><strong>Ubicación:</strong> Bogotá D.C., Colombia</p><p><strong>Horario:</strong> Lun–Sáb · 9:00 a. m.–6:00 p. m.</p><small>Correo y horario mostrados como información comercial provisional.</small></section>
+  <section id="serviceTerms" class="footer-section"><h3>Información</h3><a href="#serviceTerms">Términos y condiciones del servicio</a><a href="#serviceTerms">Política de privacidad</a><a href="#serviceTerms">Política de envíos</a><a href="#serviceTerms">Cambios y devoluciones</a><p class="footer-note">Los términos legales definitivos se publicarán antes de habilitar operaciones comerciales formales.</p></section>
+  <section id="workWithUs" class="footer-section"><h3>Colaboradores</h3><p>¿Quieres trabajar con CardNest? Contacta al equipo para conocer oportunidades y procesos de vinculación.</p><button id="footerCollaboratorLogin" type="button" class="footer-login-btn">Acceso colaboradores</button></section>
+ </div>
+ <div class="footer-bottom"><span>© 2026 CardNest. Todos los derechos reservados.</span><span>Operación y soporte · Bogotá D.C., Colombia</span></div>
+</footer>
+
+<div id="collaboratorBackdrop" class="collab-backdrop" hidden></div>
+<aside id="collaboratorModal" class="collab-modal" role="dialog" aria-modal="true" aria-labelledby="collabTitle" aria-hidden="true" inert>
+ <button id="closeCollaboratorLogin" class="collab-close" type="button" aria-label="Cerrar">×</button>
+ <div class="collab-heading"><small>PORTAL INTERNO</small><h2 id="collabTitle">Acceso de colaboradores</h2><p>Ingresa con las credenciales asignadas por tu asesor.</p></div>
+ <form id="collaboratorForm">
+  <label>Usuario<input type="text" autocomplete="username" placeholder="Usuario asignado" maxlength="60" required></label>
+  <label>Contraseña<input type="password" autocomplete="current-password" placeholder="Contraseña" maxlength="80" required></label>
+  <button type="submit">Ingresar</button>
+ </form>
+ <div class="collab-register"><strong>¿Aún no tienes acceso?</strong><p>El registro no es público. Contacta con tu asesor para que te asigne usuario y contraseña.</p><a href="https://wa.me/573125214785?text=Hola%2C%20necesito%20informaci%C3%B3n%20sobre%20acceso%20para%20colaboradores." target="_blank" rel="noopener">Contactar a mi asesor</a></div>
+ <p id="collabDemoNotice" class="collab-demo-notice" hidden>El acceso de colaboradores todavía no está habilitado.</p>
+</aside>
+
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="app.js?v=20260918-18"></script>
+<script src="app.js?v=20260918-20"></script>
 </body>
 </html>
