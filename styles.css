@@ -2249,3 +2249,13 @@ dialog.image-viewer::backdrop{background:rgba(3,12,20,.78);backdrop-filter:blur(
   font-size:10.5px!important
  }
 }
+
+
+/* Clean horizontal category scroller */
+.catalog-nav{
+ scrollbar-width:none!important;
+ -ms-overflow-style:none!important;
+ overscroll-behavior-x:contain!important;
+ scroll-behavior:smooth!important;
+}
+.catalog-nav::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
