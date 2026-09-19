@@ -539,7 +539,6 @@ function render(){
    n.querySelector(".card-status").textContent=productStatus(p);
   }
 
-  n.querySelector(".details-summary").textContent=displayInfo(p.product_type||p.misc_type||p.electronics_type||p.rarity_detected);
   n.querySelector(".card-status-summary").textContent=compactStatusLabel(p,sold);
   n.querySelector(".card-stock-detail").textContent=sold?"Sin unidades disponibles":String(Number(p.stock_quantity)||1)+" unidad"+((Number(p.stock_quantity)||1)===1?"":"es")+" disponible"+((Number(p.stock_quantity)||1)===1?"":"s");
   n.querySelector(".card-validation-detail").textContent=p.validation_status==="verified"?"Información verificada":(p.validation_status?"Pendiente de verificación":"Sin información");
