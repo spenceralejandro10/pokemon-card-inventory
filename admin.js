@@ -1,6 +1,7 @@
 const SUPABASE_URL="https://cnivcnexsqobipvqxero.supabase.co";
 const SUPABASE_KEY="sb_publishable_6UjwLuM-op0-OBKWlbusTw_qmLNZVfU";
 const ADMIN_API=SUPABASE_URL+"/functions/v1/admin-control";
+const MERCADOLIBRE_API=SUPABASE_URL+"/functions/v1/mercadolibre-oauth";
 const TOKEN_KEY="cardnestAdminToken";
 const REMEMBER_KEY="cardnestRememberedUsername";
 const REMEMBER_ACCESS_KEY="cardnestRememberAccess";
@@ -13,6 +14,8 @@ const state={
  activityHasMore:true,
  profiles:[],
  summary:{},
+ mlConnection:null,
+ mlLoading:false,
  currentView:"overview",
  heartbeatTimer:null,
  selectedAvatar:null
@@ -49,6 +52,22 @@ async function api(action,payload={}){
    sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(REMEMBER_ACCESS_KEY);state.token="";state.user=null;stopTimers();showLogin();
   }
   throw new Error(data.message||"No fue posible completar la operación.");
+ }
+ return data;
+}
+
+async function mlApi(action,payload={}){
+ const res=await fetch(MERCADOLIBRE_API,{
+  method:"POST",
+  headers:{"Content-Type":"application/json",apikey:SUPABASE_KEY,...(state.token?{"x-admin-token":state.token}:{})},
+  body:JSON.stringify({action,...payload})
+ });
+ const data=await res.json().catch(()=>({}));
+ if(!res.ok){
+  if(res.status===401){
+   sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(REMEMBER_ACCESS_KEY);state.token="";state.user=null;stopTimers();showLogin();
+  }
+  throw new Error(data.message||"No fue posible completar la conexión con Mercado Libre.");
  }
  return data;
 }
@@ -94,7 +113,11 @@ function switchView(name){
  $$(".admin-view").forEach(p=>p.classList.toggle("active",p.dataset.panel===name));
  const labels={overview:"Resumen",team:"Perfil",mercadolibre:"Mercado Libre",integrations:"Integraciones",activity:"Histórico",security:"Seguridad"};
  $("#viewTitle").textContent=labels[name]||"Centro de mando";
- if(name==="mercadolibre")renderProducts();
+ if(name==="mercadolibre"){
+  renderProducts();
+  loadMlConnection().catch(e=>setStatus($("#mlConnectionStatus"),e.message,"error"));
+ }
+ if(name==="integrations")loadMlConnection().catch(()=>{});
  if(name==="team")renderProfilePage();
  if(name==="activity")renderActivity();
  window.scrollTo({top:0,behavior:"smooth"});
@@ -113,6 +136,108 @@ function renderSummary(){
  $("#statMlActive").textContent=state.summary.ml_active??0;
  $("#statSoldOut").textContent=state.summary.sold_out??0;
 }
+
+function renderMlConnection(){
+ const info=state.mlConnection;
+ const connected=!!info?.connected;
+ const connection=info?.connection||null;
+ const overview=$("#mlOverviewStatus");
+ const integration=$("#mlIntegrationStatus");
+ const stateBox=$("#mlConnectionState");
+ const stateLabel=stateBox?.querySelector("strong");
+ const text=$("#mlConnectionText");
+ const meta=$("#mlAccountMeta");
+ const connect=$("#mlConnectBtn");
+ const disconnect=$("#mlDisconnectBtn");
+
+ if(overview){
+  overview.textContent=connected?"Conectado":"Por conectar";
+  overview.className="status "+(connected?"ok":"pending");
+ }
+ if(integration){
+  integration.textContent=connected?"Conectado":"Pendiente de autorización";
+  integration.className="status "+(connected?"ok":"pending");
+ }
+ if(stateBox){
+  stateBox.classList.toggle("connected",connected);
+ }
+ if(stateLabel)stateLabel.textContent=connected?"Cuenta autorizada":"Integración pendiente";
+ if(text){
+  text.textContent=connected
+   ?"CardNest está autorizado para operar con esta cuenta de Mercado Libre."
+   :"Autoriza la cuenta principal de Mercado Libre para activar publicaciones, stock y notificaciones.";
+ }
+ if(meta){
+  if(connected&&connection){
+   const bits=[
+    connection.nickname?String(connection.nickname):"",
+    connection.site_id?String(connection.site_id):"",
+    connection.user_id?"Usuario "+String(connection.user_id):""
+   ].filter(Boolean);
+   meta.textContent=bits.join(" · ");
+   meta.hidden=!bits.length;
+  }else{
+   meta.textContent="";
+   meta.hidden=true;
+  }
+ }
+ if(connect){
+  connect.disabled=state.mlLoading;
+  connect.textContent=connected?"Reautorizar cuenta":"Autorizar cuenta";
+ }
+ if(disconnect){
+  disconnect.hidden=!connected;
+  disconnect.disabled=state.mlLoading;
+ }
+}
+
+async function loadMlConnection(){
+ if(!state.token||state.mlLoading)return state.mlConnection;
+ state.mlLoading=true;
+ renderMlConnection();
+ try{
+  const data=await mlApi("status");
+  state.mlConnection=data;
+  renderMlConnection();
+  return data;
+ }finally{
+  state.mlLoading=false;
+  renderMlConnection();
+ }
+}
+
+async function startMlConnection(){
+ const btn=$("#mlConnectBtn");
+ if(btn){btn.disabled=true;btn.textContent="Preparando autorización…"}
+ setStatus($("#mlConnectionStatus"),"");
+ try{
+  const data=await mlApi("start");
+  if(!data.authorization_url)throw new Error("Mercado Libre no devolvió una URL de autorización.");
+  location.assign(data.authorization_url);
+ }catch(e){
+  setStatus($("#mlConnectionStatus"),e.message,"error");
+  if(btn){btn.disabled=false;btn.textContent=state.mlConnection?.connected?"Reautorizar cuenta":"Autorizar cuenta"}
+ }
+}
+
+async function disconnectMlConnection(){
+ if(!confirm("¿Desconectar la cuenta de Mercado Libre de CardNest?"))return;
+ state.mlLoading=true;
+ renderMlConnection();
+ setStatus($("#mlConnectionStatus"),"");
+ try{
+  await mlApi("disconnect");
+  state.mlConnection={connected:false,connection:null};
+  renderMlConnection();
+  setStatus($("#mlConnectionStatus"),"Cuenta de Mercado Libre desconectada correctamente.","success");
+ }catch(e){
+  setStatus($("#mlConnectionStatus"),e.message,"error");
+ }finally{
+  state.mlLoading=false;
+  renderMlConnection();
+ }
+}
+
 function otherProfile(){
  return state.profiles.find(p=>p.id!==state.user?.id)||null;
 }
@@ -265,6 +390,8 @@ $$("[data-go-team]").forEach(b=>b.addEventListener("click",()=>switchView("team"
 $$("[data-go-security]").forEach(b=>b.addEventListener("click",()=>switchView("security")));
 $("#productSearch").addEventListener("input",renderProducts);
 $("#channelFilter").addEventListener("change",renderProducts);
+$("#mlConnectBtn")?.addEventListener("click",startMlConnection);
+$("#mlDisconnectBtn")?.addEventListener("click",disconnectMlConnection);
 
 $("#avatarFile").addEventListener("change",async function(){
  const file=this.files?.[0]||null;state.selectedAvatar=file;
@@ -330,7 +457,23 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.tok
  if(!state.token){showLogin();return}
  try{
   await loadDashboard();
-  switchView("overview");
+  await loadMlConnection().catch(()=>null);
+  const mlResult=new URLSearchParams(location.search).get("ml");
+  if(mlResult){
+   switchView("mercadolibre");
+   const messages={
+    connected:["Mercado Libre quedó conectado con CardNest.","success"],
+    denied:["La autorización fue cancelada en Mercado Libre.","error"],
+    invalid_state:["La autorización venció o no corresponde a esta sesión. Inténtalo de nuevo.","error"],
+    token_error:["Mercado Libre no pudo completar la autorización. Inténtalo de nuevo.","error"],
+    storage_error:["La autorización llegó, pero no fue posible guardar los tokens de forma segura.","error"]
+   };
+   const msg=messages[mlResult]||["No fue posible completar la autorización de Mercado Libre.","error"];
+   setStatus($("#mlConnectionStatus"),msg[0],msg[1]);
+   history.replaceState({},"",location.pathname+"#mercadolibre");
+  }else{
+   switchView("overview");
+  }
  }catch(error){
   console.error("CardNest admin startup failed",error);
   showFatalPanelError(error?.message||"No fue posible cargar el panel administrativo.");
