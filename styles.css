@@ -3037,3 +3037,46 @@ body.product-info-open{overflow:hidden}
  .product-info-content{height:calc(min(82dvh,720px) - 72px);padding:15px 16px 28px}
  .product-info-head{padding:15px 16px}
 }
+
+
+/* Prominent partner brand marks */
+.services-hub .service-card{
+ grid-template-columns:92px minmax(0,1fr)!important;
+ gap:16px!important;
+ align-items:center!important;
+ padding:14px 16px!important;
+}
+.services-hub .service-card-icon{
+ width:92px!important;
+ height:76px!important;
+ padding:10px!important;
+ border-radius:12px!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ overflow:hidden!important;
+}
+.services-hub .service-card-icon img{
+ width:100%!important;
+ height:100%!important;
+ max-width:none!important;
+ max-height:none!important;
+ object-fit:contain!important;
+}
+.services-hub .service-card-ml .service-card-icon{
+ background:#fff4b8!important;
+}
+.services-hub .service-card-shipping .service-card-icon{
+ background:#eef5f9!important;
+}
+@media(max-width:600px){
+ .services-hub .service-card{
+  grid-template-columns:72px minmax(0,1fr)!important;
+  gap:12px!important;
+ }
+ .services-hub .service-card-icon{
+  width:72px!important;
+  height:62px!important;
+  padding:8px!important;
+ }
+}
