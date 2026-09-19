@@ -2410,3 +2410,117 @@ dialog.image-viewer::backdrop{background:rgba(3,12,20,.78);backdrop-filter:blur(
  .service-card{padding:11px}
  .service-card p{font-size:10px!important}
 }
+
+
+/* Grouped catalog navigation */
+.catalog-nav.catalog-nav-grouped{
+ position:sticky!important;
+ top:0!important;
+ z-index:20!important;
+ display:grid!important;
+ grid-template-columns:110px minmax(0,1.25fr) minmax(0,1fr)!important;
+ gap:10px!important;
+ align-items:stretch!important;
+ overflow:visible!important;
+ padding:10px!important;
+ margin:0 0 14px!important;
+ border:1px solid #dce4ea!important;
+ border-radius:14px!important;
+ background:rgba(255,255,255,.97)!important;
+ box-shadow:0 8px 22px rgba(26,45,61,.06)!important;
+ backdrop-filter:blur(12px)!important;
+ scrollbar-width:none!important;
+}
+.catalog-nav.catalog-nav-grouped::-webkit-scrollbar{display:none!important}
+.catalog-nav-all,
+.catalog-nav-group{
+ min-width:0!important;
+ display:grid!important;
+ align-content:start!important;
+ gap:7px!important;
+ padding:9px!important;
+ border:1px solid #e7edf1!important;
+ border-radius:11px!important;
+ background:#f9fbfc!important;
+}
+.catalog-nav-all{
+ align-content:center!important;
+}
+.catalog-nav-label{
+ display:block!important;
+ color:#748591!important;
+ font-size:9px!important;
+ font-weight:900!important;
+ letter-spacing:.08em!important;
+ text-transform:uppercase!important;
+ line-height:1.2!important;
+}
+.catalog-nav-options{
+ display:flex!important;
+ flex-wrap:wrap!important;
+ gap:6px!important;
+ align-items:center!important;
+}
+.catalog-nav-grouped .catalog-tab{
+ flex:0 0 auto!important;
+ min-height:32px!important;
+ padding:7px 11px!important;
+ border-radius:999px!important;
+ font-size:11px!important;
+ font-weight:800!important;
+ line-height:1!important;
+ box-shadow:none!important;
+ white-space:nowrap!important;
+}
+.catalog-nav-all .catalog-tab{
+ width:100%!important;
+ justify-content:center!important;
+}
+.catalog-nav-grouped .catalog-tab:hover{
+ border-color:#aebdca!important;
+ background:#f4f8fa!important;
+}
+.catalog-nav-grouped .catalog-tab.active{
+ background:#172b4d!important;
+ color:#fff!important;
+ border-color:#172b4d!important;
+ box-shadow:0 3px 10px rgba(23,43,77,.14)!important;
+}
+.catalog-nav-grouped .catalog-tab-electronics{
+ background:#eef9fb!important;
+ color:#16485a!important;
+ border-color:#9ecbd5!important;
+}
+.catalog-nav-grouped .catalog-tab-electronics.active{
+ background:#12566d!important;
+ color:#fff!important;
+ border-color:#12566d!important;
+}
+.catalog-nav-grouped .new-pill{
+ margin-left:4px!important;
+ font-size:7px!important;
+ padding:2px 4px!important;
+}
+
+@media(max-width:1050px){
+ .catalog-nav.catalog-nav-grouped{
+  grid-template-columns:100px 1fr!important;
+ }
+ .catalog-nav-group:last-child{
+  grid-column:1/-1!important;
+ }
+}
+@media(max-width:720px){
+ .catalog-nav.catalog-nav-grouped{
+  position:relative!important;
+  grid-template-columns:1fr!important;
+  gap:8px!important;
+  padding:8px!important;
+ }
+ .catalog-nav-group:last-child{grid-column:auto!important}
+ .catalog-nav-all{grid-template-columns:82px minmax(0,1fr)!important;align-items:center!important}
+ .catalog-nav-all .catalog-nav-label{margin:0!important}
+ .catalog-nav-all .catalog-tab{width:auto!important}
+ .catalog-nav-options{gap:5px!important}
+ .catalog-nav-grouped .catalog-tab{padding:7px 10px!important;font-size:10.5px!important}
+}
