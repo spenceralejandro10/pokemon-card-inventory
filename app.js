@@ -408,6 +408,10 @@ function compactStatusLabel(p,sold){
  if(p.demo)return "Estado: Demostración";
  return sold?"Estado: No disponible":"Estado: Disponible";
 }
+function canonicalProductCategory(p){
+ const raw=String(p&&p.category||"").trim().toLowerCase();
+ return VALID_CATEGORIES.has(raw)&&raw!=="all"?raw:"";
+}
 function selectedCatalogCategory(){
  return VALID_CATEGORIES.has(state.category)?state.category:"all";
 }
@@ -454,7 +458,9 @@ function render(){
  const selectedCategory=selectedCatalogCategory();
  state.category=selectedCategory;
  const filtered=state.products.filter(function(p){
-  const productCategory=String(p&&p.category||"").trim();
+  const productCategory=canonicalProductCategory(p);
+  // Regla estricta: "Todos" muestra el inventario completo; cualquier otra
+  // sección muestra exclusivamente productos asignados a esa categoría.
   const categoryMatch=selectedCategory==="all"||productCategory===selectedCategory;
   return categoryMatch&&matches(p,q,language,rarity);
  });
@@ -619,6 +625,8 @@ function resetFilters(){
  document.getElementById("rarityFilter").value="";
  document.getElementById("sortFilter").value="featured";
  state.visibleLimit=CATALOG_PAGE_SIZE;
+ // Restablecer filtros de búsqueda NO cambia la sección elegida.
+ // Un producto solo puede mostrarse en "Todos" o en su categoría exacta.
  render();
  document.querySelector(".search-panel").scrollIntoView({behavior:"smooth",block:"start"});
 }
