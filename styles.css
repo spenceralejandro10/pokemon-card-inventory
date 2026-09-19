@@ -1553,3 +1553,22 @@ header.site-utility .utility-nav a{color:#dce8f1!important}
 header.site-utility .utility-nav a:hover{color:#fff!important}
 header.site-utility .collaborator-login-link{color:#ffd35a!important}
 header.site-utility .collaborator-login-link:hover{color:#ffe48a!important}
+
+/* Corporate navigation final cascade guard */
+body>header.site-utility{
+ position:relative!important;z-index:120!important;width:100%!important;
+ display:block!important;visibility:visible!important;opacity:1!important;
+ background:#0b2033!important;color:#fff!important;
+ border:0!important;border-bottom:1px solid #203b50!important;
+ padding:0!important;margin:0!important;
+}
+body>header.site-utility .utility-inner{
+ max-width:1440px!important;margin:0 auto!important;padding:0 24px!important;
+ min-height:42px!important;display:flex!important;align-items:center!important;
+ justify-content:space-between!important;gap:18px!important;
+}
+body>header.site-utility .utility-nav{display:flex!important;align-items:center!important;gap:24px!important}
+body>header.site-utility a{display:inline-flex!important;color:#dce8f1!important}
+body>header.site-utility .collaborator-login-link{display:inline-flex!important;color:#ffd35a!important}
+body>.site-footer{display:block!important;visibility:visible!important;opacity:1!important}
+.brand-home.brand-home-logo img,.footer-brand img{background:transparent!important}
