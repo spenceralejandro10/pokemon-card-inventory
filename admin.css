@@ -610,3 +610,204 @@ button,a{transition:.18s ease}
  .ml-connection-card{grid-template-columns:1fr}
  .ml-connection-actions{justify-content:flex-start}
 }
+
+
+/* Editable executive profile and game-like rank frames */
+.profile-page{
+ grid-template-columns:minmax(0,1.55fr) minmax(300px,.45fr)!important;
+ gap:22px!important
+}
+.profile-main-card{
+ grid-template-columns:260px minmax(0,1fr)!important;
+ gap:34px!important;
+ padding:32px!important;
+ overflow:hidden;
+ position:relative;
+ isolation:isolate
+}
+.profile-main-card.rank-ceo{
+ border-color:rgba(218,173,44,.78)!important;
+ background:
+  radial-gradient(circle at 12% 18%,rgba(255,208,67,.15),transparent 26%),
+  linear-gradient(135deg,#fffdf5 0%,#fff 55%,#fffaf0 100%)!important
+}
+.profile-main-card.rank-management{
+ border-color:#cbd3d8!important;
+ background:
+  radial-gradient(circle at 12% 18%,rgba(217,226,232,.22),transparent 27%),
+  linear-gradient(135deg,#fbfcfd 0%,#fff 60%,#f7f9fa 100%)!important
+}
+.profile-photo-wrap{
+ width:238px!important;height:238px!important;
+ display:grid;place-items:center;position:relative;
+ overflow:visible
+}
+.profile-preview-large{
+ width:220px!important;height:220px!important;
+ border-radius:44px!important;
+ position:relative;z-index:3;
+ font-size:38px!important;
+ transition:box-shadow .25s ease,outline-color .25s ease,transform .25s ease
+}
+.profile-preview-large img{border-radius:38px!important}
+.profile-photo-accent{z-index:5!important;right:2px!important;bottom:2px!important;width:32px!important;height:32px!important}
+
+/* Fire / energy halo for CEO */
+.profile-photo-wrap.rank-ceo:before,
+.profile-photo-wrap.rank-ceo:after{
+ content:"";position:absolute;inset:2px;border-radius:48px;z-index:1;pointer-events:none
+}
+.profile-photo-wrap.rank-ceo:before{
+ background:
+  radial-gradient(circle at 22% 82%,rgba(255,94,0,.9) 0 4%,transparent 16%),
+  radial-gradient(circle at 72% 88%,rgba(255,184,0,.92) 0 5%,transparent 18%),
+  radial-gradient(circle at 88% 35%,rgba(255,105,0,.75) 0 4%,transparent 16%),
+  conic-gradient(from 0deg,rgba(255,201,47,.2),rgba(255,111,0,.9),rgba(255,218,73,.9),rgba(255,91,0,.75),rgba(255,201,47,.2));
+ filter:blur(13px);
+ opacity:.9;
+ animation:ceoFlameOrbit 3.8s linear infinite,ceoFlamePulse 1.35s ease-in-out infinite alternate
+}
+.profile-photo-wrap.rank-ceo:after{
+ inset:18px;
+ box-shadow:
+  0 0 34px rgba(255,193,37,.75),
+  0 0 68px rgba(255,116,0,.42),
+  inset 0 0 24px rgba(255,225,124,.25);
+ animation:ceoFlamePulse 1.15s ease-in-out infinite alternate-reverse
+}
+.profile-preview-large.rank-ceo,
+.executive-avatar.rank-ceo,
+.partner-avatar.rank-ceo,
+.partner-profile-avatar.rank-ceo{
+ outline-color:#e0b72f!important;
+ box-shadow:
+  0 0 0 6px rgba(255,215,71,.17),
+  0 0 22px rgba(255,199,36,.62),
+  0 0 44px rgba(255,105,0,.33),
+  0 18px 36px rgba(88,55,0,.20)!important;
+ animation:ceoFrameFlicker 1.3s ease-in-out infinite alternate
+}
+.executive-header-profile.rank-ceo{
+ border-color:rgba(224,183,47,.88)!important;
+ box-shadow:
+  0 0 0 2px rgba(255,216,78,.12),
+  0 0 30px rgba(255,187,0,.24),
+  0 16px 36px rgba(35,52,62,.10)!important
+}
+
+/* Silver energy for management */
+.profile-photo-wrap.rank-management:before{
+ content:"";position:absolute;inset:5px;border-radius:48px;z-index:1;pointer-events:none;
+ background:
+  conic-gradient(from 45deg,rgba(255,255,255,.1),rgba(181,196,207,.8),rgba(245,249,251,.95),rgba(151,169,182,.75),rgba(255,255,255,.18));
+ filter:blur(12px);opacity:.72;
+ animation:silverEnergy 3.2s linear infinite
+}
+.profile-preview-large.rank-management,
+.executive-avatar.rank-management,
+.partner-avatar.rank-management,
+.partner-profile-avatar.rank-management{
+ outline-color:#aebcc6!important;
+ box-shadow:
+  0 0 0 6px rgba(193,205,213,.15),
+  0 0 22px rgba(194,207,216,.56),
+  0 14px 30px rgba(51,72,86,.14)!important;
+ animation:silverPulse 1.8s ease-in-out infinite alternate
+}
+.executive-header-profile.rank-management{
+ border-color:#bdcbd4!important;
+ box-shadow:0 0 26px rgba(181,197,207,.20),0 14px 34px rgba(24,52,69,.08)!important
+}
+
+/* Standard roles stay strong but do not glow */
+.profile-preview-large.rank-standard,
+.executive-avatar.rank-standard,
+.partner-avatar.rank-standard,
+.partner-profile-avatar.rank-standard{
+ outline-color:#9eb1bd!important;
+ box-shadow:0 12px 28px rgba(23,56,77,.14)!important;
+ animation:none!important
+}
+.profile-main-card.rank-standard{border-color:#dfe7ec!important}
+.partner-profile-card.rank-ceo{border-color:rgba(224,183,47,.58)!important}
+.partner-profile-card.rank-management{border-color:#c7d2d9!important}
+
+/* Editable profile form */
+.profile-main-copy{align-content:start!important}
+.profile-main-copy h2{font-size:34px!important}
+.profile-main-copy>strong{font-size:16px!important}
+.profile-main-copy>p{min-height:20px}
+.profile-profession-empty{font-style:italic;color:#95a1a9!important}
+.profile-edit-form{
+ width:100%;margin-top:18px;padding-top:18px;border-top:1px solid #e5ebef;
+ display:grid;gap:14px
+}
+.profile-field-grid{
+ display:grid;grid-template-columns:1fr 1.2fr;gap:12px
+}
+.profile-field-grid label{
+ display:grid;gap:7px;font-size:11px;font-weight:850;color:#405563
+}
+.profile-field-grid input,.profile-field-grid select{
+ width:100%;min-height:44px;border:1px solid #d3dee5;border-radius:10px;background:#fff;
+ padding:0 12px;color:#203844;outline:none
+}
+.profile-field-grid input:focus,.profile-field-grid select:focus{
+ border-color:#8ba4b3;box-shadow:0 0 0 3px rgba(36,79,105,.09)
+}
+.profile-profession-field{grid-column:1/-1}
+.profile-profession-field small{
+ color:#86959e;font-weight:600;font-size:10px
+}
+.profile-edit-actions{
+ display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap
+}
+.profile-edit-actions>span{
+ color:#7b6a38;font-size:10px;font-weight:750;line-height:1.4
+}
+#saveProfileInfo{
+ border:0;border-radius:10px;background:#17384d;color:#fff;min-height:42px;padding:0 15px;
+ font-size:11px;font-weight:900;cursor:pointer;box-shadow:0 8px 18px rgba(23,56,77,.16)
+}
+#saveProfileInfo:hover{transform:translateY(-1px)}
+#saveProfileInfo:disabled{opacity:.55;cursor:wait;transform:none}
+.profile-photo-actions{margin-top:18px!important}
+.partner-profile-avatar{width:118px!important;height:118px!important;min-width:118px!important;border-radius:30px!important}
+.partner-profile-avatar img{border-radius:25px!important}
+
+.profile-photo-flare{
+ position:absolute;z-index:2;width:34px;height:58px;border-radius:55% 45% 60% 40%;
+ filter:blur(4px);opacity:0;pointer-events:none
+}
+.rank-ceo .profile-photo-flare{opacity:.8;background:linear-gradient(180deg,#ffd84a,#ff6b00 68%,transparent)}
+.rank-management .profile-photo-flare{opacity:.48;background:linear-gradient(180deg,#f5f8fa,#aebbc5 68%,transparent)}
+.profile-photo-flare-a{left:8px;bottom:18px;transform:rotate(-18deg)}
+.profile-photo-flare-b{right:10px;top:30px;transform:rotate(20deg)}
+.rank-ceo .profile-photo-flare-a,.rank-ceo .profile-photo-flare-b{animation:flareDance 1.15s ease-in-out infinite alternate}
+.rank-management .profile-photo-flare-a,.rank-management .profile-photo-flare-b{animation:silverPulse 1.8s ease-in-out infinite alternate}
+
+@keyframes ceoFlameOrbit{to{transform:rotate(360deg)}}
+@keyframes ceoFlamePulse{from{opacity:.58;transform:scale(.98)}to{opacity:1;transform:scale(1.045)}}
+@keyframes ceoFrameFlicker{from{filter:brightness(1)}to{filter:brightness(1.08)}}
+@keyframes silverEnergy{to{transform:rotate(-360deg)}}
+@keyframes silverPulse{from{filter:brightness(.98)}to{filter:brightness(1.07)}}
+@keyframes flareDance{from{transform:translateY(3px) scale(.88) rotate(-14deg)}to{transform:translateY(-6px) scale(1.08) rotate(4deg)}}
+
+@media(max-width:1180px){
+ .profile-main-card{grid-template-columns:220px minmax(0,1fr)!important}
+ .profile-photo-wrap{width:206px!important;height:206px!important}
+ .profile-preview-large{width:192px!important;height:192px!important}
+}
+@media(max-width:820px){
+ .profile-main-card{grid-template-columns:1fr!important}
+ .profile-photo-wrap{width:220px!important;height:220px!important}
+ .profile-preview-large{width:204px!important;height:204px!important}
+ .profile-field-grid{grid-template-columns:1fr}
+ .profile-profession-field{grid-column:auto}
+}
+@media(max-width:560px){
+ .profile-main-card{padding:20px!important}
+ .profile-photo-wrap{width:190px!important;height:190px!important}
+ .profile-preview-large{width:176px!important;height:176px!important;border-radius:36px!important}
+ .profile-main-copy h2{font-size:28px!important}
+}
