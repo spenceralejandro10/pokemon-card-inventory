@@ -3409,3 +3409,38 @@ body.product-info-open{overflow:hidden}
   min-height:38px!important;
  }
 }
+
+
+/* Live product interest indicator */
+.interest-live{
+ display:flex;
+ align-items:center;
+ gap:6px;
+ margin:7px 0 2px;
+ padding:7px 9px;
+ border:1px solid #e3e9ed;
+ border-radius:9px;
+ background:#f8fafb;
+ color:#607482;
+ font-size:9px;
+ line-height:1;
+}
+.interest-live>span{
+ color:#c7475b;
+ font-size:11px;
+}
+.interest-live strong{
+ color:#203747;
+ font-size:11px;
+}
+.interest-live small{
+ color:#6f808b;
+ font-size:9px;
+}
+@media(max-width:600px){
+ .interest-live{
+  padding:7px 8px;
+  gap:5px;
+ }
+ .interest-live small{font-size:8.5px}
+}
