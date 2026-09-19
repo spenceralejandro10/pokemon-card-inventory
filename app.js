@@ -14,6 +14,7 @@ const CATEGORY_LABELS={
  accessories:"Accesorios",sealed:"Producto sellado",books:"Libros",electronics:"Electrónica",misc:"Coleccionables y más"
 };
 const CARD_CATEGORIES=new Set(["pokemon","yugioh","digimon","dragonball","naruto","other_cards"]);
+const VALID_CATEGORIES=new Set(Object.keys(CATEGORY_LABELS));
 const SECTION_LABELS={
  pokemon:"Pokémon",yugioh:"Yu-Gi-Oh!",digimon:"Digimon",dragonball:"Dragon Ball",naruto:"Naruto",
  other_cards:"Otras cartas TCG",accessories:"Accesorios",sealed:"Producto sellado",books:"Libros",
@@ -322,9 +323,14 @@ async function loadProducts(){
  const detailsMap=detailsByProduct(results[10].status==="fulfilled"?results[10].value:[]);
  const authenticityMap=mapByProduct(results[11].status==="fulfilled"?results[11].value:[]);
  const master=masterRaw.map(function(p){return normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap,detailsMap,authenticityMap)});
- const byKey=new Map();
- legacyPokemon.concat(demo,legacyElectronics,master).forEach(function(p){byKey.set(productKey(p),p)});
- state.products=mixCatalog(Array.from(byKey.values()));
+ const byId=new Map();
+ // Un ID CardNest pertenece a una sola categoría. Si existe una versión maestra,
+ // al cargarse de última reemplaza cualquier registro legado con el mismo ID.
+ legacyPokemon.concat(demo,legacyElectronics,master).forEach(function(p){
+  const id=String(p&&p.id||"").trim();
+  if(id)byId.set(id,p);
+ });
+ state.products=mixCatalog(Array.from(byId.values()));
  restoreFavorites();
  persistFavorites();
  const partial=[];
@@ -402,13 +408,23 @@ function compactStatusLabel(p,sold){
  if(p.demo)return "Estado: Demostración";
  return sold?"Estado: No disponible":"Estado: Disponible";
 }
+function selectedCatalogCategory(){
+ const active=document.querySelector(".catalog-tab.active[data-category]");
+ const fromUi=active&&String(active.dataset.category||"").trim();
+ if(fromUi&&VALID_CATEGORIES.has(fromUi))return fromUi;
+ return VALID_CATEGORIES.has(state.category)?state.category:"all";
+}
 function render(){
  const grid=document.getElementById("cardsGrid"),tpl=document.getElementById("cardTemplate");
  const q=document.getElementById("searchInput").value;
  const language=document.getElementById("languageFilter").value;
  const rarity=document.getElementById("rarityFilter").value;
+ const selectedCategory=selectedCatalogCategory();
+ state.category=selectedCategory;
  const filtered=state.products.filter(function(p){
-  return (state.category==="all"||p.category===state.category)&&matches(p,q,language,rarity);
+  const productCategory=String(p&&p.category||"").trim();
+  const categoryMatch=selectedCategory==="all"||productCategory===selectedCategory;
+  return categoryMatch&&matches(p,q,language,rarity);
  });
  const ordered=sortProducts(filtered),list=ordered.slice(0,state.visibleLimit);
  grid.innerHTML="";
@@ -532,7 +548,8 @@ document.querySelectorAll("[data-go-category]").forEach(function(btn){
  btn.addEventListener("click",function(){selectCategory(btn.dataset.goCategory)});
 });
 function selectCategory(cat){
- state.category=cat||"all";
+ const requested=String(cat||"all").trim();
+ state.category=VALID_CATEGORIES.has(requested)?requested:"all";
  state.visibleLimit=CATALOG_PAGE_SIZE;
  document.querySelectorAll(".catalog-tab").forEach(function(b){b.classList.toggle("active",b.dataset.category===state.category)});
  document.getElementById("discoverStrip").hidden=state.category!=="all";
