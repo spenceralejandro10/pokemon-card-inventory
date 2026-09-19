@@ -2851,3 +2851,70 @@ dialog.image-viewer::backdrop{background:rgba(3,12,20,.78);backdrop-filter:blur(
  margin-top:10px!important;
  margin-bottom:10px!important;
 }
+
+
+/* Dedicated featured collaborators page */
+.collaborators-main{max-width:1180px}
+.collaborators-hero{max-width:920px;margin-bottom:18px}
+.collaborator-feature{
+ display:grid;
+ grid-template-columns:220px minmax(0,1fr);
+ gap:30px;
+ align-items:center;
+ margin:18px 0;
+ padding:28px;
+ border:1px solid #dfe7ec;
+ border-radius:18px;
+ background:#fff;
+ box-shadow:0 10px 30px rgba(26,45,61,.06);
+}
+.collaborator-ml{border-top:4px solid #f4c430}
+.collaborator-coord{border-top:4px solid #1974b8}
+.collaborator-brand{
+ min-height:160px;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:14px;
+ padding:22px;
+ border-radius:15px;
+ background:#fff8d9;
+}
+.collaborator-brand-coord{background:#eef6fb}
+.collaborator-brand img{max-width:100%;max-height:72px;object-fit:contain}
+.collaborator-symbol{width:82px}
+.collaborator-wordmark{width:170px}
+.collaborator-brand-coord img{width:180px}
+.collaborator-copy h2{margin:4px 0 8px;font-size:28px;color:#172b3a}
+.collaborator-copy>p{margin:0;color:#5d7180;line-height:1.65}
+.collaborator-benefits{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:10px;
+ margin:18px 0;
+}
+.collaborator-benefits article{
+ padding:14px;
+ border:1px solid #e3e9ed;
+ border-radius:11px;
+ background:#f9fbfc;
+}
+.collaborator-benefits strong{display:block;margin-bottom:5px;color:#203542;font-size:12px}
+.collaborator-benefits span{display:block;color:#697c88;font-size:10.5px;line-height:1.5}
+.collaborator-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.collaborator-disclaimer{
+ margin:18px 0;
+ padding:18px 20px;
+ border:1px solid #dfe7ec;
+ border-radius:13px;
+ background:#f7fafb;
+}
+.collaborator-disclaimer strong{color:#213845}
+.collaborator-disclaimer p{margin:5px 0 0;color:#657985;line-height:1.55}
+@media(max-width:820px){
+ .collaborator-feature{grid-template-columns:1fr;padding:18px;gap:16px}
+ .collaborator-brand{min-height:110px}
+ .collaborator-benefits{grid-template-columns:1fr}
+ .collaborator-copy h2{font-size:23px}
+}
