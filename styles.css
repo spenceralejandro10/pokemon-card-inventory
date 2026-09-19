@@ -1605,3 +1605,43 @@ body>header.site-utility .collaborator-login-link:hover{background:#ffefb9!impor
  body>header.site-utility .utility-nav a,
  body>header.site-utility .collaborator-login-link{padding:0 8px!important;font-size:10px!important}
 }
+
+/* Unified CardNest header: logo + corporate navigation */
+body>header.site-main-header{
+ display:block!important;background:#fff!important;border:0!important;
+ border-bottom:1px solid #dce4e9!important;padding:0!important;
+ box-shadow:0 2px 12px rgba(15,35,50,.045)!important;color:#17212b!important;
+}
+.site-main-header-inner{
+ max-width:1440px!important;min-height:96px!important;margin:0 auto!important;
+ padding:14px 24px!important;display:grid!important;
+ grid-template-columns:220px minmax(0,1fr) auto!important;
+ align-items:center!important;gap:28px!important;
+}
+.site-main-header .brand-home.brand-home-logo{max-width:210px!important;width:210px!important}
+.site-main-header .brand-home.brand-home-logo img{
+ display:block!important;width:190px!important;height:68px!important;max-width:100%!important;
+ object-fit:contain!important;object-position:left center!important;
+ background:transparent!important;
+}
+.header-corporate-nav{display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important}
+.header-corporate-nav a{
+ display:inline-flex!important;align-items:center!important;min-height:36px!important;
+ padding:0 13px!important;border-radius:8px!important;text-decoration:none!important;
+ color:#435565!important;font-size:13px!important;font-weight:750!important;
+}
+.header-corporate-nav a:hover{background:#f1f5f7!important;color:#102f46!important}
+.site-main-header .header-login{
+ min-height:38px!important;padding:0 15px!important;border:1px solid #d8b84e!important;
+ border-radius:9px!important;background:#fff8df!important;color:#624a00!important;
+ font-size:12px!important;font-weight:850!important;white-space:nowrap!important;cursor:pointer!important;
+}
+.site-main-header .header-login:hover{background:#ffefb6!important}
+@media(max-width:820px){
+ .site-main-header-inner{grid-template-columns:1fr auto!important;gap:10px!important;padding:10px 14px!important}
+ .site-main-header .brand-home.brand-home-logo{width:170px!important}
+ .site-main-header .brand-home.brand-home-logo img{width:160px!important;height:58px!important}
+ .header-corporate-nav{grid-column:1/-1!important;grid-row:2!important;justify-content:flex-start!important;overflow-x:auto!important;padding-bottom:3px!important}
+ .header-corporate-nav a{white-space:nowrap!important;font-size:11px!important;padding:0 9px!important}
+ .site-main-header .header-login{grid-column:2!important;grid-row:1!important;font-size:11px!important}
+}
