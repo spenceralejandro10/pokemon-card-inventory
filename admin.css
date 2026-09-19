@@ -1181,3 +1181,40 @@ button,a{transition:.18s ease}
  .executive-avatar{width:74px!important;height:96px!important;min-width:74px!important;border-radius:21px!important}
  .executive-avatar img{border-radius:17px!important}
 }
+
+
+/* Frame availability and explicit apply action */
+.frame-option[hidden]{display:none!important}
+.frame-picker-actions{
+ margin-top:12px;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ padding-top:12px;
+ border-top:1px solid #e4eaee;
+}
+.frame-picker-actions>span{
+ color:#73848f;
+ font-size:10px;
+ line-height:1.45;
+}
+#applyProfileFrame{
+ flex:none;
+ min-height:40px;
+ border:0;
+ border-radius:10px;
+ padding:0 15px;
+ background:#17384d;
+ color:#fff;
+ font-size:11px;
+ font-weight:900;
+ cursor:pointer;
+ box-shadow:0 8px 18px rgba(23,56,77,.16);
+}
+#applyProfileFrame:hover{transform:translateY(-1px)}
+#applyProfileFrame:active{transform:translateY(0)}
+@media(max-width:680px){
+ .frame-picker-actions{align-items:stretch;flex-direction:column}
+ #applyProfileFrame{width:100%}
+}
