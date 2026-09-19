@@ -127,6 +127,8 @@ check("Defensas críticas de Mercado Libre activas",function(){
  const oauth=edgeFunctions.find(function(entry){return entry.file.includes("mercadolibre-oauth")})?.source||"";
  const webhook=edgeFunctions.find(function(entry){return entry.file.includes("mercadolibre-webhook")})?.source||"";
  assert(oauth.includes('action === "preflight"'),"OAuth debe exponer la revisión previa");
+ assert(oauth.includes('MERCADOLIBRE_AUTHORIZATION_ENABLED'),"OAuth debe tener un interruptor de habilitación productiva");
+ assert(oauth.includes('error: "AUTHORIZATION_DISABLED"'),"OAuth debe bloquear el inicio mientras la habilitación productiva esté apagada");
  assert(oauth.includes('code_challenge_method", "S256"'),"OAuth debe exigir PKCE S256");
  assert(oauth.includes('siteId !== EXPECTED_SITE_ID'),"OAuth debe rechazar cuentas fuera de MCO");
  assert(oauth.includes('!tokenData?.refresh_token'),"OAuth debe exigir refresh token");

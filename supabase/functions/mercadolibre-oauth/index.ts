@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const CLIENT_ID = Deno.env.get("MERCADOLIBRE_CLIENT_ID") ?? "";
 const CLIENT_SECRET = Deno.env.get("MERCADOLIBRE_CLIENT_SECRET") ?? "";
+const AUTHORIZATION_ENABLED = Deno.env.get("MERCADOLIBRE_AUTHORIZATION_ENABLED") === "true";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const REDIRECT_URI = "https://cnivcnexsqobipvqxero.supabase.co/functions/v1/mercadolibre-oauth";
@@ -180,7 +181,8 @@ Deno.serve(async (req: Request) => {
       { key: "configuration", label: "Credenciales y App ID configurados", ok: clientIdOk && CLIENT_SECRET.length >= 8 },
       { key: "secure_storage", label: "Almacenamiento cifrado consistente", ok: storageOk },
       { key: "webhook", label: "Webhook disponible y configurado", ok: webhookOk },
-      { key: "site", label: "Cuenta compatible con Mercado Libre Colombia", ok: siteOk }
+      { key: "site", label: "Restricción técnica a Mercado Libre Colombia activa", ok: siteOk },
+      { key: "authorization_gate", label: "Habilitación productiva aprobada", ok: AUTHORIZATION_ENABLED }
     ];
 
     return {
@@ -221,6 +223,7 @@ Deno.serve(async (req: Request) => {
         ok: true,
         service: "CardNest Mercado Libre OAuth",
         configured: true,
+        authorization_enabled: AUTHORIZATION_ENABLED,
         redirect_uri: REDIRECT_URI,
         webhook_uri: WEBHOOK_URI
       });
@@ -420,6 +423,15 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action === "start") {
+    if (!AUTHORIZATION_ENABLED) {
+      await audit(auth.user.id, "mercadolibre_oauth_start_blocked", { reason: "authorization_disabled" });
+      return json(req, {
+        ok: false,
+        error: "AUTHORIZATION_DISABLED",
+        message: "La autorización productiva permanece desactivada hasta completar la revisión de cumplimiento."
+      }, 423);
+    }
+
     const manualChecks = body.manual_checks && typeof body.manual_checks === "object"
       ? body.manual_checks as Record<string, unknown>
       : {};

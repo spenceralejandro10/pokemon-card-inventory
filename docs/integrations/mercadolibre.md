@@ -89,6 +89,7 @@ La integración de Mercado Libre ya tiene:
 - Validación posterior al consentimiento de que el token incluya los scopes `read` y `write`.
 - Rechazo de autorizaciones sin refresh token y rotación serializada con recuperación después de fallos transitorios.
 - Cada intento OAuth queda ligado a la sesión administrativa que lo inició; cerrar sesión o desconectar invalida callbacks pendientes.
+- Interruptor servidor de habilitación productiva. La autorización permanece bloqueada aunque el frontend sea manipulado mientras `MERCADOLIBRE_AUTHORIZATION_ENABLED` no sea exactamente `true`.
 
 ## Alcance funcional actual
 
@@ -103,6 +104,12 @@ Deben existir en Supabase:
 
 - `MERCADOLIBRE_CLIENT_ID`
 - `MERCADOLIBRE_CLIENT_SECRET`
+
+Debe permanecer ausente o con un valor distinto de `true` durante la revisión:
+
+- `MERCADOLIBRE_AUTHORIZATION_ENABLED`
+
+Solo establecer `MERCADOLIBRE_AUTHORIZATION_ENABLED=true` después de completar la lista obligatoria, probar con usuarios de test y aprobar expresamente la salida productiva.
 
 No copiar sus valores a este repositorio.
 
