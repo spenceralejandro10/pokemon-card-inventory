@@ -93,6 +93,43 @@ La integración de Mercado Libre ya tiene:
 - Cada intento OAuth queda ligado a la sesión administrativa que lo inició; cerrar sesión o desconectar invalida callbacks pendientes.
 - Interruptor servidor de habilitación productiva. La autorización permanece bloqueada aunque el frontend sea manipulado mientras `MERCADOLIBRE_AUTHORIZATION_ENABLED` no sea exactamente `true`.
 
+## Posicionamiento comercial y comunicación pública
+
+Mercado Libre debe presentarse públicamente como **canal complementario de compra** o **canal adicional de venta de CardNest**. La integración no debe comunicarse como “socio estratégico”, “partner oficial”, patrocinador, representante o sociedad corporativa salvo que exista un acuerdo expreso que autorice esa denominación.
+
+### Mensaje público recomendado
+
+> CardNest integra Mercado Libre como canal complementario para productos seleccionados. Cuando una compra se concreta y paga íntegramente dentro de Mercado Libre, se aplican también los términos, condiciones, políticas y mecanismos de protección vigentes de esa plataforma.
+
+### Captación de clientes
+
+La página pública incorpora un bloque específico para clientes que prefieran Mercado Libre:
+
+1. El visitante descubre el canal desde la página principal.
+2. Puede solicitar por WhatsApp que CardNest confirme si el producto tiene una publicación disponible en Mercado Libre.
+3. Si existe publicación, el comprador debe finalizar compra, pago, mensajería y reclamaciones asociadas a esa operación dentro de Mercado Libre.
+4. Si no existe publicación, CardNest puede decidir si prepara ese producto para el canal; no debe prometer que todos los productos estarán disponibles allí.
+5. Una compra directa de CardNest y una compra dentro de Mercado Libre son operaciones separadas y no deben mezclar sus mecanismos de protección.
+
+### Compra Protegida
+
+La comunicación pública debe evitar promesas propias sobre cobertura. La redacción correcta es que las compras **concretadas y pagadas dentro de Mercado Libre** quedan sujetas a los términos, políticas y mecanismos de Compra Protegida vigentes de Mercado Libre, incluyendo sus plazos, exclusiones y procedimientos.
+
+Referencias públicas:
+- https://www.mercadolibre.com.co/compra-protegida
+- https://www.mercadolibre.com.co/l/compra-seguro
+
+### Enlace directo a la tienda de Mercado Libre
+
+No publicar ni inventar una URL de tienda/perfil. El enlace directo debe agregarse únicamente cuando:
+
+- la cuenta productiva haya completado la autorización;
+- CardNest haya confirmado el perfil público correcto del vendedor;
+- la URL se haya probado en sesión no autenticada;
+- el enlace lleve realmente a las publicaciones de CardNest en Mercado Libre Colombia.
+
+Hasta entonces, el CTA público debe ser **“Pedir opción por Mercado Libre”** y dirigir a WhatsApp. Una vez verificada la URL, ese CTA puede convivir con **“Ver publicaciones en Mercado Libre”**.
+
 ## Alcance funcional actual
 
 - **No existe publicación automática.** Marcar un producto como “Preparado para ML” solo guarda una selección interna con estado `ready`.

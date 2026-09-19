@@ -9,6 +9,13 @@ Catálogo web de cartas coleccionables, accesorios, producto sellado y electrón
 - Imágenes en Google Drive o Supabase Storage.
 - Flujo de envío, Top Loaders y comprobante PDF.
 
+## Canales comerciales
+- **CardNest directo:** catálogo, negociación asistida por WhatsApp, código de venta y flujo propio de envío.
+- **Mercado Libre:** canal complementario para productos seleccionados. Cuando una compra se concreta y paga dentro de Mercado Libre, se aplican los términos, políticas y mecanismos de protección de esa plataforma.
+- No se debe describir a Mercado Libre como “socio estratégico”, “partner oficial” o patrocinador salvo que exista un acuerdo que autorice expresamente esa denominación.
+- El enlace público directo a la tienda/perfil de Mercado Libre solo debe publicarse cuando la cuenta productiva esté autorizada y la URL del vendedor haya sido verificada.
+- Referencia técnica y comercial: `docs/integrations/mercadolibre.md`.
+
 ## Reglas de datos
 - Nunca inventar rarezas: usar `unknown/null` cuando no se vea o no esté verificada.
 - `name_original` conserva el nombre impreso.
@@ -27,6 +34,7 @@ Catálogo web de cartas coleccionables, accesorios, producto sellado y electrón
 - `scripts/verify.mjs`: comprobaciones estáticas reproducibles.
 - `docs/data-model.md`: esquema del modelo.
 - `docs/extraction-rules.md`: protocolo de extracción.
+- `docs/integrations/mercadolibre.md`: arquitectura, seguridad, operación y comunicación pública del canal Mercado Libre.
 
 ## Verificación local
 
