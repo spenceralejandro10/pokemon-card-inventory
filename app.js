@@ -1,7 +1,8 @@
 const SUPABASE_URL="https://cnivcnexsqobipvqxero.supabase.co";
 const SUPABASE_KEY="sb_publishable_6UjwLuM-op0-OBKWlbusTw_qmLNZVfU";
 const WA="573125214785";
-const SALE_API=SUPABASE_URL+"/functions/v1/sale-order";\nconst ADMIN_API=SUPABASE_URL+"/functions/v1/admin-control";
+const SALE_API=SUPABASE_URL+"/functions/v1/sale-order";
+const ADMIN_API=SUPABASE_URL+"/functions/v1/admin-control";
 const CATALOG_PAGE_SIZE=48;
 const SUPABASE_PAGE_SIZE=1000;
 const CATALOG_MAX_REMOTE_ROWS=25000;
