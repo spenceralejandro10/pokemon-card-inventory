@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>CardNest · Centro de mando</title>
-  <link rel="stylesheet" href="admin.css?v=20260919-4">
+  <link rel="stylesheet" href="admin.css?v=20260919-5">
 </head>
 <body>
   <main class="admin-shell">
@@ -215,11 +215,20 @@
 
                 <div class="profile-photo-actions">
                   <label class="file-picker primary-file-picker">Cambiar foto
-                    <input id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp">
+                    <input id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
                   </label>
                   <button id="saveAvatar" type="button" disabled>Guardar foto</button>
-                  <small id="avatarFileName">JPG, PNG o WebP · máximo 5 MB</small>
+                  <small id="avatarFileName">JPG, PNG, WebP o GIF · máximo 10 MB · se muestra completa sin recortes</small>
                 </div>
+                <div class="profile-certificate-card">
+                  <div>
+                    <small>CERTIFICACIÓN INTERNA · DEMO</small>
+                    <strong>Certificado de cargo y funciones</strong>
+                    <p>Genera un PDF profesional con tu nombre, cargo, profesión declarada, funciones asociadas, logo CardNest y firma de demostración. El documento queda marcado como DEMO y sin validez laboral o legal.</p>
+                  </div>
+                  <button id="downloadRoleCertificate" type="button">Descargar certificado PDF</button>
+                </div>
+                <div id="certificateStatus" class="form-status" role="status" hidden></div>
                 <div id="profileStatus" class="form-status" role="status" hidden></div>
                 <div id="avatarStatus" class="form-status" role="status" hidden></div>
               </div>
@@ -344,6 +353,6 @@
       </div>
     </section>
   </main>
-  <script src="admin.js?v=20260919-4"></script>
+  <script src="admin.js?v=20260919-5"></script>
 </body>
 </html>
