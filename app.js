@@ -39,7 +39,7 @@ const state={
 const normalize=function(v){
  return String(v==null?"":v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
 };
-const cop=function(n){return new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(Number(n)||0)};
+const cop=function(n){return new Intl.NumberFormat("es-CO",{maximumFractionDigits:0}).format(Number(n)||0)};
 const parseCOP=function(v){return Number(String(v||"").replace(/\D/g,""))||0};
 function formatCOPInput(el){const n=parseCOP(el.value);el.value=n?new Intl.NumberFormat("es-CO").format(n):""}
 function productKey(p){return String(p.category||"product")+"::"+String(p.id)}
@@ -775,7 +775,7 @@ function renderFavoriteItems(){
   const max=Math.max(1,Number(p.stock_quantity||1)),key=productKey(p),o=productOffer(p),disabled=state.offerMode==="lot"?"disabled":"";
   row.innerHTML='<div class="favorite-product-info"><strong>'+escapeHTML(productName(p))+'</strong><small>ID '+escapeHTML(p.id)+' · '+escapeHTML(p.card_number||"Sin referencia")+'</small><small>Disponibles: '+max+'</small><button class="offer-remove" type="button">Quitar de la selección</button></div>'+
    '<div class="offer-controls"><label>Cantidad<input class="qty-input" type="number" min="1" max="'+max+'" value="'+(o.qty||1)+'"></label>'+
-   '<label>Oferta por unidad <b>COP</b><div class="money-input"><span>$</span><input class="price-input" inputmode="numeric" maxlength="10" placeholder="Mín. 3.000" '+disabled+' value="'+(o.price?new Intl.NumberFormat("es-CO").format(o.price):"")+'"></div><small class="offer-field-help">Mínimo $3.000 COP por unidad.</small></label></div>';
+   '<label>Oferta por unidad <b>COP</b><div class="money-input"><span>COP</span><input class="price-input" inputmode="numeric" maxlength="10" placeholder="0000" '+disabled+' value="'+(o.price?new Intl.NumberFormat("es-CO").format(o.price):"")+'"></div><small class="offer-field-help">Mínimo 3.000 COP por unidad.</small></label></div>';
   const qty=row.querySelector(".qty-input"),price=row.querySelector(".price-input"),remove=row.querySelector(".offer-remove");
   remove.setAttribute("aria-label","Quitar "+productName(p)+" de la selección");
   remove.onclick=function(){toggleFavorite(p);renderFavoriteItems()};
@@ -792,7 +792,7 @@ function renderFavoriteItems(){
    e.target.value=val?new Intl.NumberFormat("es-CO").format(val):"";
    state.offers[key]=Object.assign({},state.offers[key]||{},{price:val});
    persistOfferDraft();
-   setOfferInputState(e.target,!val||val>=MIN_OFFER_PER_UNIT,val&&val<MIN_OFFER_PER_UNIT?"La oferta mínima es $3.000 COP.":"Mínimo $3.000 COP por unidad.");
+   setOfferInputState(e.target,!val||val>=MIN_OFFER_PER_UNIT,val&&val<MIN_OFFER_PER_UNIT?"La oferta mínima es 3.000 COP.":"Mínimo 3.000 COP por unidad.");
    updateOfferTotal();
   };
   box.appendChild(row);
@@ -884,9 +884,9 @@ document.getElementById("sendOffer").onclick=function(){
   const invalid=products.find(function(p){return Number(productOffer(p).price||0)<MIN_OFFER_PER_UNIT});
   if(invalid){
    renderFavoriteItems();
-   setOfferStatus('Debes asignar una oferta mínima de $3.000 COP a cada producto. Falta: '+productName(invalid)+'.',"error");
+   setOfferStatus('Debes asignar una oferta mínima de 3.000 COP a cada producto. Falta: '+productName(invalid)+'.',"error");
    const invalidIndex=products.indexOf(invalid),invalidInput=document.querySelectorAll(".price-input")[invalidIndex];
-   if(invalidInput){invalidInput.focus();setOfferInputState(invalidInput,false,"La oferta mínima es $3.000 COP.")}
+   if(invalidInput){invalidInput.focus();setOfferInputState(invalidInput,false,"La oferta mínima es 3.000 COP.")}
    return;
   }
   total=products.reduce(function(a,p){
