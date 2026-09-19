@@ -60,14 +60,11 @@ async function api(action,payload={}){
 }
 
 function showLogin(){
- $("#loginView").hidden=false;$("#panelView").hidden=true;
- const remembered=localStorage.getItem(REMEMBER_KEY)||"";
- $("#adminUsername").value=remembered;
- $("#rememberUsername").checked=!!remembered;
- setTimeout(()=>remembered?$("#adminPassword")?.focus():$("#adminUsername")?.focus(),20);
+ stopTimers();
+ location.replace("index.html?collab=1");
 }
 function showPanel(){
- $("#loginView").hidden=true;$("#panelView").hidden=false;
+ $("#panelView").hidden=false;
  const me=selfProfile();
  $("#sidebarUser").textContent=me?.display_name||me?.username||"Administrador";
  $("#sidebarRole").textContent=me?.corporate_title||me?.role||"Administrador";
@@ -338,28 +335,6 @@ async function loadDashboard(renderProductsToo=true){
  if(renderProductsToo)renderProducts();
 }
 
-$("#adminLoginForm").addEventListener("submit",async e=>{
- e.preventDefault();const status=$("#loginStatus");setStatus(status,"");
- const username=$("#adminUsername").value.trim();
- const remember=$("#rememberUsername").checked;
- const btn=e.currentTarget.querySelector("button");btn.disabled=true;btn.textContent="Validando…";
- try{
-  const data=await api("login",{username,password:$("#adminPassword").value});
-  if(remember){
-   localStorage.setItem(REMEMBER_KEY,username);
-   localStorage.setItem(REMEMBER_ACCESS_KEY,"true");
-   localStorage.setItem(TOKEN_KEY,data.token);
-  }else{
-   localStorage.removeItem(REMEMBER_KEY);
-   localStorage.removeItem(REMEMBER_ACCESS_KEY);
-   localStorage.removeItem(TOKEN_KEY);
-  }
-  state.token=data.token;state.user=data.user;sessionStorage.setItem(TOKEN_KEY,state.token);$("#adminPassword").value="";
-  await loadDashboard();switchView("overview");
- }catch(err){setStatus(status,err.message,"error")}
- finally{btn.disabled=false;btn.textContent="Entrar al panel"}
-});
-
 $("#logoutBtn").addEventListener("click",async()=>{
  try{await api("logout")}catch{}
  sessionStorage.removeItem(TOKEN_KEY);state.token="";state.user=null;stopTimers();showLogin();
@@ -456,10 +431,15 @@ $("#passwordForm").addEventListener("submit",async e=>{
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.token)heartbeat().catch(()=>{})});
 
 (async function init(){
- const remembered=localStorage.getItem(REMEMBER_KEY)||"";
- const persistAccess=localStorage.getItem(REMEMBER_ACCESS_KEY)==="true";
- if(remembered)$("#adminUsername").value=remembered;
- $("#rememberUsername").checked=!!remembered||persistAccess
  if(!state.token){showLogin();return}
- try{await loadDashboard();switchView("overview")}catch{sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(REMEMBER_ACCESS_KEY);state.token="";showLogin()}
+ try{
+  await loadDashboard();
+  switchView("overview");
+ }catch{
+  sessionStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REMEMBER_ACCESS_KEY);
+  state.token="";
+  showLogin();
+ }
 })();
