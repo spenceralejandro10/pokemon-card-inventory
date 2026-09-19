@@ -1444,3 +1444,14 @@ window.addEventListener("scroll",function(){
 loadProducts().catch(function(e){
  console.error(e);document.getElementById("cardsGrid").innerHTML='<div class="empty">No fue posible cargar el catálogo.</div>';
 });
+
+function setCollaboratorModal(open){
+ const modal=document.getElementById("collaboratorModal"),backdrop=document.getElementById("collaboratorBackdrop");if(!modal||!backdrop)return;
+ modal.setAttribute("aria-hidden",open?"false":"true");modal.inert=!open;backdrop.hidden=!open;
+ if(open)setTimeout(()=>modal.querySelector("input")?.focus(),20);
+}
+["openCollaboratorLogin","footerCollaboratorLogin"].forEach(id=>document.getElementById(id)?.addEventListener("click",()=>setCollaboratorModal(true)));
+document.getElementById("closeCollaboratorLogin")?.addEventListener("click",()=>setCollaboratorModal(false));
+document.getElementById("collaboratorBackdrop")?.addEventListener("click",()=>setCollaboratorModal(false));
+document.getElementById("collaboratorForm")?.addEventListener("submit",e=>{e.preventDefault();document.getElementById("collabDemoNotice").hidden=false});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.getElementById("collaboratorModal")?.getAttribute("aria-hidden")==="false")setCollaboratorModal(false)});
