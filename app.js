@@ -1783,3 +1783,19 @@ document.getElementById("collaboratorForm")?.addEventListener("submit",async fun
  }
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.getElementById("collaboratorModal")?.getAttribute("aria-hidden")==="false")setCollaboratorModal(false)});
+
+
+/* Responsive catalog filter state */
+(()=>{
+ const filterAccordion=document.querySelector(".catalog-filter-accordion");
+ if(!filterAccordion)return;
+ const syncCatalogFilterMode=()=>{
+  filterAccordion.open=!window.matchMedia("(max-width: 900px)").matches;
+ };
+ syncCatalogFilterMode();
+ let resizeTimer;
+ window.addEventListener("resize",()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(syncCatalogFilterMode,120);
+ });
+})();
