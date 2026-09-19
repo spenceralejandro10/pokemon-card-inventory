@@ -166,12 +166,13 @@ En Mercado Libre Developers, verificar y marcar en el panel de CardNest:
 5. Se usará la cuenta principal de Mercado Libre Colombia (`MCO`).
 6. La revisión técnica de CardNest muestra configuración, Vault, webhook y país en estado aprobado.
 7. Todas las pruebas de publicación, compra, preguntas y ventas se realizan únicamente entre usuarios de test; nunca con la cuenta personal o productiva.
+8. Existe al menos un flujo productivo que genera valor para la cuenta —por ejemplo, publicar o actualizar productos seleccionados— y fue probado de extremo a extremo. No autorizar una cuenta real únicamente para leer datos.
 
 El backend vuelve a ejecutar el preflight justo antes de crear el `state` OAuth y rechaza llamadas que no incluyan las tres confirmaciones manuales.
 
 ### Paso humano final
 
-Desde el panel de administración de CardNest, entrar a **Mercado Libre** y pulsar **Autorizar cuenta**. Mercado Libre mostrará su pantalla oficial de consentimiento y devolverá el código al callback de Supabase.
+Solo después de implementar y probar el flujo productivo, desde el panel de administración de CardNest, entrar a **Mercado Libre** y pulsar **Autorizar cuenta**. Mercado Libre mostrará su pantalla oficial de consentimiento y devolverá el código al callback de Supabase.
 
 La autorización no publica productos por sí sola. Si la pantalla de consentimiento muestra una aplicación, país, cuenta o permisos inesperados, cancelar y revisar la configuración; no continuar “para probar”.
 
