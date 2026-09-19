@@ -1678,3 +1678,108 @@ body>header.site-main-header{
 .legal-source{margin-top:24px;padding:28px;background:#eaf2f6;border-radius:17px}.legal-source div{display:flex;gap:10px;flex-wrap:wrap}.legal-source a{background:#fff;padding:10px 12px;border-radius:8px;text-decoration:none}
 .info-footer{background:#0b2033!important;color:#dbe6ee!important;padding:38px max(24px,calc((100% - 1240px)/2));display:grid;grid-template-columns:1.2fr 1fr auto;gap:35px;align-items:center}.info-footer img{width:170px;max-width:100%;background:#fff;border-radius:9px;padding:4px}.info-footer p{color:#9fb3c1!important;font-size:12px;line-height:1.6}.info-footer nav{display:flex;flex-direction:column;gap:8px}.info-footer a{color:#dbe6ee!important;text-decoration:none;font-size:13px}
 @media(max-width:800px){.info-header-inner{align-items:flex-start;flex-direction:column;gap:5px}.info-header nav{justify-content:flex-start}.info-main{padding:28px 14px 50px}.info-hero{padding:32px 24px}.info-hero:after{display:none}.info-grid,.steps,.story-panel,.terms-layout{grid-template-columns:1fr}.terms-index{position:static}.commission-card{grid-template-columns:1fr;gap:8px}.info-footer{grid-template-columns:1fr}.collectible-orbit{display:none}}
+
+
+/* Premium CardNest collaborator access */
+.collab-modal-premium{
+ width:min(500px,calc(100vw - 28px))!important;
+ padding:30px!important;
+ border-radius:22px!important;
+ border:1px solid #d7e1e7!important;
+ background:linear-gradient(180deg,#ffffff 0%,#f9fbfc 100%)!important;
+ box-shadow:0 34px 100px rgba(6,25,39,.34)!important;
+ overflow:hidden;
+}
+.collab-modal-premium:before{
+ content:"";position:absolute;inset:0 0 auto 0;height:5px;
+ background:linear-gradient(90deg,#153f5d,#e0b72f,#153f5d)
+}
+.collab-brand{
+ display:flex;align-items:center;gap:14px;padding:0 36px 18px 0;margin-bottom:18px;
+ border-bottom:1px solid #e6edf1;
+}
+.collab-brand img{
+ width:112px;height:64px;object-fit:contain;object-position:left center;display:block;
+ background:transparent!important;
+}
+.collab-brand>div{display:grid;gap:3px}
+.collab-brand span{
+ color:#8a6a16;font-size:10px;font-weight:950;letter-spacing:.12em;
+}
+.collab-brand strong{
+ color:#17384d;font-size:13px;font-weight:850;line-height:1.3;
+}
+.collab-modal-premium .collab-heading h2{
+ margin:0 0 7px!important;font-size:28px!important;line-height:1.08;color:#10293b!important;
+ letter-spacing:-.025em;
+}
+.collab-modal-premium .collab-heading p{
+ margin:0 0 22px!important;color:#687987!important;font-size:13px;line-height:1.5;
+}
+.collab-modal-premium #collaboratorForm{gap:15px!important}
+.collab-modal-premium #collaboratorForm label:not(.collab-remember){
+ gap:7px!important;color:#2f4554!important;font-size:11px!important;letter-spacing:.01em;
+}
+.collab-modal-premium #collaboratorForm input[type="text"],
+.collab-modal-premium #collaboratorForm input[type="password"]{
+ height:50px!important;border-radius:11px!important;border:1px solid #ccd8e0!important;
+ padding:0 14px!important;font-size:13px!important;
+ box-shadow:inset 0 1px 2px rgba(16,40,58,.025);
+ transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.collab-modal-premium #collaboratorForm input[type="text"]:focus,
+.collab-modal-premium #collaboratorForm input[type="password"]:focus{
+ outline:none!important;border-color:#d5ad29!important;
+ box-shadow:0 0 0 4px rgba(224,183,47,.14)!important;background:#fffefa!important;
+}
+.collab-remember{
+ display:flex!important;grid-template-columns:18px 1fr!important;align-items:center!important;
+ gap:9px!important;color:#566b79!important;font-size:12px!important;font-weight:700!important;
+ cursor:pointer;padding:2px 0;
+}
+.collab-remember input{
+ width:17px!important;height:17px!important;min-height:0!important;margin:0!important;
+ accent-color:#173f5d;box-shadow:none!important;
+}
+.collab-modal-premium #collaboratorForm button{
+ height:50px!important;border-radius:11px!important;padding:0 16px!important;
+ display:flex;align-items:center;justify-content:space-between;
+ background:linear-gradient(135deg,#123a57,#1b5579)!important;
+ box-shadow:0 10px 24px rgba(18,58,87,.19)!important;
+ font-size:13px!important;letter-spacing:.01em;transition:transform .16s ease,box-shadow .16s ease!important;
+}
+.collab-modal-premium #collaboratorForm button:hover{
+ transform:translateY(-1px);box-shadow:0 14px 30px rgba(18,58,87,.24)!important;
+}
+.collab-modal-premium #collaboratorForm button:disabled{opacity:.65;cursor:wait;transform:none}
+.collab-modal-premium #collaboratorForm button b{font-size:18px;font-weight:600}
+.collab-security-note{
+ margin-top:16px;padding:12px 13px;border:1px solid #dce8e2;border-radius:11px;
+ background:#f3faf6;display:grid;grid-template-columns:10px 1fr;gap:10px;align-items:start;
+}
+.collab-security-note>span{color:#25906a;font-size:11px;line-height:1.6}
+.collab-security-note>div{display:grid;gap:2px}
+.collab-security-note strong{font-size:11px;color:#28624d!important}
+.collab-security-note small{font-size:10px!important;line-height:1.45;color:#688075!important}
+.collab-modal-premium .collab-register{
+ margin-top:14px!important;padding:14px 15px!important;border:1px solid #e4eaf0!important;
+ background:#f5f8fa!important;border-radius:11px!important;
+}
+.collab-modal-premium .collab-register strong{font-size:12px!important}
+.collab-modal-premium .collab-register p{font-size:11px!important;margin:4px 0 8px!important}
+.collab-modal-premium .collab-register a{font-size:11px!important}
+.collab-modal-premium .collab-demo-notice{
+ margin-top:12px!important;border:1px solid #ead9a6!important;background:#fff8e6!important;
+ color:#755812!important;font-size:11px!important;
+}
+.collab-modal-premium .collab-demo-notice.success{
+ border-color:#b9decf!important;background:#eef9f4!important;color:#176548!important;
+}
+.collab-modal-premium .collab-demo-notice.error{
+ border-color:#efc6c6!important;background:#fff1f1!important;color:#973b3b!important;
+}
+@media(max-width:560px){
+ .collab-modal-premium{padding:23px!important}
+ .collab-brand img{width:95px;height:54px}
+ .collab-modal-premium .collab-heading h2{font-size:24px!important}
+}
