@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>CardNest · Centro de mando</title>
-  <link rel="stylesheet" href="admin.css?v=20260918-6">
+  <link rel="stylesheet" href="admin.css?v=20260918-7">
 </head>
 <body>
-  <main class="admin-shell">\n    <section id="adminBoot" class="admin-boot" aria-live="polite"><img src="https://drive.google.com/thumbnail?id=1IUSpv73234Nvjz2KC_VhqhuFHSsF0yqN&sz=w1000" alt="CardNest"><div class="admin-boot-spinner"></div><strong>Abriendo centro de mando</strong><span>Validando sesión y cargando operaciones…</span></section>
+  <main class="admin-shell">
+    <section id="adminBoot" class="admin-boot" aria-live="polite"><img src="https://drive.google.com/thumbnail?id=1IUSpv73234Nvjz2KC_VhqhuFHSsF0yqN&sz=w1000" alt="CardNest"><div class="admin-boot-spinner"></div><strong>Abriendo centro de mando</strong><span>Validando sesión y cargando operaciones…</span></section>
     <section id="panelView" class="panel-view" hidden>
       <aside class="sidebar">
         <a class="sidebar-brand" href="index.html"><img src="https://drive.google.com/thumbnail?id=1IUSpv73234Nvjz2KC_VhqhuFHSsF0yqN&sz=w1000" alt="CardNest"></a>
         <div class="sidebar-label">Centro de mando</div>
         <nav>
           <button class="nav-item active" data-view="overview">Resumen</button>
-          <button class="nav-item" data-view="team">Equipo</button>
-          <button class="nav-item nav-chat" data-view="chat">Chat interno <span id="chatBadge" class="nav-badge" hidden>0</span></button>
+          <button class="nav-item" data-view="team">Perfil</button>
           <button class="nav-item" data-view="mercadolibre">Mercado Libre</button>
           <button class="nav-item" data-view="integrations">Integraciones</button>
           <button class="nav-item" data-view="activity">Histórico</button>
@@ -43,6 +43,13 @@
                 </div>
                 <strong id="headerName">—</strong>
                 <small id="headerTitle">—</small>
+              </div>
+            </div>
+            <div id="partnerPresence" class="partner-presence" aria-label="Estado del otro administrador">
+              <div id="partnerAvatar" class="partner-avatar">—</div>
+              <div class="partner-copy">
+                <strong id="partnerName">—</strong>
+                <span id="partnerStatus"><i></i> Comprobando estado…</span>
               </div>
             </div>
             <span class="secure-pill">Sesión protegida</span>
@@ -76,14 +83,6 @@
             </article>
           </div>
 
-          <article class="panel-card team-presence-card">
-            <div class="panel-card-head">
-              <div><small>EQUIPO CARDNEST</small><h2>Quién está conectado</h2></div>
-              <button class="text-action" type="button" data-go-team>Ver perfiles</button>
-            </div>
-            <div id="presenceGrid" class="presence-grid"></div>
-          </article>
-
           <article class="panel-card">
             <div class="panel-card-head"><div><small>REGLA COMERCIAL</small><h2>Autonomía de CardNest</h2></div></div>
             <div class="principles">
@@ -96,56 +95,36 @@
         </section>
 
         <section class="admin-view" data-panel="team">
-          <div class="section-intro">
-            <div><small>EQUIPO DIRECTIVO</small><h2>Perfiles profesionales</h2><p>Ambos perfiles tienen acceso operativo equivalente. Los cargos se muestran de forma independiente para mantener claras las responsabilidades dentro de CardNest.</p></div>
-          </div>
-          <div id="teamProfiles" class="team-profiles"></div>
-
-          <article class="panel-card profile-photo-card">
-            <div class="panel-card-head"><div><small>TU PERFIL</small><h2>Foto profesional</h2></div></div>
-            <div class="photo-editor">
-              <div id="profilePreview" class="profile-preview">CN</div>
-              <div class="photo-editor-copy">
-                <p>Tu foto queda guardada en el perfil y volverá a mostrarse cada vez que inicies sesión. Solo se reemplaza cuando subes una nueva.</p>
-                <label class="file-picker">Seleccionar foto
-                  <input id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp">
-                </label>
-                <small id="avatarFileName">JPG, PNG o WebP · máximo 3 MB</small>
-                <button id="saveAvatar" type="button" disabled>Guardar foto</button>
+          <div class="profile-page">
+            <article class="profile-main-card">
+              <div class="profile-photo-wrap">
+                <div id="profilePreview" class="profile-preview profile-preview-large">CN</div>
+                <span class="profile-photo-accent" aria-hidden="true"></span>
               </div>
-            </div>
-            <div id="avatarStatus" class="form-status" role="status" hidden></div>
-          </article>
-        </section>
+              <div class="profile-main-copy">
+                <small>MI PERFIL CARDNEST</small>
+                <h2 id="profileDisplayName">—</h2>
+                <strong id="profileDisplayTitle">—</strong>
+                <p id="profileDisplayProfession">—</p>
+                <div class="profile-photo-actions">
+                  <label class="file-picker primary-file-picker">Cambiar foto
+                    <input id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp">
+                  </label>
+                  <button id="saveAvatar" type="button" disabled>Guardar foto</button>
+                  <small id="avatarFileName">JPG, PNG o WebP · máximo 5 MB</small>
+                </div>
+                <div id="avatarStatus" class="form-status" role="status" hidden></div>
+              </div>
+            </article>
 
-        <section class="admin-view" data-panel="chat">
-          <div class="chat-shell panel-card">
-            <header class="chat-head">
+            <article class="partner-profile-card">
+              <div id="profilePartnerAvatar" class="partner-profile-avatar">—</div>
               <div>
-                <small>COMUNICACIÓN INTERNA</small>
-                <h2>Chat empresarial</h2>
-                <p>Mensajes privados entre administradores de CardNest. El historial del chat no se elimina desde el panel.</p>
+                <small>OTRO ADMINISTRADOR</small>
+                <h3 id="profilePartnerName">—</h3>
+                <span id="profilePartnerStatus" class="profile-partner-status"><i></i> Comprobando estado…</span>
               </div>
-              <div class="chat-recipient">
-                <label>Conversación con
-                  <select id="chatRecipient"></select>
-                </label>
-                <span id="chatRecipientStatus" class="presence-label">—</span>
-              </div>
-            </header>
-            <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
-            <div id="chatAttachmentPreview" class="chat-attachment-preview" hidden></div>
-            <form id="chatForm" class="chat-composer">
-              <textarea id="chatMessage" maxlength="2000" rows="3" placeholder="Escribe un mensaje interno..."></textarea>
-              <div class="chat-actions">
-                <label class="attach-button">Adjuntar archivo
-                  <input id="chatFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,text/plain,.docx,.xlsx,.pptx">
-                </label>
-                <span id="chatFileName">Imagen, PDF o documento · máximo 5 MB</span>
-                <button type="submit">Enviar mensaje</button>
-              </div>
-            </form>
-            <div id="chatStatus" class="form-status" role="status" hidden></div>
+            </article>
           </div>
         </section>
 
@@ -175,7 +154,7 @@
             </article>
             <article class="panel-card integration-card">
               <div class="integration-logo db">DB</div>
-              <div><small>DATOS</small><h2>Supabase</h2><p>Inventario maestro, perfiles, chat privado, histórico y sesiones administrativas.</p></div>
+              <div><small>DATOS</small><h2>Supabase</h2><p>Inventario maestro, perfiles, histórico y sesiones administrativas.</p></div>
               <span class="status ok">Conectado</span>
             </article>
             <article class="panel-card integration-card">
@@ -226,6 +205,6 @@
       </div>
     </section>
   </main>
-  <script src="admin.js?v=20260918-8"></script>
+  <script src="admin.js?v=20260918-9"></script>
 </body>
 </html>
