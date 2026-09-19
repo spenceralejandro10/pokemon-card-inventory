@@ -499,7 +499,9 @@ function render(){
   n.querySelectorAll(".product-accordion").forEach(function(detail){
    detail.addEventListener("toggle",function(){
     if(!detail.open)return;
-    card.querySelectorAll(".product-accordion").forEach(function(other){if(other!==detail)other.open=false});
+    document.querySelectorAll(".product-accordion[open]").forEach(function(other){
+     if(other!==detail)other.open=false;
+    });
    });
   });
 
@@ -513,6 +515,16 @@ function render(){
  document.getElementById(id).addEventListener("input",function(){state.visibleLimit=CATALOG_PAGE_SIZE;render()});
 });
 document.getElementById("loadMore").onclick=function(){state.visibleLimit+=CATALOG_PAGE_SIZE;render()};
+document.addEventListener("click",function(e){
+ const target=e.target instanceof Element?e.target:null;
+ if(!target)return;
+ if(target.closest(".product-accordion"))return;
+ const clickedCard=target.closest(".card");
+ document.querySelectorAll(".product-accordion[open]").forEach(function(openDetail){
+  const owner=openDetail.closest(".card");
+  if(!clickedCard||owner!==clickedCard)openDetail.open=false;
+ });
+});
 document.querySelectorAll(".catalog-tab").forEach(function(btn){
  btn.addEventListener("click",function(){selectCategory(btn.dataset.category)});
 });
