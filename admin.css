@@ -1735,3 +1735,259 @@ button,a{transition:.18s ease}
  .header-actions{grid-template-columns:1fr!important}
  .partner-power-card,.executive-header-profile{width:100%!important}
 }
+
+
+/* =========================================================
+   CARDNEST FUN PROFILE THEMES — added without changing legacy frames
+   ========================================================= */
+
+/* Selector previews */
+.frame-swatch.frame-metal-rock{
+ background:
+  linear-gradient(145deg,rgba(255,255,255,.16),transparent 38%),
+  linear-gradient(135deg,#0c1014,#59636b 48%,#11161b);
+ outline-color:#aab4bc;
+ color:#f0f5f8;
+ text-shadow:0 0 8px rgba(255,255,255,.75);
+ box-shadow:0 0 14px rgba(185,203,214,.3),inset 0 0 0 2px #252c31
+}
+.frame-swatch.frame-lava-rock{
+ background:
+  radial-gradient(circle at 50% 62%,#ffb000 0 7%,#ff4a00 26%,#321008 57%,#090606 100%);
+ outline-color:#ff7a17;
+ color:#fff1be;
+ text-shadow:0 0 10px #ff6a00;
+ box-shadow:0 0 16px rgba(255,86,0,.58),0 0 28px rgba(255,166,0,.22)
+}
+.frame-swatch.frame-future-neon{
+ background:
+  radial-gradient(circle at 50% 50%,#173153,#07121f 62%),
+  conic-gradient(#45efff,#8e5cff,#f45eff,#45efff);
+ outline-color:#4ee7ff;
+ color:#c8fbff;
+ text-shadow:0 0 10px #66ecff,0 0 18px #a057ff;
+ box-shadow:0 0 15px rgba(61,225,255,.55),0 0 28px rgba(156,83,255,.25)
+}
+
+/* Shared generated-frame overlay engine */
+.profile-photo-wrap.frame-metal-rock:before,
+.profile-photo-wrap.frame-lava-rock:before,
+.profile-photo-wrap.frame-future-neon:before,
+.executive-avatar-wrap.frame-metal-rock:before,
+.executive-avatar-wrap.frame-lava-rock:before,
+.executive-avatar-wrap.frame-future-neon:before,
+.partner-profile-avatar-wrap.frame-metal-rock:before,
+.partner-profile-avatar-wrap.frame-lava-rock:before,
+.partner-profile-avatar-wrap.frame-future-neon:before{
+ content:"";
+ position:absolute;
+ pointer-events:none;
+ z-index:8;
+ background-position:center;
+ background-repeat:no-repeat;
+ background-size:100% 100%;
+ filter:drop-shadow(0 12px 18px rgba(0,0,0,.3));
+}
+
+/* Large self portrait: full graphic frame */
+.profile-photo-wrap.frame-metal-rock:before,
+.profile-photo-wrap.frame-lava-rock:before,
+.profile-photo-wrap.frame-future-neon:before{inset:-34px}
+
+/* Header portrait: scaled graphic frame, same for self + other admin */
+.executive-avatar-wrap.frame-metal-rock:before,
+.executive-avatar-wrap.frame-lava-rock:before,
+.executive-avatar-wrap.frame-future-neon:before{inset:-18px}
+
+/* Other admin large portrait */
+.partner-profile-avatar-wrap.frame-metal-rock:before,
+.partner-profile-avatar-wrap.frame-lava-rock:before,
+.partner-profile-avatar-wrap.frame-future-neon:before{inset:-24px}
+
+.profile-photo-wrap.frame-metal-rock:before,
+.executive-avatar-wrap.frame-metal-rock:before,
+.partner-profile-avatar-wrap.frame-metal-rock:before{
+ background-image:url("assets/profile-themes/metal-frame.svg")
+}
+.profile-photo-wrap.frame-lava-rock:before,
+.executive-avatar-wrap.frame-lava-rock:before,
+.partner-profile-avatar-wrap.frame-lava-rock:before{
+ background-image:url("assets/profile-themes/lava-frame.svg");
+ animation:themeLavaBreathe 1.4s ease-in-out infinite alternate
+}
+.profile-photo-wrap.frame-future-neon:before,
+.executive-avatar-wrap.frame-future-neon:before,
+.partner-profile-avatar-wrap.frame-future-neon:before{
+ background-image:url("assets/profile-themes/future-frame.svg");
+ animation:themeFuturePulse 1.55s ease-in-out infinite alternate
+}
+
+/* Remove old generic outline so generated frame is the hero */
+.profile-preview-large.frame-metal-rock,
+.profile-preview-large.frame-lava-rock,
+.profile-preview-large.frame-future-neon,
+.executive-avatar.frame-metal-rock,
+.executive-avatar.frame-lava-rock,
+.executive-avatar.frame-future-neon,
+.partner-profile-avatar.frame-metal-rock,
+.partner-profile-avatar.frame-lava-rock,
+.partner-profile-avatar.frame-future-neon{
+ outline:none!important;
+ border:3px solid rgba(255,255,255,.82)!important;
+ background:#090d11!important
+}
+.profile-preview-large.frame-metal-rock,
+.executive-avatar.frame-metal-rock,
+.partner-profile-avatar.frame-metal-rock{
+ box-shadow:0 0 26px rgba(199,217,228,.44),0 18px 36px rgba(0,0,0,.28)!important
+}
+.profile-preview-large.frame-lava-rock,
+.executive-avatar.frame-lava-rock,
+.partner-profile-avatar.frame-lava-rock{
+ box-shadow:0 0 26px rgba(255,131,0,.82),0 0 52px rgba(255,65,0,.34),0 18px 36px rgba(40,8,0,.36)!important
+}
+.profile-preview-large.frame-future-neon,
+.executive-avatar.frame-future-neon,
+.partner-profile-avatar.frame-future-neon{
+ box-shadow:0 0 25px rgba(70,235,255,.8),0 0 48px rgba(151,82,255,.38),0 18px 36px rgba(5,15,35,.32)!important
+}
+
+/* Backgrounds follow the selected frame across the user's profile */
+.profile-main-card.frame-metal-rock,
+.executive-header-profile.frame-metal-rock,
+.partner-profile-card.frame-metal-rock{
+ background:
+  linear-gradient(90deg,rgba(7,10,12,.94),rgba(18,23,27,.82),rgba(5,8,10,.92)),
+  url("assets/profile-themes/metal-bg.svg") center/cover no-repeat!important;
+ border-color:#7e8b94!important;
+ box-shadow:0 0 0 1px rgba(211,225,233,.18),0 18px 42px rgba(0,0,0,.28)!important
+}
+.profile-main-card.frame-lava-rock,
+.executive-header-profile.frame-lava-rock,
+.partner-profile-card.frame-lava-rock{
+ background:
+  linear-gradient(90deg,rgba(18,5,1,.9),rgba(44,12,2,.68),rgba(13,3,1,.9)),
+  url("assets/profile-themes/lava-bg.svg") center/cover no-repeat!important;
+ border-color:#ff7215!important;
+ box-shadow:0 0 0 1px rgba(255,187,58,.2),0 0 30px rgba(255,75,0,.24),0 18px 42px rgba(45,8,0,.3)!important
+}
+.profile-main-card.frame-future-neon,
+.executive-header-profile.frame-future-neon,
+.partner-profile-card.frame-future-neon{
+ background:
+  linear-gradient(90deg,rgba(3,9,25,.91),rgba(8,18,43,.75),rgba(3,7,19,.92)),
+  url("assets/profile-themes/future-bg.svg") center/cover no-repeat!important;
+ border-color:#48dff7!important;
+ box-shadow:0 0 0 1px rgba(91,236,255,.17),0 0 32px rgba(60,222,255,.19),0 0 46px rgba(143,79,255,.12),0 18px 42px rgba(4,10,30,.3)!important
+}
+
+/* Full profile surfaces become part of the theme — not only the portrait */
+.profile-main-card.frame-metal-rock .profile-edit-form,
+.profile-main-card.frame-lava-rock .profile-edit-form,
+.profile-main-card.frame-future-neon .profile-edit-form{
+ border-top-color:rgba(255,255,255,.22)!important
+}
+.profile-main-card.frame-metal-rock .profile-frame-section,
+.profile-main-card.frame-metal-rock .profile-certificate-card,
+.profile-main-card.frame-lava-rock .profile-frame-section,
+.profile-main-card.frame-lava-rock .profile-certificate-card,
+.profile-main-card.frame-future-neon .profile-frame-section,
+.profile-main-card.frame-future-neon .profile-certificate-card{
+ background:rgba(5,10,14,.70)!important;
+ border-color:rgba(255,255,255,.2)!important;
+ backdrop-filter:blur(10px)
+}
+.profile-main-card.frame-metal-rock .profile-main-copy>small,
+.profile-main-card.frame-metal-rock .profile-main-copy h2,
+.profile-main-card.frame-metal-rock .profile-main-copy>strong,
+.profile-main-card.frame-metal-rock .profile-main-copy>p,
+.profile-main-card.frame-metal-rock .profile-field-grid label,
+.profile-main-card.frame-metal-rock .profile-frame-section legend,
+.profile-main-card.frame-lava-rock .profile-main-copy>small,
+.profile-main-card.frame-lava-rock .profile-main-copy h2,
+.profile-main-card.frame-lava-rock .profile-main-copy>strong,
+.profile-main-card.frame-lava-rock .profile-main-copy>p,
+.profile-main-card.frame-lava-rock .profile-field-grid label,
+.profile-main-card.frame-lava-rock .profile-frame-section legend,
+.profile-main-card.frame-future-neon .profile-main-copy>small,
+.profile-main-card.frame-future-neon .profile-main-copy h2,
+.profile-main-card.frame-future-neon .profile-main-copy>strong,
+.profile-main-card.frame-future-neon .profile-main-copy>p,
+.profile-main-card.frame-future-neon .profile-field-grid label,
+.profile-main-card.frame-future-neon .profile-frame-section legend{
+ color:#f4f8fb!important
+}
+.profile-main-card.frame-metal-rock .profile-frame-section>p,
+.profile-main-card.frame-metal-rock .profile-field-grid small,
+.profile-main-card.frame-metal-rock .profile-certificate-card p,
+.profile-main-card.frame-lava-rock .profile-frame-section>p,
+.profile-main-card.frame-lava-rock .profile-field-grid small,
+.profile-main-card.frame-lava-rock .profile-certificate-card p,
+.profile-main-card.frame-future-neon .profile-frame-section>p,
+.profile-main-card.frame-future-neon .profile-field-grid small,
+.profile-main-card.frame-future-neon .profile-certificate-card p{
+ color:#c4d0d7!important
+}
+.profile-main-card.frame-metal-rock .profile-field-grid input,
+.profile-main-card.frame-metal-rock .profile-field-grid select,
+.profile-main-card.frame-lava-rock .profile-field-grid input,
+.profile-main-card.frame-lava-rock .profile-field-grid select,
+.profile-main-card.frame-future-neon .profile-field-grid input,
+.profile-main-card.frame-future-neon .profile-field-grid select{
+ background:rgba(255,255,255,.94)!important;
+ border-color:rgba(255,255,255,.3)!important
+}
+
+/* Header text automatically adapts to dark theme */
+.executive-header-profile.frame-metal-rock .executive-profile-copy>strong,
+.executive-header-profile.frame-lava-rock .executive-profile-copy>strong,
+.executive-header-profile.frame-future-neon .executive-profile-copy>strong,
+.executive-header-profile.frame-metal-rock .executive-profile-copy>small,
+.executive-header-profile.frame-lava-rock .executive-profile-copy>small,
+.executive-header-profile.frame-future-neon .executive-profile-copy>small,
+.executive-header-profile.frame-metal-rock .partner-power-status,
+.executive-header-profile.frame-lava-rock .partner-power-status,
+.executive-header-profile.frame-future-neon .partner-power-status{
+ color:#f4f8fb!important;
+ text-shadow:0 2px 8px rgba(0,0,0,.55)
+}
+.executive-header-profile.frame-metal-rock .executive-brand-line{color:#d8e2e8!important}
+.executive-header-profile.frame-lava-rock .executive-brand-line{color:#ffc060!important}
+.executive-header-profile.frame-future-neon .executive-brand-line{color:#6cecff!important}
+
+/* Side card text */
+.partner-profile-card.frame-metal-rock h3,
+.partner-profile-card.frame-metal-rock small,
+.partner-profile-card.frame-lava-rock h3,
+.partner-profile-card.frame-lava-rock small,
+.partner-profile-card.frame-future-neon h3,
+.partner-profile-card.frame-future-neon small{
+ color:#f5f8fa!important;
+ text-shadow:0 2px 7px rgba(0,0,0,.55)
+}
+
+/* New-theme personality animations */
+.profile-main-card.frame-metal-rock{animation:themeMetalSweep 5.5s ease-in-out infinite alternate}
+.profile-main-card.frame-lava-rock{animation:themeLavaCard 2s ease-in-out infinite alternate}
+.profile-main-card.frame-future-neon{animation:themeFutureCard 2.6s ease-in-out infinite alternate}
+
+@keyframes themeMetalSweep{
+ from{filter:brightness(.96)}
+ to{filter:brightness(1.06)}
+}
+@keyframes themeLavaBreathe{
+ from{filter:drop-shadow(0 0 7px rgba(255,70,0,.58)) brightness(.95)}
+ to{filter:drop-shadow(0 0 16px rgba(255,159,0,.9)) brightness(1.08)}
+}
+@keyframes themeLavaCard{
+ from{box-shadow:0 0 0 1px rgba(255,187,58,.18),0 0 22px rgba(255,65,0,.19),0 18px 42px rgba(45,8,0,.28)}
+ to{box-shadow:0 0 0 1px rgba(255,205,91,.25),0 0 42px rgba(255,84,0,.32),0 18px 48px rgba(45,8,0,.34)}
+}
+@keyframes themeFuturePulse{
+ from{filter:drop-shadow(0 0 7px rgba(64,231,255,.56)) brightness(.98)}
+ to{filter:drop-shadow(0 0 16px rgba(162,84,255,.82)) brightness(1.08)}
+}
+@keyframes themeFutureCard{
+ from{box-shadow:0 0 0 1px rgba(91,236,255,.14),0 0 25px rgba(60,222,255,.15),0 18px 42px rgba(4,10,30,.28)}
+ to{box-shadow:0 0 0 1px rgba(154,93,255,.22),0 0 40px rgba(89,226,255,.22),0 0 56px rgba(143,79,255,.15),0 18px 48px rgba(4,10,30,.35)}
+}
