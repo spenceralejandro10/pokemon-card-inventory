@@ -321,11 +321,11 @@
 <aside id="favoritesModal" class="shipping-modal favorites-modal" role="dialog" aria-modal="true" aria-labelledby="favoritesTitle" aria-hidden="true" inert>
  <button id="closeFavorites" class="modal-close" type="button" aria-label="Cerrar propuesta">×</button>
  <h2 id="favoritesTitle">Mis productos seleccionados</h2>
- <p class="modal-lead">Haz una propuesta en pesos colombianos (COP). Cada producto debe tener una oferta mínima de <strong>$3.000 COP</strong> y la propuesta total no puede superar <strong>$10.000.000 COP</strong>. Si llegan a un acuerdo, el analista te entregará un código para finalizar la compra.</p>
+ <p class="modal-lead">Haz una propuesta en pesos colombianos (COP). Cada producto debe tener una oferta mínima de <strong>3.000 COP</strong> y la propuesta total no puede superar <strong>10.000.000 COP</strong>. Si llegan a un acuerdo, el analista te entregará un código para finalizar la compra.</p>
  <div class="offer-mode light-offer-mode"><strong>¿Cómo quieres ofertar?</strong><label><input type="radio" name="offerMode" value="individual" checked><span><b>Por cada producto</b><small>Define cantidad y oferta por unidad en COP.</small></span></label><label><input type="radio" name="offerMode" value="lot"><span><b>Por todo el lote</b><small>Una sola oferta total para todo lo seleccionado.</small></span></label></div>
  <div id="favoriteItems" class="favorite-items"></div>
- <label id="lotOfferBox" class="lot-offer" hidden>Tu oferta por todos los productos <div class="money-input"><span>$</span><input id="lotOffer" inputmode="numeric" maxlength="10" placeholder="Ej. 50.000"></div><small id="lotOfferHelp">Valor total en pesos colombianos (COP).</small></label>
- <div class="offer-total">Oferta propuesta (COP): <strong id="offerTotal">$0</strong></div>
+ <label id="lotOfferBox" class="lot-offer" hidden>Tu oferta por todos los productos <div class="money-input"><span>COP</span><input id="lotOffer" inputmode="numeric" maxlength="10" placeholder="0000"></div><small id="lotOfferHelp">Valor total en pesos colombianos (COP).</small></label>
+ <div class="offer-total">Oferta propuesta (COP): <strong id="offerTotal">0</strong></div>
  <div id="offerStatus" class="offer-status" role="alert" hidden></div>
  <button id="sendOffer" class="whatsapp-btn" type="button">Enviar propuesta por WhatsApp</button>
  <button id="startShipping" class="secondary-action" type="button">Ya acordé el precio · Continuar con envío</button>
@@ -387,6 +387,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="app.js?v=20260919-19"></script>
+<script src="app.js?v=20260919-22"></script>
 </body>
 </html>
