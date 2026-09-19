@@ -2524,3 +2524,127 @@ dialog.image-viewer::backdrop{background:rgba(3,12,20,.78);backdrop-filter:blur(
  .catalog-nav-options{gap:5px!important}
  .catalog-nav-grouped .catalog-tab{padding:7px 10px!important;font-size:10.5px!important}
 }
+
+
+/* Professional compact catalog toolbar */
+.catalog-nav.catalog-nav-grouped{
+ position:sticky!important;
+ top:0!important;
+ z-index:20!important;
+ display:flex!important;
+ flex-wrap:wrap!important;
+ align-items:center!important;
+ gap:8px 12px!important;
+ width:100%!important;
+ padding:9px 12px!important;
+ margin:0 0 14px!important;
+ overflow:visible!important;
+ border:1px solid #dce4ea!important;
+ border-radius:12px!important;
+ background:rgba(255,255,255,.97)!important;
+ box-shadow:0 5px 16px rgba(26,45,61,.05)!important;
+ backdrop-filter:blur(12px)!important;
+}
+
+/* Remove the oversized inner cards that were creating empty space */
+.catalog-nav-all,
+.catalog-nav-group{
+ display:flex!important;
+ align-items:center!important;
+ gap:7px!important;
+ min-width:0!important;
+ padding:0!important;
+ margin:0!important;
+ border:0!important;
+ border-radius:0!important;
+ background:transparent!important;
+}
+
+/* Visual grouping without boxing every section */
+.catalog-nav-group{
+ padding-left:12px!important;
+ border-left:1px solid #e4eaee!important;
+}
+
+.catalog-nav-label{
+ flex:0 0 auto!important;
+ margin:0!important;
+ color:#748591!important;
+ font-size:8px!important;
+ font-weight:900!important;
+ letter-spacing:.075em!important;
+ text-transform:uppercase!important;
+ line-height:1!important;
+ white-space:nowrap!important;
+}
+
+.catalog-nav-options{
+ display:flex!important;
+ flex-wrap:wrap!important;
+ align-items:center!important;
+ gap:5px!important;
+ min-width:0!important;
+}
+
+.catalog-nav-grouped .catalog-tab{
+ flex:0 0 auto!important;
+ min-height:30px!important;
+ padding:6px 10px!important;
+ border-radius:999px!important;
+ font-size:10.5px!important;
+ font-weight:800!important;
+ line-height:1!important;
+ white-space:nowrap!important;
+ box-shadow:none!important;
+}
+
+.catalog-nav-all .catalog-tab{
+ width:auto!important;
+ min-width:70px!important;
+}
+
+.catalog-nav-grouped .new-pill{
+ margin-left:4px!important;
+ font-size:6.5px!important;
+ padding:2px 4px!important;
+}
+
+/* Medium widths: keep it compact but allow a clean second line */
+@media(max-width:1180px){
+ .catalog-nav.catalog-nav-grouped{
+  align-items:flex-start!important;
+ }
+ .catalog-nav-group{
+  flex:1 1 auto!important;
+ }
+}
+
+/* Mobile: stack only when necessary */
+@media(max-width:720px){
+ .catalog-nav.catalog-nav-grouped{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:8px!important;
+  padding:9px!important;
+ }
+ .catalog-nav-all,
+ .catalog-nav-group{
+  display:grid!important;
+  grid-template-columns:92px minmax(0,1fr)!important;
+  align-items:start!important;
+  gap:8px!important;
+  padding:0!important;
+  border-left:0!important;
+ }
+ .catalog-nav-label{
+  padding-top:8px!important;
+ }
+ .catalog-nav-options{
+  gap:5px!important;
+ }
+ .catalog-nav-grouped .catalog-tab{
+  font-size:10px!important;
+  padding:6px 9px!important;
+ }
+}
