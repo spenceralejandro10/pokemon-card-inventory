@@ -430,3 +430,25 @@ button,a{transition:.18s ease}
  .profile-hero,.large-avatar{width:86px!important;height:86px!important}
  .large-avatar{border-radius:22px!important}
 }
+
+
+/* Admin startup state */
+.admin-boot{
+ min-height:100vh;display:grid;place-items:center;align-content:center;gap:12px;
+ padding:32px;text-align:center;background:
+ radial-gradient(circle at 18% 14%,rgba(231,195,87,.15),transparent 25%),
+ radial-gradient(circle at 82% 82%,rgba(23,56,77,.10),transparent 28%),#f4f7f9;
+ color:#17384d
+}
+.admin-boot img{width:190px;height:72px;object-fit:contain}
+.admin-boot strong{font-size:20px}
+.admin-boot span{font-size:12px;color:#71828d}
+.admin-boot-spinner{
+ width:30px;height:30px;border-radius:50%;border:3px solid #dbe5eb;border-top-color:#d5b54a;
+ animation:adminBootSpin .8s linear infinite
+}
+.admin-boot.error .admin-boot-spinner{display:none}
+.admin-boot button{
+ border:0;border-radius:10px;background:#17384d;color:#fff;padding:10px 16px;font-weight:850;cursor:pointer
+}
+@keyframes adminBootSpin{to{transform:rotate(360deg)}}
