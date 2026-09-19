@@ -1,7 +1,7 @@
 const SUPABASE_URL="https://cnivcnexsqobipvqxero.supabase.co";
 const SUPABASE_KEY="sb_publishable_6UjwLuM-op0-OBKWlbusTw_qmLNZVfU";
 const WA="573125214785";
-const SALE_API=SUPABASE_URL+"/functions/v1/sale-order";
+const SALE_API=SUPABASE_URL+"/functions/v1/sale-order";\nconst ADMIN_API=SUPABASE_URL+"/functions/v1/admin-control";
 const CATALOG_PAGE_SIZE=48;
 const SUPABASE_PAGE_SIZE=1000;
 const CATALOG_MAX_REMOTE_ROWS=25000;
@@ -1453,5 +1453,20 @@ function setCollaboratorModal(open){
 ["openCollaboratorLogin","footerCollaboratorLogin"].forEach(id=>document.getElementById(id)?.addEventListener("click",()=>setCollaboratorModal(true)));
 document.getElementById("closeCollaboratorLogin")?.addEventListener("click",()=>setCollaboratorModal(false));
 document.getElementById("collaboratorBackdrop")?.addEventListener("click",()=>setCollaboratorModal(false));
-document.getElementById("collaboratorForm")?.addEventListener("submit",e=>{e.preventDefault();document.getElementById("collabDemoNotice").hidden=false});
+document.getElementById("collaboratorForm")?.addEventListener("submit",async function(e){
+ e.preventDefault();
+ const form=e.currentTarget,inputs=form.querySelectorAll("input"),notice=document.getElementById("collabDemoNotice"),button=form.querySelector("button");
+ const username=String(inputs[0]?.value||"").trim(),password=String(inputs[1]?.value||"");
+ notice.hidden=false;notice.textContent="Validando acceso…";button.disabled=true;
+ try{
+  const res=await fetch(ADMIN_API,{method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE_KEY},body:JSON.stringify({action:"login",username:username,password:password})});
+  const data=await res.json().catch(function(){return {}});
+  if(!res.ok||!data.token)throw new Error(data.message||"Usuario o contraseña incorrectos.");
+  sessionStorage.setItem("cardnestAdminToken",data.token);
+  location.href="admin.html";
+ }catch(error){
+  notice.textContent=error.message||"No fue posible iniciar sesión.";
+  button.disabled=false;
+ }
+});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.getElementById("collaboratorModal")?.getAttribute("aria-hidden")==="false")setCollaboratorModal(false)});
