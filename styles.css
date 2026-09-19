@@ -2110,3 +2110,142 @@ dialog.image-viewer::backdrop{background:rgba(3,12,20,.78);backdrop-filter:blur(
  .image-viewer .viewer-thumb{flex-basis:56px!important;width:56px!important;height:56px!important}
  .product-accordion>summary small{max-width:52%}
 }
+
+
+/* Final clean product accordions */
+.product-accordion{
+ margin:8px 0!important;
+ border:1px solid #dfe6eb!important;
+ border-radius:10px!important;
+ background:#ffffff!important;
+ box-shadow:0 1px 3px rgba(22,38,52,.04)!important;
+ overflow:hidden!important;
+ font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important
+}
+.product-accordion>summary{
+ min-height:42px!important;
+ padding:10px 12px!important;
+ background:#ffffff!important;
+ color:#1d2b36!important;
+ font-size:12px!important;
+ font-weight:800!important;
+ line-height:1.25!important;
+ letter-spacing:0!important
+}
+.product-accordion>summary span{
+ color:#1d2b36!important;
+ font-size:12px!important;
+ font-weight:800!important
+}
+.product-accordion>summary small{
+ color:#778895!important;
+ font-size:10px!important;
+ font-weight:650!important;
+ line-height:1.2!important
+}
+.product-accordion>summary:after{
+ color:#657b89!important;
+ font-size:18px!important
+}
+.product-accordion[open]>summary{
+ border-bottom:1px solid #edf1f4!important
+}
+.product-accordion-body{
+ padding:4px 12px 11px!important;
+ background:#ffffff!important
+}
+.product-accordion .meta{
+ margin:0!important
+}
+.product-accordion .meta>div,
+.detail-list>div{
+ display:grid!important;
+ grid-template-columns:minmax(92px,.75fr) minmax(0,1.25fr)!important;
+ gap:12px!important;
+ align-items:start!important;
+ padding:8px 0!important;
+ border-bottom:1px solid #edf1f4!important
+}
+.product-accordion .meta dt,
+.detail-list dt{
+ color:#73838f!important;
+ font-size:10px!important;
+ font-weight:650!important;
+ line-height:1.35!important;
+ letter-spacing:0!important
+}
+.product-accordion .meta dd,
+.detail-list dd{
+ margin:0!important;
+ color:#1f2d38!important;
+ font-size:11px!important;
+ font-weight:700!important;
+ line-height:1.42!important;
+ text-align:right!important;
+ overflow-wrap:anywhere!important
+}
+.product-status-accordion>summary{
+ background:#f8fbf9!important
+}
+.product-status-accordion .card-status-summary{
+ color:#17694d!important;
+ font-weight:800!important
+}
+.detail-section{
+ margin-top:8px!important;
+ padding-top:9px!important;
+ border-top:1px solid #edf1f4!important
+}
+.detail-section h4{
+ margin:0 0 5px!important;
+ color:#4d6070!important;
+ font-size:9px!important;
+ font-weight:850!important;
+ letter-spacing:.06em!important;
+ text-transform:uppercase!important
+}
+
+/* Keep long descriptions inside the details area readable */
+.extended-details .detail-list dd{
+ font-weight:600!important
+}
+
+/* The category is informational, not a second action button */
+.card-actions{
+ grid-template-columns:1fr!important;
+ gap:8px!important
+}
+.card-category-tag{
+ display:block!important;
+ width:100%!important;
+ max-width:none!important;
+ min-height:0!important;
+ padding:7px 2px 0!important;
+ border:0!important;
+ border-top:1px solid #e4eaee!important;
+ border-radius:0!important;
+ background:transparent!important;
+ color:#687985!important;
+ font-size:10px!important;
+ font-weight:750!important;
+ line-height:1.3!important;
+ text-align:left!important;
+ justify-content:flex-start!important
+}
+.card-category-tag[data-category]{
+ background:transparent!important;
+ color:#687985!important;
+ border-color:#e4eaee!important
+}
+
+@media(max-width:620px){
+ .product-accordion .meta>div,
+ .detail-list>div{
+  grid-template-columns:minmax(84px,.8fr) minmax(0,1.2fr)!important;
+  gap:9px!important
+ }
+ .product-accordion .meta dd,
+ .detail-list dd{
+  font-size:10.5px!important
+ }
+}
