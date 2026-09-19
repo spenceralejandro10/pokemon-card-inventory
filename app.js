@@ -562,7 +562,7 @@ function selectCategory(cat){
  language.hidden=!languageAllowed;
  if(!languageAllowed)language.value="";
  const launch=document.getElementById("electronicsLaunch");
- if(launch)launch.hidden=!(state.category==="all"||state.category==="electronics");
+ if(launch)launch.hidden=false;
  const search=document.getElementById("searchInput");
  const label=CATEGORY_LABELS[state.category]||"productos";
  search.placeholder=state.category==="all"
