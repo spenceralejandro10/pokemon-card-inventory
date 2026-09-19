@@ -253,7 +253,7 @@ function render(){
  loadMore.hidden=list.length>=filtered.length;
  if(!loadMore.hidden)loadMore.textContent="Cargar "+Math.min(CATALOG_PAGE_SIZE,filtered.length-list.length)+" productos más";
  if(!list.length){
-  grid.innerHTML='<div class="empty"><strong>No encontramos coincidencias.</strong><span>Prueba otro nombre, número o restablece los filtros.</span><button type="button" data-reset-empty>Restablecer filtros</button></div>';
+  grid.innerHTML='<div class="empty"><div class="empty-icon" aria-hidden="true">⌕</div><div class="empty-copy"><strong>Sin resultados con estos filtros</strong><span>No hay productos que coincidan con la combinación actual. Puedes cambiar un filtro o volver a ver todo el catálogo.</span></div><button type="button" data-reset-empty>Ver todos los productos</button></div>';
   grid.querySelector("[data-reset-empty]").onclick=resetFilters;
   return;
  }
