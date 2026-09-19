@@ -1411,3 +1411,27 @@ body.panel-open{overflow:hidden}
  .shipping-modal{width:100vw!important;max-width:100vw!important;padding:22px 16px 120px!important}
  .cart-viewer{width:92vw!important;padding-bottom:80px!important}
 }
+
+/* Respect native hidden state even when component classes define display */
+[hidden]{display:none!important}
+
+.pending-order-notice{
+ margin-top:10px;
+ padding:10px 11px;
+ border:1px solid #c9d7e0;
+ border-radius:10px;
+ background:#f7fafc;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px;
+}
+.pending-order-notice>div{display:grid;gap:2px}
+.pending-order-notice strong{color:#173c55!important;font-size:11px!important}
+.pending-order-notice small{color:#667684!important;font-size:10px!important}
+.pending-order-notice button{
+ border:0;border-radius:8px;background:#173c55;color:#fff;
+ padding:8px 10px;font-size:10px;font-weight:850;cursor:pointer;white-space:nowrap
+}
+.pending-order-notice button:hover{background:#20526f}
+#startAnotherOrder{margin-top:8px!important}
