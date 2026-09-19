@@ -1,5 +1,5 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js@2.116.0/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
 const CLIENT_ID = Deno.env.get("MERCADOLIBRE_CLIENT_ID") ?? "";
 const CLIENT_SECRET = Deno.env.get("MERCADOLIBRE_CLIENT_SECRET") ?? "";

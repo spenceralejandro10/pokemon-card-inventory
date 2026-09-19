@@ -1,5 +1,5 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js@2.116.0/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 import { PDFDocument, StandardFonts, rgb, degrees } from "npm:pdf-lib@1.17.1";
 
 const allowedOrigins=new Set([

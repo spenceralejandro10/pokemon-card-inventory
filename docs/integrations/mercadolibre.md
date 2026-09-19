@@ -92,6 +92,7 @@ La integración de Mercado Libre ya tiene:
 - Rechazo de autorizaciones sin refresh token y rotación serializada con recuperación después de fallos transitorios.
 - Validación estricta de `token_type`, `expires_in`, `offline_access`, `read`, `write` y del refresh token nuevo en cada rotación.
 - Corte automático de llamadas autenticadas después de respuestas `401`, `403` o `429`; exige revisión antes de volver a consumir la API y evita acumular errores 4xx.
+- Dependencias de Supabase fijadas a versiones exactas para impedir actualizaciones implícitas durante un despliegue.
 - Cada intento OAuth queda ligado a la sesión administrativa que lo inició; cerrar sesión o desconectar invalida callbacks pendientes.
 - Interruptor servidor de habilitación productiva. La autorización permanece bloqueada aunque el frontend sea manipulado mientras `MERCADOLIBRE_AUTHORIZATION_ENABLED` no sea exactamente `true`.
 

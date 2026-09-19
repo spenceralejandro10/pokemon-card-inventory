@@ -119,6 +119,8 @@ check("CSS con bloques balanceados",function(){
 
 check("Funciones Edge sin secretos incrustados",function(){
  edgeFunctions.forEach(function(entry){
+  assert(entry.source.includes('jsr:@supabase/functions-js@2.116.0/edge-runtime.d.ts'),entry.file+" debe fijar la versión del runtime de Supabase");
+  assert(entry.source.includes('npm:@supabase/supabase-js@2.116.0'),entry.file+" debe fijar la versión de supabase-js");
   assert(entry.source.includes('Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")'),entry.file+" debe leer la clave de servicio del entorno");
   assert(!/sb_secret_[A-Za-z0-9_-]+/.test(entry.source),entry.file+" contiene una clave secreta literal");
   assert(!/eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\./.test(entry.source),entry.file+" contiene un JWT literal");
