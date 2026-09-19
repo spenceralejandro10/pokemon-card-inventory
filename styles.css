@@ -1783,3 +1783,149 @@ body>header.site-main-header{
  .collab-brand img{width:95px;height:54px}
  .collab-modal-premium .collab-heading h2{font-size:24px!important}
 }
+
+/* 2026-09-19 · Aliados de la operación en términos */
+.operations-partners-carousel{
+  margin:24px 0 26px;
+  padding:28px;
+  border:1px solid #d8e3e9;
+  border-radius:22px;
+  background:linear-gradient(135deg,#102f46 0%,#174c6c 100%);
+  box-shadow:0 18px 46px rgba(16,47,70,.14);
+  overflow:hidden;
+}
+.operations-partners-heading span{
+  display:block;
+  margin-bottom:7px;
+  color:#f4c733!important;
+  font-size:10px;
+  font-weight:950;
+  letter-spacing:.13em;
+}
+.operations-partners-heading h2{
+  max-width:850px;
+  margin:0 0 7px;
+  color:#fff!important;
+  font-size:clamp(22px,3vw,32px)!important;
+  line-height:1.12;
+}
+.operations-partners-heading p{
+  max-width:900px;
+  margin:0 0 20px;
+  color:#c9d8e2!important;
+  font-size:13px;
+  line-height:1.6;
+}
+.operations-partners-viewport{overflow:hidden}
+.operations-partners-track{
+  display:flex;
+  gap:14px;
+  width:max-content;
+  animation:cardnestPartnersScroll 26s linear infinite;
+}
+.operations-partners-carousel:hover .operations-partners-track{animation-play-state:paused}
+.operations-partner-card{
+  width:min(455px,78vw);
+  min-height:130px;
+  display:grid;
+  grid-template-columns:145px 1fr;
+  gap:18px;
+  align-items:center;
+  flex:0 0 auto;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:17px;
+  background:#fff;
+  box-shadow:0 10px 28px rgba(0,0,0,.12);
+}
+.operations-partner-logo{
+  min-height:88px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:9px;
+  border-radius:13px;
+  background:#f8fafb;
+}
+.operations-partner-logo img:first-child{width:44px;height:44px;object-fit:contain}
+.operations-partner-logo img+img{width:88px;height:54px;object-fit:contain}
+.operations-partner-logo-coord img:first-child{width:130px;height:62px;object-fit:contain}
+.operations-partner-card small{
+  display:block;
+  margin-bottom:4px;
+  color:#b07a00;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+.operations-partner-card strong{
+  display:block;
+  margin-bottom:5px;
+  color:#102f46;
+  font-size:17px;
+}
+.operations-partner-card span{
+  display:block;
+  color:#607483;
+  font-size:11px;
+  line-height:1.5;
+}
+@keyframes cardnestPartnersScroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(calc(-50% - 7px))}
+}
+.terms-partner-brand{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin:-4px 0 20px;
+  padding:13px 16px;
+  border:1px solid #e0e8ed;
+  border-radius:13px;
+  background:#f8fbfc;
+}
+.terms-partner-brand>img{width:190px;height:58px;object-fit:contain;object-position:left center}
+.terms-partner-brand>span{
+  color:#617481;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-align:right;
+}
+.terms-partner-mercadolibre>div{display:flex;align-items:center;gap:8px}
+.terms-ml-symbol{width:48px;height:48px;object-fit:contain}
+.terms-ml-wordmark{width:126px;height:58px;object-fit:contain}
+.legal-source-brands{
+  display:flex!important;
+  align-items:center;
+  gap:12px!important;
+  margin:16px 0!important;
+}
+.legal-brand{
+  min-height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:9px 14px;
+  border:1px solid #dce5ea;
+  border-radius:12px;
+  background:#fff;
+}
+.legal-brand>img{width:180px;height:54px;object-fit:contain}
+.legal-brand-ml>img:first-child{width:46px;height:46px}
+.legal-brand-ml>img+img{width:120px;height:52px}
+@media(max-width:700px){
+  .operations-partners-carousel{padding:20px 16px}
+  .operations-partner-card{grid-template-columns:1fr;width:min(340px,82vw)}
+  .operations-partner-logo{min-height:74px}
+  .terms-partner-brand{align-items:flex-start;flex-direction:column}
+  .terms-partner-brand>span{text-align:left}
+  .legal-source-brands{align-items:stretch!important;flex-direction:column}
+}
+@media(prefers-reduced-motion:reduce){
+  .operations-partners-track{animation:none;flex-wrap:wrap;width:100%}
+  .operations-partner-card[aria-hidden="true"]{display:none}
+}

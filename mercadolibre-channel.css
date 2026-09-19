@@ -187,3 +187,43 @@
   .ml-channel-logo-lockup .ml-channel-wordmark{width:150px;height:62px}
   .logistics-partner{padding:17px}.logistics-partner-actions{flex-direction:column}
 }
+
+/* 2026-09-19 · Mercado Libre visual cleanup */
+.ml-channel-banner{
+  display:block!important;
+  padding:26px 28px!important;
+}
+.ml-channel-main{max-width:100%!important}
+.ml-channel-proof{display:none!important}
+.ml-channel-note{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  width:min(760px,100%);
+  margin-top:18px;
+  padding:13px 15px;
+  border:1px solid rgba(20,33,61,.14);
+  border-radius:13px;
+  background:rgba(255,255,255,.56);
+}
+.ml-channel-note img{
+  width:42px;
+  height:42px;
+  object-fit:contain;
+  flex:0 0 auto;
+}
+.ml-channel-note strong{
+  display:block;
+  margin-bottom:3px;
+  color:#14213d;
+  font-size:13px;
+}
+.ml-channel-note span{
+  display:block;
+  color:#536078;
+  font-size:12px;
+  line-height:1.5;
+}
+@media(max-width:540px){
+  .ml-channel-banner{padding:18px!important}
+}
