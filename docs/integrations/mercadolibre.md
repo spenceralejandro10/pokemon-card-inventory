@@ -69,19 +69,38 @@ https://cnivcnexsqobipvqxero.supabase.co/functions/v1/mercadolibre-oauth
 https://cnivcnexsqobipvqxero.supabase.co/functions/v1/mercadolibre-webhook
 ```
 
-## Estado técnico al 2026-09-18
+## Estado técnico al 2026-09-19
 
-Funciones Supabase existentes:
+Funciones Supabase activas:
 
 - `sale-order`
 - `admin-control`
-
-Funciones pendientes para esta integración:
-
 - `mercadolibre-oauth`
 - `mercadolibre-webhook`
 
-**Importante:** no finalizar la configuración de producción hasta que las rutas de OAuth y webhook estén implementadas y probadas.
+La integración de Mercado Libre ya tiene:
+
+- OAuth 2.0 Server Side con PKCE S256 y validación de `state`.
+- Inicio de autorización restringido a una sesión administrativa válida de CardNest.
+- Client ID y Client Secret almacenados como Edge Function Secrets.
+- Access token y refresh token almacenados cifrados mediante Supabase Vault.
+- Renovación segura de tokens con bloqueo temporal para evitar reutilizar simultáneamente un refresh token.
+- Webhook público HTTPS con respuesta inmediata y verificación posterior del recurso contra la API oficial.
+- Persistencia de eventos de webhook sin guardar en bruto la respuesta del recurso, para minimizar datos personales.
+- Panel administrativo con estado de conexión, botón de autorización y desconexión.
+
+### Secrets de Edge Functions
+
+Deben existir en Supabase:
+
+- `MERCADOLIBRE_CLIENT_ID`
+- `MERCADOLIBRE_CLIENT_SECRET`
+
+No copiar sus valores a este repositorio.
+
+### Paso humano final
+
+Desde el panel de administración de CardNest, entrar a **Mercado Libre** y pulsar **Autorizar cuenta**. Mercado Libre mostrará su pantalla oficial de consentimiento y devolverá el código al callback de Supabase.
 
 ## Seguridad
 
