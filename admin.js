@@ -61,9 +61,19 @@ async function api(action,payload={}){
 
 function showLogin(){
  stopTimers();
+ const boot=$("#adminBoot");if(boot)boot.hidden=true;
  location.replace("index.html?collab=1");
 }
+function showFatalPanelError(message){
+ const boot=$("#adminBoot");
+ if(!boot)return;
+ boot.hidden=false;
+ boot.classList.add("error");
+ boot.innerHTML='<img src="https://drive.google.com/thumbnail?id=1IUSpv73234Nvjz2KC_VhqhuFHSsF0yqN&sz=w1000" alt="CardNest"><strong>No pudimos abrir el centro de mando</strong><span>'+safe(message||"Ocurrió un error inesperado.")+'</span><button type="button" id="retryAdminBoot">Reintentar</button>';
+ document.getElementById("retryAdminBoot")?.addEventListener("click",()=>location.reload());
+}
 function showPanel(){
+ const boot=$("#adminBoot");if(boot)boot.hidden=true;
  const panel=$("#panelView");
  if(panel)panel.hidden=false;
  const me=selfProfile();
@@ -436,11 +446,8 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.tok
  try{
   await loadDashboard();
   switchView("overview");
- }catch{
-  sessionStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(REMEMBER_ACCESS_KEY);
-  state.token="";
-  showLogin();
+ }catch(error){
+  console.error("CardNest admin startup failed",error);
+  showFatalPanelError(error?.message||"No fue posible cargar el panel administrativo.");
  }
 })();
