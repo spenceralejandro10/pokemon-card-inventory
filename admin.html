@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>CardNest · Centro de mando</title>
+  <link rel="stylesheet" href="admin.css?v=20260918-1">
+</head>
+<body>
+  <main class="admin-shell">
+    <section id="loginView" class="login-view">
+      <div class="login-card">
+        <a class="admin-brand" href="index.html" aria-label="Volver a CardNest">
+          <img src="https://drive.google.com/thumbnail?id=1IUSpv73234Nvjz2KC_VhqhuFHSsF0yqN&sz=w1000" alt="CardNest">
+        </a>
+        <div class="login-kicker">PORTAL INTERNO</div>
+        <h1>Centro de mando CardNest</h1>
+        <p>Inventario, canales de venta e integraciones en un solo lugar.</p>
+        <form id="adminLoginForm">
+          <label>Usuario<input id="adminUsername" autocomplete="username" maxlength="40" required></label>
+          <label>Contraseña<input id="adminPassword" type="password" autocomplete="current-password" maxlength="100" required></label>
+          <button type="submit">Entrar al panel</button>
+        </form>
+        <div id="loginStatus" class="form-status" role="alert" hidden></div>
+        <a class="back-link" href="index.html">← Volver a la tienda</a>
+      </div>
+    </section>
+
+    <section id="panelView" class="panel-view" hidden>
+      <aside class="sidebar">
+        <a class="sidebar-brand" href="index.html"><img src="https://drive.google.com/thumbnail?id=1IUSpv73234Nvjz2KC_VhqhuFHSsF0yqN&sz=w1000" alt="CardNest"></a>
+        <div class="sidebar-label">Centro de mando</div>
+        <nav>
+          <button class="nav-item active" data-view="overview">Resumen</button>
+          <button class="nav-item" data-view="mercadolibre">Mercado Libre</button>
+          <button class="nav-item" data-view="integrations">Integraciones</button>
+          <button class="nav-item" data-view="activity">Actividad</button>
+          <button class="nav-item" data-view="security">Seguridad</button>
+        </nav>
+        <div class="sidebar-footer">
+          <div><strong id="sidebarUser">—</strong><small id="sidebarRole">—</small></div>
+          <button id="logoutBtn" type="button">Cerrar sesión</button>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="workspace-header">
+          <div>
+            <small>CARDNEST · OPERACIONES</small>
+            <h1 id="viewTitle">Resumen</h1>
+          </div>
+          <div class="header-actions">
+            <span class="secure-pill">Sesión protegida</span>
+            <a href="index.html" target="_blank" rel="noopener">Ver tienda</a>
+          </div>
+        </header>
+
+        <div id="passwordWarning" class="password-warning" hidden>
+          <div><strong>Credencial temporal</strong><span>Cámbiala desde Seguridad antes de usar este panel en operación real.</span></div>
+          <button type="button" data-go-security>Ir a Seguridad</button>
+        </div>
+
+        <section class="admin-view active" data-panel="overview">
+          <div class="stat-grid">
+            <article><span>Productos</span><strong id="statProducts">—</strong><small>Inventario maestro</small></article>
+            <article><span>Preparados para ML</span><strong id="statMlSelected">—</strong><small>Seleccionados por nosotros</small></article>
+            <article><span>Activos en ML</span><strong id="statMlActive">—</strong><small>Cuando la integración esté conectada</small></article>
+            <article><span>Agotados</span><strong id="statSoldOut">—</strong><small>Sin stock disponible</small></article>
+          </div>
+          <div class="dashboard-grid">
+            <article class="panel-card channel-card">
+              <div class="panel-card-head"><div><small>CANAL PRINCIPAL</small><h2>CardNest</h2></div><span class="status ok">Activo</span></div>
+              <p>Nuestra tienda sigue siendo el centro del inventario y de las decisiones comerciales. El catálogo público continúa sin mostrar precios.</p>
+              <a href="index.html" target="_blank" rel="noopener">Abrir tienda</a>
+            </article>
+            <article class="panel-card channel-card">
+              <div class="panel-card-head"><div><small>CANAL ADICIONAL</small><h2>Mercado Libre</h2></div><span class="status pending">Por conectar</span></div>
+              <p>Selecciona aquí qué productos queremos preparar para Mercado Libre y define su precio exclusivo para ese canal.</p>
+              <button type="button" data-go-ml>Configurar productos</button>
+            </article>
+          </div>
+          <article class="panel-card">
+            <div class="panel-card-head"><div><small>REGLA COMERCIAL</small><h2>Autonomía de CardNest</h2></div></div>
+            <div class="principles">
+              <span>CardNest decide qué productos salen a Mercado Libre.</span>
+              <span>El precio de Mercado Libre es privado en CardNest.</span>
+              <span>Publicar en Mercado Libre requerirá confirmación manual.</span>
+              <span>Las ventas se sincronizarán para evitar doble venta.</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="admin-view" data-panel="mercadolibre">
+          <div class="section-intro">
+            <div><small>CANAL DE VENTA</small><h2>Productos para Mercado Libre</h2><p>Activar aquí significa “preparar para Mercado Libre”. Todavía no publica nada hasta que conectemos y autoricemos la cuenta.</p></div>
+            <div class="ml-state"><span></span><strong>Integración pendiente</strong></div>
+          </div>
+          <div class="toolbar">
+            <input id="productSearch" type="search" placeholder="Buscar producto, ID o referencia">
+            <select id="channelFilter">
+              <option value="all">Todos</option>
+              <option value="selected">Preparados para ML</option>
+              <option value="cardnest">Solo CardNest</option>
+            </select>
+          </div>
+          <div id="productsTable" class="products-table"></div>
+          <div id="productsStatus" class="form-status" role="status" hidden></div>
+        </section>
+
+        <section class="admin-view" data-panel="integrations">
+          <div class="integration-grid">
+            <article class="panel-card integration-card">
+              <div class="integration-logo ml">ML</div>
+              <div><small>CANAL EXTERNO</small><h2>Mercado Libre</h2><p>OAuth, publicaciones, fotos, stock y notificaciones de ventas.</p></div>
+              <span class="status pending">Pendiente de autorización</span>
+            </article>
+            <article class="panel-card integration-card">
+              <div class="integration-logo db">DB</div>
+              <div><small>DATOS</small><h2>Supabase</h2><p>Inventario maestro, configuración privada y sesiones administrativas.</p></div>
+              <span class="status ok">Conectado</span>
+            </article>
+            <article class="panel-card integration-card">
+              <div class="integration-logo web">WEB</div>
+              <div><small>TIENDA</small><h2>CardNest Web</h2><p>Catálogo público y flujo de ofertas sin precio visible.</p></div>
+              <span class="status ok">Conectado</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-view" data-panel="activity">
+          <article class="panel-card">
+            <div class="panel-card-head"><div><small>TRAZABILIDAD</small><h2>Actividad reciente</h2></div></div>
+            <div id="activityList" class="activity-list"></div>
+          </article>
+        </section>
+
+        <section class="admin-view" data-panel="security">
+          <div class="security-grid">
+            <article class="panel-card">
+              <div class="panel-card-head"><div><small>CUENTA</small><h2>Cambiar contraseña</h2></div></div>
+              <p>Las credenciales iniciales son temporales. Usa una contraseña distinta para cada administrador.</p>
+              <form id="passwordForm" class="password-form">
+                <label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="12" required></label>
+                <label>Repetir contraseña<input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required></label>
+                <small>Mínimo 12 caracteres con mayúscula, minúscula, número y símbolo.</small>
+                <button type="submit">Actualizar contraseña</button>
+              </form>
+              <div id="passwordStatus" class="form-status" role="alert" hidden></div>
+            </article>
+            <article class="panel-card">
+              <div class="panel-card-head"><div><small>PROTECCIÓN</small><h2>Cómo está protegido</h2></div></div>
+              <ul class="security-list">
+                <li>Las contraseñas no se guardan en texto plano.</li>
+                <li>Las tablas administrativas no tienen acceso público.</li>
+                <li>La sesión administrativa vence automáticamente.</li>
+                <li>Las claves privadas de integraciones nunca irán al navegador.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <script src="admin.js?v=20260918-1"></script>
+</body>
+</html>
