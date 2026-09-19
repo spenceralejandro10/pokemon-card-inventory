@@ -7,7 +7,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://cnivcnexsqobipvqxero.supabase.co; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; upgrade-insecure-requests">
   <title>CardNest</title>
   <script src="frame-guard.js?v=20260919-1"></script>
-  <link rel="stylesheet" href="styles.css?v=20260919-29">
+  <link rel="stylesheet" href="styles.css?v=20260919-30">
   <link rel="stylesheet" href="mercadolibre-channel.css?v=20260919-1">
 </head>
 <body>
@@ -266,14 +266,38 @@
           <div class="card-badges"><span class="demo-badge" hidden>DEMO</span><span class="language-badge"></span><span class="stock-badge"></span></div>
         </div>
         <p class="original-name"></p>
-        <dl class="meta">
-          <div><dt>ID</dt><dd class="card-id"></dd></div>
-          <div><dt>Número / Ref.</dt><dd class="card-number"></dd></div>
-          <div><dt>Colección / Set</dt><dd class="card-set"></dd></div>
-          <div class="card-hp-row"><dt>HP</dt><dd class="card-hp"></dd></div>
-          <div><dt>Rareza / Tipo</dt><dd class="card-rarity"></dd></div>
-          <div><dt>Estado</dt><dd class="card-status"></dd></div>
-        </dl>
+
+        <details class="product-accordion product-details-accordion">
+          <summary>
+            <span>Detalles del producto</span>
+            <small class="details-summary">Ver información</small>
+          </summary>
+          <div class="product-accordion-body">
+            <dl class="meta">
+              <div><dt>ID</dt><dd class="card-id"></dd></div>
+              <div><dt>Número / Ref.</dt><dd class="card-number"></dd></div>
+              <div><dt>Colección / Set</dt><dd class="card-set"></dd></div>
+              <div class="card-hp-row"><dt>HP</dt><dd class="card-hp"></dd></div>
+              <div><dt>Rareza / Tipo</dt><dd class="card-rarity"></dd></div>
+            </dl>
+            <div class="extended-details"></div>
+          </div>
+        </details>
+
+        <details class="product-accordion product-status-accordion">
+          <summary>
+            <span class="card-status-summary">Estado: Disponible</span>
+            <small>Ver estado</small>
+          </summary>
+          <div class="product-accordion-body">
+            <dl class="meta status-meta">
+              <div><dt>Estado</dt><dd class="card-status"></dd></div>
+              <div><dt>Stock</dt><dd class="card-stock-detail"></dd></div>
+              <div><dt>Verificación</dt><dd class="card-validation-detail"></dd></div>
+            </dl>
+          </div>
+        </details>
+
         <div class="card-actions">
           <button class="favorite-btn" type="button">♡ Me interesa</button>
           <span class="card-category-tag"></span>
@@ -301,7 +325,7 @@
  <details class="offer-history-accordion"><summary>Historial de ofertas</summary><div class="offer-history-tools"><span>Se guardan las últimas 3 ofertas en este dispositivo.</span><button id="clearOfferHistory" type="button">Eliminar historial</button></div><div id="offerHistory" class="offer-history"></div></details>
 </aside>
 <dialog id="imageViewer" class="image-viewer">
-    <form method="dialog"><button id="closeImageViewer" type="submit" aria-label="Cerrar">×</button></form>
+    <form method="dialog"><button id="closeImageViewer" class="viewer-close" type="submit" aria-label="Cerrar galería">×</button></form>
     <div class="viewer-shell">
       <button id="viewerPrev" class="viewer-nav viewer-prev" type="button" aria-label="Imagen anterior">‹</button>
       <div class="viewer-content">
@@ -356,6 +380,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="app.js?v=20260919-2"></script>
+<script src="app.js?v=20260919-3"></script>
 </body>
 </html>
