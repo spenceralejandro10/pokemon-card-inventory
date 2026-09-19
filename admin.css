@@ -192,3 +192,15 @@ button,a{transition:.18s ease}
  .chat-messages{min-height:330px;height:52vh;padding:12px}.chat-message{width:94%}
  .chat-actions{flex-wrap:wrap}.chat-actions button{width:100%;margin-left:0}.chat-actions>span{flex:1}
 }
+
+
+/* Profile identity: single prominent location in workspace header */
+.header-profile{display:flex;align-items:center;gap:14px;padding:7px 14px 7px 8px;border:1px solid rgba(231,195,87,.72);border-radius:18px;background:linear-gradient(135deg,#fff 0%,#fffaf0 100%);box-shadow:0 8px 24px rgba(23,56,77,.12),0 0 0 3px rgba(231,195,87,.10)}
+.header-avatar{width:72px!important;height:72px!important;min-width:72px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:linear-gradient(145deg,var(--navy),var(--navy-2));color:#fff;font-size:19px;font-weight:900;border:3px solid #fff;outline:3px solid var(--gold);box-shadow:0 0 0 6px rgba(231,195,87,.16),0 8px 20px rgba(23,56,77,.22)}
+.header-avatar img{width:100%;height:100%;object-fit:cover}
+.header-profile>div:last-child{display:grid;gap:3px}
+.header-profile strong{font-size:14px;color:var(--navy);white-space:nowrap}
+.header-profile small{font-size:11px;letter-spacing:.02em;text-transform:none;color:var(--muted);white-space:nowrap}
+.sidebar-footer{display:block}
+.sidebar-footer #logoutBtn{margin-top:0}
+@media(max-width:900px){.header-avatar{width:60px!important;height:60px!important;min-width:60px}.header-profile{padding-right:10px}.header-profile small{display:block}}
