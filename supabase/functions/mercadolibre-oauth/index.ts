@@ -367,8 +367,7 @@ Deno.serve(async (req: Request) => {
 
     await audit(session.admin_user_id, "mercadolibre_connected", {
       user_id: userId,
-      site_id: siteId,
-      nickname: clean(me?.nickname) || null
+      site_id: siteId
     });
 
     await db

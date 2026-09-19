@@ -15,6 +15,10 @@ const adminScriptPath=matches(adminHtml,/<script\s+src=["']([^"']+\.js(?:\?[^"']
 const adminApp=adminScriptPath?read(adminScriptPath):"";
 const adminSource=read("admin.js");
 const adminCss=read("admin.css");
+const migrationSource=fs.readdirSync(path.join(root,"supabase/migrations"))
+ .filter(function(file){return file.endsWith(".sql")})
+ .map(function(file){return read("supabase/migrations/"+file)})
+ .join("\n");
 const edgeFunctionPaths=[
  "supabase/functions/sale-order/index.ts",
  "supabase/functions/admin-control/index.ts",
@@ -144,6 +148,8 @@ check("Defensas críticas de Mercado Libre activas",function(){
  assert(webhook.includes("timedFetch"),"Las llamadas del webhook deben tener timeout");
  assert(webhook.includes('refreshToken.length >= 10'),"La renovación debe exigir un refresh token nuevo");
  assert(webhook.includes("mercadolibre_mark_connection_error"),"El webhook debe cortar llamadas después de errores críticos de API");
+ assert(migrationSource.includes("cardnest-mercadolibre-data-retention"),"La integración debe programar la retención de metadatos");
+ assert(migrationSource.includes("received_at < now() - interval '30 days'"),"Los metadatos de webhook deben expirar");
  assert(/id=["']mlConnectBtn["'][^>]*\bdisabled\b/.test(adminHtml),"El botón OAuth debe iniciar bloqueado");
  assert(adminHtml.includes('id="mlPreflightChecks"'),"El panel debe mostrar la revisión previa");
  assert(adminApp.includes('mlApi("preflight")'),"El frontend debe repetir el preflight antes de autorizar");

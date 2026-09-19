@@ -84,6 +84,8 @@ La integración de Mercado Libre ya tiene:
 - Renovación segura de tokens con bloqueo temporal para evitar reutilizar simultáneamente un refresh token.
 - Webhook público HTTPS con respuesta inmediata y verificación posterior del recurso contra la API oficial.
 - Persistencia de eventos de webhook sin guardar en bruto la respuesta del recurso, para minimizar datos personales.
+- Retención automática de metadatos de webhook por máximo 30 días y de intentos OAuth por máximo 24 horas.
+- Eliminación de tokens, intentos OAuth y metadatos de webhook al desconectar la integración.
 - Panel administrativo con preflight técnico, confirmaciones manuales, autorización bloqueada por defecto y desconexión.
 - Validación cruzada del usuario devuelto por el token y `/users/me`, además de rechazo de cuentas que no sean `MCO`.
 - Validación posterior al consentimiento de que el token incluya los scopes `read` y `write`.
