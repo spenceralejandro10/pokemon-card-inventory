@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CardNest</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-15">
+  <link rel="stylesheet" href="styles.css?v=20260918-17">
 </head>
 <body>
   <header class="topbar" id="pageTop">
@@ -88,8 +88,14 @@
 
 <section class="shipping-section sale-code-section checkout-gate">
  <div class="section-heading"><span>1</span><div><strong>Código de venta del analista</strong><small>Este código confirma internamente la compra acordada y habilita únicamente el proceso de envío.</small></div></div>
- <div class="code-validator"><input id="saleCode" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" pattern="[A-Za-z0-9-]{6,40}" aria-label="Código de venta" placeholder="Ej. CN-VENTA-001"><button id="validateSaleCode" type="button">Validar código</button></div>
- <div id="saleCodeStatus" class="code-status" aria-live="polite">Valida tu código para continuar.</div>
+ <div id="saleCodeRows" class="sale-code-rows">
+   <div class="sale-code-row" data-code-row>
+     <div class="code-validator"><input class="sale-code-input" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" pattern="[A-Za-z0-9-]{6,40}" aria-label="Código de venta 1" placeholder="Ej. CN-VENTA-001"><button class="validate-sale-code" type="button">Validar</button></div>
+     <div class="sale-code-row-status code-status" aria-live="polite">Código principal.</div>
+   </div>
+ </div>
+ <button id="addSaleCode" class="add-sale-code" type="button">+ Agregar otro código</button>
+ <div id="saleCodeStatus" class="code-status code-summary" aria-live="polite">Puedes usar de 1 a 3 códigos de compra en el mismo envío.</div>
  <div id="pendingOrderNotice" class="pending-order-notice" hidden>
    <div><strong>Ya tienes un pedido pendiente</strong><small id="pendingOrderLabel"></small></div>
    <button id="viewPendingOrder" type="button">Ver pedido pendiente</button>
@@ -100,8 +106,8 @@
    <a href="https://wa.me/573125214785?text=Hola%2C%20quiero%20realizar%20una%20compra%20en%20CardNest." target="_blank" rel="noopener">Hablar con el analista por WhatsApp</a>
  </div>
  <div class="demo-code-box">
-   <span>CÓDIGO TEMPORAL DE PRUEBA</span>
-   <strong>Se asigna automáticamente</strong>
+   <span>CÓDIGOS TEMPORALES DE PRUEBA</span>
+   <strong>Se pueden cargar hasta 3 automáticamente</strong>
    <button id="useDemoSaleCode" type="button">Preparar prueba</button>
  </div>
 </section>
@@ -251,6 +257,6 @@
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="app.js?v=20260918-15"></script>
+<script src="app.js?v=20260918-17"></script>
 </body>
 </html>
