@@ -1303,10 +1303,12 @@ function resetCheckoutToCodeEntry(){
  if(fabHint)fabHint.textContent="Paga los productos al recibir";
  clearValidatedCodes();
  moveCheckoutInfoInitial();
- const codeInput=document.getElementById("saleCode");
- codeInput.value="";
- setCodeStatus("","Valida tu código para continuar.");
- codeInput.focus();
+ const rows=Array.from(document.querySelectorAll("[data-code-row]"));
+ rows.forEach(function(row,i){if(i>0)row.remove()});
+ const codeInput=document.querySelector(".sale-code-input");
+ if(codeInput){codeInput.value="";codeInput.dataset.validatedCode="";setRowCodeStatus(rows[0],"","Código principal.");codeInput.focus()}
+ document.getElementById("addSaleCode").disabled=false;
+ setCodeStatus("","Valida al menos un código para continuar. Puedes agregar hasta 3.");
 }
 function refreshPendingOrderNotice(){
  const notice=document.getElementById("pendingOrderNotice");
