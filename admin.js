@@ -39,6 +39,17 @@ function setAvatar(el,profile){
 }
 function profileById(id){return state.profiles.find(p=>p.id===id)||null}
 function selfProfile(){return profileById(state.user?.id)||state.user||null}
+function rankTier(title){
+ const value=String(title||"").trim();
+ if(value==="CEO & Fundador")return "rank-ceo";
+ if(/Gerente|COO|CTO|CFO|CMO|Director/i.test(value))return "rank-management";
+ return "rank-standard";
+}
+function applyRankAura(el,title){
+ if(!el)return;
+ el.classList.remove("rank-ceo","rank-management","rank-standard");
+ el.classList.add(rankTier(title));
+}
 
 async function api(action,payload={}){
  const res=await fetch(ADMIN_API,{
@@ -96,6 +107,8 @@ function showPanel(){
  if(headerName)headerName.textContent=me?.display_name||me?.username||"Administrador";
  if(headerTitle)headerTitle.textContent=[me?.corporate_title,me?.professional_title].filter(Boolean).join(" · ")||"Administración";
  setAvatar($("#headerAvatar"),me);
+ applyRankAura($(".executive-header-profile"),me?.corporate_title);
+ applyRankAura($("#headerAvatar"),me?.corporate_title);
  if(passwordWarning)passwordWarning.hidden=!state.user?.must_change_password;
  startTimers();
 }
@@ -251,7 +264,10 @@ function renderPartnerPresence(){
  const avatar=$("#partnerAvatar");
  const name=$("#partnerName");
  const status=$("#partnerStatus");
- if(avatar)setAvatar(avatar,partner);
+ if(avatar){
+  setAvatar(avatar,partner);
+  applyRankAura(avatar,partner?.corporate_title);
+ }
  if(name)name.textContent=partner?.display_name||"Otro administrador";
  if(status){
   status.className=partner?.online?"online":"offline";
@@ -260,7 +276,11 @@ function renderPartnerPresence(){
  const pageAvatar=$("#profilePartnerAvatar");
  const pageName=$("#profilePartnerName");
  const pageStatus=$("#profilePartnerStatus");
- if(pageAvatar)setAvatar(pageAvatar,partner);
+ if(pageAvatar){
+  setAvatar(pageAvatar,partner);
+  applyRankAura(pageAvatar,partner?.corporate_title);
+ }
+ applyRankAura($("#partnerProfileCard"),partner?.corporate_title);
  if(pageName)pageName.textContent=partner?.display_name||"Otro administrador";
  if(pageStatus){
   pageStatus.className="profile-partner-status "+(partner?.online?"online":"offline");
@@ -270,12 +290,40 @@ function renderPartnerPresence(){
 function renderProfilePage(){
  const me=selfProfile();
  setAvatar($("#profilePreview"),me);
+ applyRankAura($("#profilePreview"),me?.corporate_title);
+ applyRankAura($("#profilePhotoWrap"),me?.corporate_title);
+ applyRankAura($("#profileMainCard"),me?.corporate_title);
+
  const name=$("#profileDisplayName");
  const title=$("#profileDisplayTitle");
  const profession=$("#profileDisplayProfession");
+ const nameInput=$("#profileNameInput");
+ const titleSelect=$("#profileTitleSelect");
+ const professionInput=$("#profileProfessionInput");
+ const ceoOption=titleSelect?.querySelector('option[value="CEO & Fundador"]');
+ const ceoNote=$("#ceoExclusiveNote");
+ const canBeCeo=me?.username==="gatocomandante36";
+
  if(name)name.textContent=me?.display_name||me?.username||"Administrador";
- if(title)title.textContent=me?.corporate_title||"Administración";
- if(profession)profession.textContent=me?.professional_title||"";
+ if(title)title.textContent=me?.corporate_title||"Sin cargo";
+ if(profession){
+  const value=String(me?.professional_title||"").trim();
+  profession.textContent=value||"Sin profesión seleccionada";
+  profession.classList.toggle("profile-profession-empty",!value);
+ }
+ if(nameInput)nameInput.value=me?.display_name||"";
+ if(titleSelect){
+  if(ceoOption){
+   ceoOption.disabled=!canBeCeo;
+   ceoOption.hidden=!canBeCeo;
+  }
+  titleSelect.value=me?.corporate_title||"";
+ }
+ if(professionInput)professionInput.value=me?.professional_title||"";
+ if(ceoNote)ceoNote.textContent=canBeCeo
+  ?"CEO & Fundador está reservado exclusivamente para tu cuenta."
+  :"CEO & Fundador es exclusivo de Picard. Puedes elegir cualquiera de los demás cargos.";
+
  renderPartnerPresence();
 }
 function renderActivity(){
@@ -287,7 +335,8 @@ function renderActivity(){
   save_channel:"Canal de venta actualizado",
   change_password:"Contraseña actualizada",
   profile_photo_updated:"Foto de perfil actualizada",
-  chat_message_sent:"Mensaje interno enviado"
+  profile_updated:"Datos de perfil actualizados",
+  chat_message_sent:"Comunicación interna histórica"
  };
  box.innerHTML=state.activity.map(a=>{
   const actor=a.admin_users?.display_name||a.admin_users?.username||"Sistema";
@@ -392,6 +441,38 @@ $("#productSearch").addEventListener("input",renderProducts);
 $("#channelFilter").addEventListener("change",renderProducts);
 $("#mlConnectBtn")?.addEventListener("click",startMlConnection);
 $("#mlDisconnectBtn")?.addEventListener("click",disconnectMlConnection);
+
+$("#profileEditForm")?.addEventListener("submit",async function(e){
+ e.preventDefault();
+ const status=$("#profileStatus");
+ const btn=$("#saveProfileInfo");
+ const displayName=String($("#profileNameInput")?.value||"").trim();
+ const corporateTitle=String($("#profileTitleSelect")?.value||"").trim();
+ const professionalTitle=String($("#profileProfessionInput")?.value||"").trim();
+ setStatus(status,"");
+ if(!displayName){setStatus(status,"Escribe un nombre visible.","error");return}
+ if(!corporateTitle){setStatus(status,"Selecciona un cargo.","error");return}
+ btn.disabled=true;btn.textContent="Guardando…";
+ try{
+  const data=await api("save_profile",{
+   display_name:displayName,
+   corporate_title:corporateTitle,
+   professional_title:professionalTitle
+  });
+  state.user={...state.user,...data.user};
+  const idx=state.profiles.findIndex(p=>p.id===state.user.id);
+  if(idx>=0)state.profiles[idx]={...state.profiles[idx],...data.user};
+  else state.profiles.push({...data.user,online:true});
+  renderProfilePage();
+  renderPartnerPresence();
+  showPanel();
+  setStatus(status,"Perfil actualizado correctamente.","success");
+ }catch(err){
+  setStatus(status,err.message||"No fue posible guardar el perfil.","error");
+ }finally{
+  btn.disabled=false;btn.textContent="Guardar datos del perfil";
+ }
+});
 
 $("#avatarFile").addEventListener("change",async function(){
  const file=this.files?.[0]||null;state.selectedAvatar=file;
