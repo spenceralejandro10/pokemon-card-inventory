@@ -1572,3 +1572,36 @@ body>header.site-utility a{display:inline-flex!important;color:#dce8f1!important
 body>header.site-utility .collaborator-login-link{display:inline-flex!important;color:#ffd35a!important}
 body>.site-footer{display:block!important;visibility:visible!important;opacity:1!important}
 .brand-home.brand-home-logo img,.footer-brand img{background:transparent!important}
+
+/* Corporate navigation integrated below the logo */
+body>header.site-utility{
+ background:#fff!important;
+ border-top:1px solid #e2e8ed!important;
+ border-bottom:1px solid #d8e1e7!important;
+ box-shadow:0 3px 10px rgba(15,35,50,.035)!important;
+}
+body>header.site-utility .utility-inner{
+ max-width:1440px!important;min-height:48px!important;
+ padding:0 max(24px,calc((100% - 1440px)/2))!important;
+}
+body>header.site-utility .utility-nav{gap:8px!important}
+body>header.site-utility .utility-nav a,
+body>header.site-utility .collaborator-login-link{
+ min-height:34px!important;display:inline-flex!important;align-items:center!important;
+ padding:0 13px!important;border-radius:8px!important;
+ color:#405365!important;font-size:12px!important;font-weight:750!important;
+ transition:background .18s ease,color .18s ease!important;
+}
+body>header.site-utility .utility-nav a:hover{
+ background:#f1f5f7!important;color:#102f46!important;text-decoration:none!important;
+}
+body>header.site-utility .collaborator-login-link{
+ border:1px solid #d7b54a!important;background:#fff9e8!important;color:#6d5100!important;
+}
+body>header.site-utility .collaborator-login-link:hover{background:#ffefb9!important;color:#4d3900!important}
+@media(max-width:650px){
+ body>header.site-utility .utility-inner{padding:8px 14px!important;align-items:center!important}
+ body>header.site-utility .utility-nav{gap:3px!important}
+ body>header.site-utility .utility-nav a,
+ body>header.site-utility .collaborator-login-link{padding:0 8px!important;font-size:10px!important}
+}
