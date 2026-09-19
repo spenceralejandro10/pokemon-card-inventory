@@ -128,6 +128,7 @@ check("Defensas críticas de Mercado Libre activas",function(){
  assert(oauth.includes('code_challenge_method", "S256"'),"OAuth debe exigir PKCE S256");
  assert(oauth.includes('siteId !== EXPECTED_SITE_ID'),"OAuth debe rechazar cuentas fuera de MCO");
  assert(oauth.includes('!tokenData?.refresh_token'),"OAuth debe exigir refresh token");
+ assert(oauth.includes('error: "MANUAL_CHECKS_REQUIRED"'),"OAuth debe exigir la confirmación de configuración externa");
  assert(webhook.includes('applicationId !== Number(CLIENT_ID)'),"El webhook debe validar application_id");
  assert(webhook.includes('Number(tokens.user_id) !== userId'),"El webhook debe validar user_id");
  assert(webhook.includes('url.pathname.startsWith(prefix)'),"El webhook debe limitar rutas de recursos");
@@ -136,6 +137,7 @@ check("Defensas críticas de Mercado Libre activas",function(){
  assert(adminHtml.includes('id="mlPreflightChecks"'),"El panel debe mostrar la revisión previa");
  assert(adminApp.includes('mlApi("preflight")'),"El frontend debe repetir el preflight antes de autorizar");
  assert(adminApp.includes("validMlAuthorizationUrl"),"El frontend debe validar la URL de autorización");
+ assert(adminApp.includes("mlManualReady"),"El frontend debe exigir la lista manual de Mercado Libre Developers");
  assert(admin.includes("readLimitedBody(req)"),"La API administrativa debe limitar el cuerpo por bytes");
  assert(admin.includes('error:"ORIGIN_NOT_ALLOWED"'),"La API administrativa debe rechazar orígenes externos");
  assert(admin.includes('error:"PRODUCT_NOT_SELLABLE"'),"La selección para ML debe validar inventario vendible");

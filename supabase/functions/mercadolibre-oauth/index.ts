@@ -355,6 +355,20 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action === "start") {
+    const manualChecks = body.manual_checks && typeof body.manual_checks === "object"
+      ? body.manual_checks as Record<string, unknown>
+      : {};
+    const manualChecksOk = manualChecks.redirect_uri === true &&
+      manualChecks.webhook_topics === true && manualChecks.permissions_account === true;
+    if (!manualChecksOk) {
+      await audit(auth.user.id, "mercadolibre_oauth_manual_checks_failed");
+      return json(req, {
+        ok: false,
+        error: "MANUAL_CHECKS_REQUIRED",
+        message: "Confirma los ajustes de Mercado Libre Developers antes de autorizar."
+      }, 409);
+    }
+
     const result = await readiness();
     if (!result.ready) {
       const failedChecks = result.checks.filter((check) => !check.ok).map((check) => check.key);

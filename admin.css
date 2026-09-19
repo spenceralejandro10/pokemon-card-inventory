@@ -628,6 +628,11 @@ button,a{transition:.18s ease}
 .ml-endpoints{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ml-endpoints label{display:grid;gap:5px;color:#6c7d88;font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.04em;min-width:0}
 .ml-endpoints code{display:block;overflow-wrap:anywhere;text-transform:none;letter-spacing:0;border:1px solid #e1e8ec;border-radius:9px;padding:8px;background:#fff;color:#3d5869;font-size:10px;line-height:1.45}
+.ml-manual-checks{margin:0;border:1px solid #dce6eb;border-radius:11px;padding:10px 11px 11px;display:grid;gap:8px;background:#fff}
+.ml-manual-checks legend{padding:0 5px;color:#536b79;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.ml-manual-checks label{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:start;gap:8px;color:#526975;font-size:10px;line-height:1.5;cursor:pointer}
+.ml-manual-checks input{width:16px;height:16px;margin:0;accent-color:#1d7d5a}
+.ml-manual-checks code{font-size:9px;color:#2d5065;background:#eef3f6;border-radius:4px;padding:1px 3px}
 .ml-preflight-note{margin:0!important;color:#657984!important;font-size:10px!important;line-height:1.55!important}
 .ml-state.connected{color:#1b6a4c;background:var(--green-bg);border-color:#cfe8dc}
 .ml-state.connected span{background:#1d9b6c}

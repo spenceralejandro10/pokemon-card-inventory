@@ -27,29 +27,24 @@ https://cnivcnexsqobipvqxero.supabase.co/functions/v1/mercadolibre-oauth
 - PKCE: **activado**
 - Skip PKCE: **no activar**
 
-## Topics / Notificaciones previstos
+## Topics / Notificaciones permitidos
+
+Aplicar principio de mínimo alcance: activar únicamente los topics que el webhook valida de forma explícita. Cualquier topic adicional debe implementarse, probarse y agregarse a la allowlist antes de activarlo en Mercado Libre Developers.
 
 ### Activar
 
 - Orders: `orders_v2`
-- Messages
-  - created
-  - read
-- Items
-- Questions
-- Item Price
-- Stock Locations
-- Shipments
-- User Products
-  - created
-  - updated
-  - purged
-- Post Purchase
-  - Claims
-  - Claims Actions
+- Items: `items`
+- Questions: `questions`
+- Messages: `messages`
+- Shipments: `shipments`
 
 ### No activar por ahora
 
+- Item Price
+- Stock Locations
+- User Products y sus variantes
+- Post Purchase, Claims y Claims Actions
 - Orders Feedback
 - Insurance Messages
 - Price Suggestions
@@ -62,6 +57,8 @@ https://cnivcnexsqobipvqxero.supabase.co/functions/v1/mercadolibre-oauth
 - Payments
 - Invoices
 - Otros topics que CardNest todavía no utilice
+
+El webhook responde `200` a eventos ajenos o no soportados para evitar reintentos, pero no los almacena ni hace llamadas autenticadas con ellos. Antes de consultar un recurso verifica `application_id`, `user_id`, cuenta `MCO`, topic y prefijo de ruta.
 
 ## Callback de notificaciones
 
@@ -87,7 +84,16 @@ La integración de Mercado Libre ya tiene:
 - Renovación segura de tokens con bloqueo temporal para evitar reutilizar simultáneamente un refresh token.
 - Webhook público HTTPS con respuesta inmediata y verificación posterior del recurso contra la API oficial.
 - Persistencia de eventos de webhook sin guardar en bruto la respuesta del recurso, para minimizar datos personales.
-- Panel administrativo con estado de conexión, botón de autorización y desconexión.
+- Panel administrativo con preflight técnico, confirmaciones manuales, autorización bloqueada por defecto y desconexión.
+- Validación cruzada del usuario devuelto por el token y `/users/me`, además de rechazo de cuentas que no sean `MCO`.
+- Rechazo de autorizaciones sin refresh token y rotación serializada con recuperación después de fallos transitorios.
+
+## Alcance funcional actual
+
+- **No existe publicación automática.** Marcar un producto como “Preparado para ML” solo guarda una selección interna con estado `ready`.
+- **No existe sincronización automática de stock o precios.** El webhook valida y registra metadatos mínimos del aviso, pero todavía no modifica inventario ni publicaciones.
+- Los productos demo, sin stock, archivados, en borrador, sin datos básicos, sin imagen HTTPS o con precio menor de `$3.000 COP` no pueden quedar preparados.
+- No se debe prometer publicación, sincronización bidireccional ni gestión de ventas hasta implementar y probar esos subsistemas por separado.
 
 ### Secrets de Edge Functions
 
@@ -98,9 +104,24 @@ Deben existir en Supabase:
 
 No copiar sus valores a este repositorio.
 
+### Lista obligatoria antes del paso humano
+
+En Mercado Libre Developers, verificar y marcar en el panel de CardNest:
+
+1. El **Redirect URI** coincide carácter por carácter con el indicado en este documento.
+2. El **callback de notificaciones** coincide carácter por carácter y solo están activos los cinco topics permitidos.
+3. Mercado Libre está activado con Read y Write; Mercado Pago está desactivado.
+4. PKCE está activado y Skip PKCE está desactivado.
+5. Se usará la cuenta principal de Mercado Libre Colombia (`MCO`).
+6. La revisión técnica de CardNest muestra configuración, Vault, webhook y país en estado aprobado.
+
+El backend vuelve a ejecutar el preflight justo antes de crear el `state` OAuth y rechaza llamadas que no incluyan las tres confirmaciones manuales.
+
 ### Paso humano final
 
 Desde el panel de administración de CardNest, entrar a **Mercado Libre** y pulsar **Autorizar cuenta**. Mercado Libre mostrará su pantalla oficial de consentimiento y devolverá el código al callback de Supabase.
+
+La autorización no publica productos por sí sola. Si la pantalla de consentimiento muestra una aplicación, país, cuenta o permisos inesperados, cancelar y revisar la configuración; no continuar “para probar”.
 
 ## Seguridad
 

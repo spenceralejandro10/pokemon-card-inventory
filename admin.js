@@ -161,21 +161,29 @@ function renderSummary(){
  $("#statSoldOut").textContent=state.summary.sold_out??0;
 }
 
+function mlManualChecks(){
+ const values={redirect_uri:false,webhook_topics:false,permissions_account:false};
+ $$('[data-ml-manual]').forEach(input=>{if(input.dataset.mlManual in values)values[input.dataset.mlManual]=input.checked===true});
+ return values;
+}
+function mlManualReady(){return Object.values(mlManualChecks()).every(Boolean)}
+
 function renderMlPreflight(info){
  const box=$("#mlPreflight");
  const badge=$("#mlPreflightState");
  const list=$("#mlPreflightChecks");
  const redirect=$("#mlRedirectUri");
  const webhook=$("#mlWebhookUri");
- const ready=info?.ready===true;
+ const technicalReady=info?.ready===true;
+ const ready=technicalReady&&mlManualReady();
  const checking=state.mlLoading;
  const checks=Array.isArray(info?.checks)?info.checks:[];
  if(box){
   box.classList.toggle("ready",!checking&&ready);
-  box.classList.toggle("failed",!checking&&!!info&&!ready);
+  box.classList.toggle("failed",!checking&&!!info&&!technicalReady);
  }
  if(badge){
-  badge.textContent=checking?"Comprobando…":ready?"Aprobada":info?"Bloqueada":"Pendiente";
+  badge.textContent=checking?"Comprobando…":ready?"Lista":technicalReady?"Confirma la configuración":info?"Bloqueada":"Pendiente";
   badge.className="status "+(!checking&&ready?"ok":"pending");
  }
  if(list){
@@ -196,8 +204,9 @@ function renderMlPreflight(info){
 function renderMlConnection(){
  const info=state.mlConnection;
  const connected=!!info?.connected;
- const ready=info?.ready===true;
- const attention=connected&&!ready&&!state.mlLoading;
+ const technicalReady=info?.ready===true;
+ const ready=technicalReady&&mlManualReady();
+ const attention=connected&&!technicalReady&&!state.mlLoading;
  const connection=info?.connection||null;
  const overview=$("#mlOverviewStatus");
  const integration=$("#mlIntegrationStatus");
@@ -224,8 +233,8 @@ function renderMlConnection(){
  if(stateLabel)stateLabel.textContent=state.mlLoading?"Comprobando conexión…":connected?(attention?"Conexión requiere revisión":"Cuenta autorizada"):(ready?"Lista para autorizar":"Integración bloqueada");
  if(text){
   text.textContent=connected
-   ?"CardNest está autorizado para operar con esta cuenta de Mercado Libre."
-   :"Autoriza la cuenta principal de Mercado Libre para activar publicaciones, stock y notificaciones.";
+   ?"CardNest conserva una autorización válida para esta cuenta. Publicación y sincronización siguen desactivadas."
+   :"Autoriza la cuenta principal de Mercado Libre cuando todo esté verificado. Autorizar no publica ni sincroniza productos.";
  }
  if(meta){
   if(connected&&connection){
@@ -285,6 +294,12 @@ function validMlAuthorizationUrl(value){
 
 async function startMlConnection(){
  const btn=$("#mlConnectBtn");
+ const manualChecks=mlManualChecks();
+ if(!Object.values(manualChecks).every(Boolean)){
+  setStatus($("#mlConnectionStatus"),"Confirma primero los tres ajustes de Mercado Libre Developers.","error");
+  renderMlConnection();
+  return;
+ }
  state.mlLoading=true;
  renderMlConnection();
  if(btn)btn.textContent="Ejecutando revisión…";
@@ -300,7 +315,7 @@ async function startMlConnection(){
    return;
   }
   if(btn)btn.textContent="Preparando autorización…";
-  const data=await mlApi("start");
+  const data=await mlApi("start",{manual_checks:manualChecks});
   if(!validMlAuthorizationUrl(data.authorization_url))throw new Error("La URL de autorización no superó la validación de seguridad.");
   location.assign(data.authorization_url);
  }catch(e){
@@ -316,7 +331,9 @@ async function refreshMlPreflight(){
  setStatus($("#mlConnectionStatus"),"");
  try{
   const data=await loadMlConnection();
-  setStatus($("#mlConnectionStatus"),data?.ready?"Revisión previa aprobada. Ya puedes autorizar la cuenta.":"La autorización sigue bloqueada: revisa las comprobaciones pendientes.",data?.ready?"success":"error");
+  const complete=data?.ready&&mlManualReady();
+  const message=complete?"Revisión completa. Ya puedes autorizar la cuenta.":data?.ready?"Revisión técnica aprobada. Confirma los tres ajustes de Mercado Libre Developers.":"La autorización sigue bloqueada: revisa las comprobaciones pendientes.";
+  setStatus($("#mlConnectionStatus"),message,complete?"success":data?.ready?"":"error");
  }catch(e){
   setStatus($("#mlConnectionStatus"),e.message,"error");
  }
@@ -562,6 +579,7 @@ $("#channelFilter").addEventListener("change",renderProducts);
 $("#mlConnectBtn")?.addEventListener("click",startMlConnection);
 $("#mlRefreshCheckBtn")?.addEventListener("click",refreshMlPreflight);
 $("#mlDisconnectBtn")?.addEventListener("click",disconnectMlConnection);
+$$('[data-ml-manual]').forEach(input=>input.addEventListener("change",()=>renderMlConnection()));
 
 $("#profileEditForm")?.addEventListener("submit",async function(e){
  e.preventDefault();

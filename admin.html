@@ -100,8 +100,8 @@
             <div class="principles">
               <span>CardNest decide qué productos salen a Mercado Libre.</span>
               <span>El precio de Mercado Libre es privado en CardNest.</span>
-              <span>Publicar en Mercado Libre requerirá confirmación manual.</span>
-              <span>Las ventas se sincronizarán para evitar doble venta.</span>
+              <span>La publicación permanece desactivada; preparar un producto no lo publica.</span>
+              <span>La sincronización de ventas sigue desactivada hasta implementarla y validarla.</span>
             </div>
           </article>
         </section>
@@ -304,6 +304,12 @@
                   <label>Redirect URI autorizado<code id="mlRedirectUri">Comprobando…</code></label>
                   <label>Callback de notificaciones<code id="mlWebhookUri">Comprobando…</code></label>
                 </div>
+                <fieldset class="ml-manual-checks">
+                  <legend>Confirma en Mercado Libre Developers</legend>
+                  <label><input type="checkbox" data-ml-manual="redirect_uri"> Guardé exactamente el Redirect URI mostrado arriba.</label>
+                  <label><input type="checkbox" data-ml-manual="webhook_topics"> Guardé el callback y activé únicamente <code>orders_v2</code>, <code>items</code>, <code>questions</code>, <code>messages</code> y <code>shipments</code>.</label>
+                  <label><input type="checkbox" data-ml-manual="permissions_account"> Activé Read, Write y PKCE; dejé Skip PKCE y Mercado Pago desactivados; usaré la cuenta principal de Colombia.</label>
+                </fieldset>
                 <p class="ml-preflight-note">La autorización permanece bloqueada hasta aprobar todas las comprobaciones. Usa únicamente la cuenta principal de Mercado Libre Colombia (MCO).</p>
               </div>
             </div>
@@ -331,7 +337,7 @@
           <div class="integration-grid">
             <article class="panel-card integration-card">
               <div class="integration-logo ml">ML</div>
-              <div><small>CANAL EXTERNO</small><h2>Mercado Libre</h2><p id="mlIntegrationText">OAuth con PKCE, tokens cifrados, webhook y sincronización segura.</p><button class="text-action" type="button" data-go-ml>Administrar conexión</button></div>
+              <div><small>CANAL EXTERNO</small><h2>Mercado Libre</h2><p id="mlIntegrationText">OAuth con PKCE, tokens cifrados y webhook validado. Publicación y sincronización aún desactivadas.</p><button class="text-action" type="button" data-go-ml>Administrar conexión</button></div>
               <span id="mlIntegrationStatus" class="status pending">Comprobando…</span>
             </article>
             <article class="panel-card integration-card">
@@ -403,6 +409,6 @@
       </div>
     </section>
   </main>
-  <script src="admin-runtime-20260919-15.js?v=20260919-17"></script>
+  <script src="admin-runtime-20260919-15.js?v=20260919-18"></script>
 </body>
 </html>
