@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>CardNest · Centro de mando</title>
-  <link rel="stylesheet" href="admin.css?v=20260919-2">
+  <link rel="stylesheet" href="admin.css?v=20260919-3">
 </head>
 <body>
   <main class="admin-shell">
@@ -96,16 +96,75 @@
 
         <section class="admin-view" data-panel="team">
           <div class="profile-page">
-            <article class="profile-main-card">
-              <div class="profile-photo-wrap">
-                <div id="profilePreview" class="profile-preview profile-preview-large">CN</div>
+            <article id="profileMainCard" class="profile-main-card rank-standard">
+              <div id="profilePhotoWrap" class="profile-photo-wrap rank-standard">
+                <div id="profilePreview" class="profile-preview profile-preview-large rank-standard">CN</div>
                 <span class="profile-photo-accent" aria-hidden="true"></span>
+                <span class="profile-photo-flare profile-photo-flare-a" aria-hidden="true"></span>
+                <span class="profile-photo-flare profile-photo-flare-b" aria-hidden="true"></span>
               </div>
               <div class="profile-main-copy">
                 <small>MI PERFIL CARDNEST</small>
                 <h2 id="profileDisplayName">—</h2>
                 <strong id="profileDisplayTitle">—</strong>
-                <p id="profileDisplayProfession">—</p>
+                <p id="profileDisplayProfession" class="profile-profession-empty">Sin profesión seleccionada</p>
+
+                <form id="profileEditForm" class="profile-edit-form">
+                  <div class="profile-field-grid">
+                    <label>Nombre visible
+                      <input id="profileNameInput" type="text" maxlength="60" autocomplete="name" required>
+                    </label>
+                    <label>Cargo
+                      <select id="profileTitleSelect" required>
+                        <option value="">Selecciona un cargo</option>
+                        <option value="CEO & Fundador">CEO & Fundador</option>
+                        <option value="Gerente General & COO">Gerente General & COO</option>
+                        <option value="COO · Director de Operaciones">COO · Director de Operaciones</option>
+                        <option value="CTO · Director de Tecnología">CTO · Director de Tecnología</option>
+                        <option value="CFO · Director Financiero">CFO · Director Financiero</option>
+                        <option value="CMO · Director de Marketing">CMO · Director de Marketing</option>
+                        <option value="Gerente de Tecnología">Gerente de Tecnología</option>
+                        <option value="Gerente Comercial">Gerente Comercial</option>
+                        <option value="Gerente de Operaciones">Gerente de Operaciones</option>
+                        <option value="Gerente Administrativo">Gerente Administrativo</option>
+                        <option value="Director de Producto">Director de Producto</option>
+                        <option value="Director Comercial">Director Comercial</option>
+                        <option value="Director de Tecnología">Director de Tecnología</option>
+                        <option value="Coordinador de Área">Coordinador de Área</option>
+                        <option value="Líder de Área">Líder de Área</option>
+                        <option value="Especialista">Especialista</option>
+                        <option value="Analista">Analista</option>
+                        <option value="Asesor">Asesor</option>
+                      </select>
+                    </label>
+                    <label class="profile-profession-field">Profesión
+                      <input id="profileProfessionInput" type="text" maxlength="80" list="professionSuggestions" placeholder="Sin profesión seleccionada">
+                      <small>Es opcional. Puedes elegir una sugerencia o escribir la tuya.</small>
+                    </label>
+                  </div>
+                  <datalist id="professionSuggestions">
+                    <option value="Ingeniero de Sistemas"></option>
+                    <option value="Ingeniera de Sistemas"></option>
+                    <option value="Ingeniero de Software"></option>
+                    <option value="Ingeniera de Software"></option>
+                    <option value="Administrador de Empresas"></option>
+                    <option value="Administradora de Empresas"></option>
+                    <option value="Profesional en Comercio Internacional"></option>
+                    <option value="Economista"></option>
+                    <option value="Contador Público"></option>
+                    <option value="Contadora Pública"></option>
+                    <option value="Abogado"></option>
+                    <option value="Abogada"></option>
+                    <option value="Diseñador"></option>
+                    <option value="Diseñadora"></option>
+                    <option value="Profesional en Marketing"></option>
+                  </datalist>
+                  <div class="profile-edit-actions">
+                    <span id="ceoExclusiveNote">CEO & Fundador es un cargo exclusivo de Picard.</span>
+                    <button id="saveProfileInfo" type="submit">Guardar datos del perfil</button>
+                  </div>
+                </form>
+
                 <div class="profile-photo-actions">
                   <label class="file-picker primary-file-picker">Cambiar foto
                     <input id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp">
@@ -113,12 +172,13 @@
                   <button id="saveAvatar" type="button" disabled>Guardar foto</button>
                   <small id="avatarFileName">JPG, PNG o WebP · máximo 5 MB</small>
                 </div>
+                <div id="profileStatus" class="form-status" role="status" hidden></div>
                 <div id="avatarStatus" class="form-status" role="status" hidden></div>
               </div>
             </article>
 
-            <article class="partner-profile-card">
-              <div id="profilePartnerAvatar" class="partner-profile-avatar">—</div>
+            <article id="partnerProfileCard" class="partner-profile-card rank-standard">
+              <div id="profilePartnerAvatar" class="partner-profile-avatar rank-standard">—</div>
               <div>
                 <small>OTRO ADMINISTRADOR</small>
                 <h3 id="profilePartnerName">—</h3>
@@ -220,6 +280,6 @@
       </div>
     </section>
   </main>
-  <script src="admin.js?v=20260919-2"></script>
+  <script src="admin.js?v=20260919-3"></script>
 </body>
 </html>
