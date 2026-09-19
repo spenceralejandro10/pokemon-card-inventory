@@ -521,10 +521,13 @@ function detailRowsHtml(details){
 function renderProducts(){
  const q=($("#productSearch")?.value||"").trim().toLowerCase();
  const mode=$("#channelFilter")?.value||"all";
+ const availability=$("#availabilityFilter")?.value||"all";
  const rows=state.products.filter(p=>{
   const c=channelState(p);
   if(mode==="selected"&&!c.enabled)return false;
   if(mode==="cardnest"&&c.enabled)return false;
+  if(availability==="available"&&(p.sale_status!=="available"||Number(p.stock_quantity)<=0))return false;
+  if(availability==="sold_out"&&(p.sale_status!=="sold_out"&&Number(p.stock_quantity)>0))return false;
   const a=p.authenticity||{};
   const details=(p.details||[]).map(d=>[d.section,d.label,d.value].join(" ")).join(" ");
   const hay=[p.id,p.name,p.reference_code,p.category_code,p.product_type,p.brand,p.model,a.authenticity_type,a.brand_name,details].join(" ").toLowerCase();
@@ -545,10 +548,19 @@ function renderProducts(){
     '<div class="product-summary-chips">'+
      '<span>'+safe(String(p.stock_quantity))+' uds.</span>'+
      '<span>'+safe(sellLabel)+'</span>'+
+     '<span>♥ '+safe(String(Number(p.interest_count||0)))+' interesados</span>'+
      '<span>'+safe(authenticityLabel(a.authenticity_type))+'</span>'+
     '</div>'+
    '</summary>'+
    '<div class="product-admin-body">'+
+    '<div class="product-availability-bar">'+
+     '<div><small>DISPONIBILIDAD EN TIENDA</small><strong>'+safe(p.id)+'</strong><span>♥ '+safe(String(Number(p.interest_count||0)))+' personas lo tienen guardado</span></div>'+
+     '<div class="product-availability-buttons">'+
+      '<button class="availability-action '+(p.sale_status==="available"&&Number(p.stock_quantity)>0?"active":"")+'" data-availability="available" type="button">Disponible</button>'+
+      '<button class="availability-action danger '+(p.sale_status==="sold_out"||Number(p.stock_quantity)<=0?"active":"")+'" data-availability="sold_out" type="button">Sin disponibilidad</button>'+
+     '</div>'+
+     '<div class="availability-status" role="status"></div>'+
+    '</div>'+
 
     '<details class="admin-subaccordion">'+
      '<summary>Datos principales <small>Nombre, categoría, referencia y descripción</small></summary>'+
@@ -618,6 +630,7 @@ function renderProducts(){
   input?.addEventListener("input",()=>{const n=parsePrice(input.value);input.value=n?new Intl.NumberFormat("es-CO").format(n):""});
   row.querySelector(".channel-save")?.addEventListener("click",()=>saveChannel(row));
   row.querySelector(".product-save")?.addEventListener("click",()=>saveProduct(row));
+  row.querySelectorAll(".availability-action").forEach(btn=>btn.addEventListener("click",()=>setProductAvailability(row,btn.dataset.availability,btn)));
   row.querySelector(".add-detail")?.addEventListener("click",()=>addDetailRow(row));
   row.querySelectorAll(".remove-detail").forEach(btn=>btn.addEventListener("click",()=>removeDetailRow(btn)));
   row.querySelectorAll(".admin-subaccordion").forEach(detail=>{
@@ -697,6 +710,34 @@ async function saveProduct(row){
   btn.disabled=false;btn.textContent="Guardar datos del producto";
  }
 }
+async function setProductAvailability(row,availability,button){
+ const productId=row.dataset.product;
+ const status=row.querySelector(".availability-status");
+ const buttons=Array.from(row.querySelectorAll(".availability-action"));
+ buttons.forEach(b=>b.disabled=true);
+ if(status){status.textContent="Actualizando disponibilidad…";status.className="availability-status"}
+ try{
+  const data=await api("set_product_availability",{product_id:productId,availability});
+  const p=state.products.find(x=>x.id===productId);
+  if(p&&data.product){
+   p.sale_status=data.product.sale_status;
+   p.stock_quantity=data.product.stock_quantity;
+  }
+  if(status){
+   status.textContent=availability==="available"?"Producto disponible en la tienda.":"Producto marcado sin disponibilidad.";
+   status.className="availability-status success";
+  }
+  await loadDashboard(true);
+ }catch(e){
+  if(status){
+   status.textContent=e.message||"No fue posible actualizar la disponibilidad.";
+   status.className="availability-status error";
+  }
+ }finally{
+  buttons.forEach(b=>b.disabled=false);
+ }
+}
+
 async function saveChannel(row){
  const productId=row.dataset.product,toggle=row.querySelector(".ml-toggle"),priceEl=row.querySelector(".price-input"),status=row.querySelector(".row-status"),btn=row.querySelector(".channel-save");
  const enabled=!!toggle.checked,price=parsePrice(priceEl.value)||null;
@@ -764,6 +805,7 @@ $$("[data-go-ml]").forEach(b=>b.addEventListener("click",()=>switchView("mercado
 $$("[data-go-team]").forEach(b=>b.addEventListener("click",()=>switchView("team")));
 $$("[data-go-security]").forEach(b=>b.addEventListener("click",()=>switchView("security")));
 $("#productSearch").addEventListener("input",renderProducts);
+$("#availabilityFilter")?.addEventListener("change",renderProducts);
 $("#channelFilter").addEventListener("change",renderProducts);
 $("#mlConnectBtn")?.addEventListener("click",startMlConnection);
 $("#mlRefreshCheckBtn")?.addEventListener("click",refreshMlPreflight);
