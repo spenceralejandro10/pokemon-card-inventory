@@ -127,3 +127,28 @@
   .ml-channel-actions a{width:100%}
   .ml-channel-proof{align-items:flex-start}
 }
+
+
+.ml-channel-brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.ml-channel-logo{
+  display:block;
+  width:210px;
+  max-width:100%;
+  height:auto;
+  background:#fff;
+  border-radius:14px;
+  padding:10px 14px;
+  box-shadow:0 8px 18px rgba(20,33,61,.10);
+}
+@media (max-width:540px){
+  .ml-channel-logo{width:180px}
+}
+
+.legal-source-top{
+  margin:24px 0 30px;
+}
