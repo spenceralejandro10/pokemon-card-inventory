@@ -41,61 +41,59 @@
   <button class="catalog-tab catalog-tab-electronics" data-category="electronics">Electrónica <span class="new-pill">NUEVO</span></button>
   <button class="catalog-tab" data-category="misc">Coleccionables y más</button>
 </nav>
-<section id="mercadoLibreChannel" class="ml-channel-banner ml-channel-compact" aria-label="Mercado Libre como canal complementario de compra">
-  <div class="ml-channel-brand-panel">
-    <div class="ml-channel-logo-lockup" aria-label="Mercado Libre">
-      <img class="ml-channel-symbol" src="assets/partners/mercadolibre-handshake.svg" alt="">
-      <img class="ml-channel-wordmark" src="assets/partners/mercadolibre-wordmark.svg" alt="Mercado Libre">
+<section class="services-hub" aria-label="Servicios y opciones de compra de CardNest">
+  <header class="services-hub-head">
+    <div>
+      <small>SERVICIOS CARDNEST</small>
+      <strong>Compra, envíos y nuevas categorías</strong>
     </div>
-    <span class="ml-channel-kicker">CANAL COMPLEMENTARIO</span>
-  </div>
+    <span>Lo importante, reunido en un solo lugar.</span>
+  </header>
 
-  <div class="ml-channel-content">
-    <h2>¿Prefieres comprar por Mercado Libre?</h2>
-    <p>CardNest integra Mercado Libre como canal adicional para productos seleccionados. Cuando la publicación está disponible, puedes completar allí la compra y el pago bajo los términos y mecanismos de protección de Mercado Libre.</p>
-    <div class="ml-channel-trust-row">
-      <span><b>✓</b> Compra dentro de Mercado Libre</span>
-      <span><b>✓</b> Compra Protegida según sus políticas</span>
-      <span><b>✓</b> Canal separado de la compra directa</span>
-    </div>
-  </div>
-
-  <div class="ml-channel-side">
-    <div class="ml-channel-safe">
-      <img src="assets/partners/mercadolibre-handshake.svg" alt="">
-      <div>
-        <strong>Compra protegida dentro de la plataforma</strong>
-        <span>La compra y el pago deben finalizarse dentro de Mercado Libre para conservar las protecciones aplicables.</span>
+  <div class="services-hub-grid">
+    <article id="mercadoLibreChannel" class="service-card service-card-ml">
+      <div class="service-card-icon service-card-icon-ml" aria-hidden="true">
+        <img src="assets/partners/mercadolibre-handshake.svg" alt="">
       </div>
-    </div>
-    <div class="ml-channel-actions ml-channel-actions-side">
-      <a class="ml-channel-primary" href="https://wa.me/573125214785?text=Hola%2C%20vi%20un%20producto%20en%20CardNest%20y%20prefiero%20comprarlo%20por%20Mercado%20Libre.%20%C2%BFMe%20pueden%20confirmar%20si%20tiene%20publicaci%C3%B3n%20disponible%3F" target="_blank" rel="noopener">Pedir opción por Mercado Libre</a>
-      <a class="ml-channel-secondary" href="terminos.html#marketplace">Ver cómo funciona</a>
-    </div>
+      <div class="service-card-content">
+        <span class="service-card-kicker">CANAL COMPLEMENTARIO</span>
+        <h2>Compra por Mercado Libre</h2>
+        <p>Para productos seleccionados puedes completar la compra dentro de Mercado Libre y conservar las protecciones aplicables de la plataforma.</p>
+        <div class="service-card-actions">
+          <a class="service-primary" href="https://wa.me/573125214785?text=Hola%2C%20vi%20un%20producto%20en%20CardNest%20y%20prefiero%20comprarlo%20por%20Mercado%20Libre.%20%C2%BFMe%20pueden%20confirmar%20si%20tiene%20publicaci%C3%B3n%20disponible%3F" target="_blank" rel="noopener">Solicitar opción</a>
+          <a class="service-link" href="terminos.html#marketplace">Cómo funciona</a>
+        </div>
+      </div>
+    </article>
+
+    <article id="logisticsPartner" class="service-card service-card-shipping">
+      <div class="service-card-icon service-card-icon-shipping" aria-hidden="true">
+        <img src="assets/partners/coordinadora.svg" alt="">
+      </div>
+      <div class="service-card-content">
+        <span class="service-card-kicker">ENVÍOS DIRECTOS</span>
+        <h2>Envíos con Coordinadora</h2>
+        <p>Los pedidos gestionados directamente por CardNest cuentan con generación de guía, transporte y seguimiento según las condiciones del servicio.</p>
+        <div class="service-card-actions">
+          <a class="service-primary" href="https://rastreo.coordinadora.com/" target="_blank" rel="noopener">Rastrear envío</a>
+          <a class="service-link" href="terminos.html#envios">Condiciones</a>
+        </div>
+      </div>
+    </article>
+
+    <article id="electronicsLaunch" class="service-card service-card-electronics">
+      <div class="service-card-icon service-card-icon-electronics" aria-hidden="true">⌁</div>
+      <div class="service-card-content">
+        <span class="service-card-kicker">NUEVO EN CARDNEST</span>
+        <h2>Electrónica</h2>
+        <p>Audio, carga, conectividad, periféricos y otros productos de tecnología dentro del mismo catálogo.</p>
+        <div class="service-card-actions">
+          <button id="exploreElectronics" class="service-primary" type="button">Explorar electrónica</button>
+          <span class="service-card-note">Nueva categoría</span>
+        </div>
+      </div>
+    </article>
   </div>
-</section>
-<section id="logisticsPartner" class="logistics-partner" aria-label="Aliado logístico de CardNest">
-  <div class="logistics-partner-brand">
-    <span class="logistics-partner-kicker">ALIADO LOGÍSTICO DE ENVÍOS</span>
-    <img src="assets/partners/coordinadora.svg" alt="Coordinadora">
-  </div>
-  <div class="logistics-partner-copy">
-    <strong>Nuestros envíos directos se realizan con Coordinadora</strong>
-    <span>CardNest utiliza Coordinadora para la operación logística de los pedidos gestionados directamente por nosotros, incluyendo generación de guía, transporte y seguimiento según las condiciones aplicables del servicio.</span>
-  </div>
-  <div class="logistics-partner-actions">
-    <a href="https://rastreo.coordinadora.com/" target="_blank" rel="noopener">Rastrear envío</a>
-    <a href="terminos.html#envios">Condiciones de envío</a>
-  </div>
-</section>
-<section id="electronicsLaunch" class="electronics-launch" aria-label="Nueva sección de electrónica">
-  <div class="electronics-launch-badge">NUEVO EN CARDNEST</div>
-  <div class="electronics-launch-copy">
-    <small>TECNOLOGÍA Y ACCESORIOS ELECTRÓNICOS</small>
-    <strong>¿Te apasiona la electrónica?</strong>
-    <span>Ahora también encuentras productos de tecnología seleccionados dentro de CardNest. Explora audio, carga, conectividad, periféricos y más sin salir del mismo catálogo.</span>
-  </div>
-  <button id="exploreElectronics" type="button">Explorar electrónica</button>
 </section>
 <section class="search-panel">
   <input id="searchInput" type="search" autocomplete="off" spellcheck="false" aria-label="Buscar productos" placeholder="Busca por nombre, número, colección o referencia">
