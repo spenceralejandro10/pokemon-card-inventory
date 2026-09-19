@@ -3,6 +3,7 @@ const SUPABASE_KEY="sb_publishable_6UjwLuM-op0-OBKWlbusTw_qmLNZVfU";
 const WA="573125214785";
 const SALE_API=SUPABASE_URL+"/functions/v1/sale-order";
 const ADMIN_API=SUPABASE_URL+"/functions/v1/admin-control";
+const INTEREST_API=SUPABASE_URL+"/functions/v1/product-interest";
 const CATALOG_PAGE_SIZE=48;
 const SUPABASE_PAGE_SIZE=1000;
 const CATALOG_MAX_REMOTE_ROWS=25000;
@@ -31,9 +32,10 @@ const SHIPPING={
  5:{L:16230,R:19610,N:29270,Z:41250,O:49350,E:65730}
 };
 const state={
- products:[],favorites:new Map(),offers:{},offerMode:"individual",
+ products:[],favorites:new Map(),interestCounts:new Map(),offers:{},offerMode:"individual",
  offerHistory:[],category:"all",sort:"featured",visibleLimit:CATALOG_PAGE_SIZE,
- lotOffer:0,order:null,validatedCodes:new Map(),codeHandlingPrice:0,codeShippingWeightKg:1
+ lotOffer:0,order:null,validatedCodes:new Map(),codeHandlingPrice:0,codeShippingWeightKg:1,
+ realtimeClient:null,realtimeChannel:null
 };
 
 const normalize=function(v){
@@ -55,6 +57,76 @@ function escapeHTML(value){
  return String(value==null?"":value).replace(/[&<>"']/g,function(char){
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char];
  });
+}
+
+const INTEREST_VISITOR_KEY="cardnestInterestVisitorId";
+function interestVisitorId(){
+ let id="";
+ try{id=String(localStorage.getItem(INTEREST_VISITOR_KEY)||"")}catch(e){}
+ if(!/^[0-9a-fA-F-]{36}$/.test(id)){
+  if(globalThis.crypto&&typeof globalThis.crypto.randomUUID==="function")id=globalThis.crypto.randomUUID();
+  else{
+   const hex="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+   id=hex.replace(/[xy]/g,function(c){
+    const r=Math.floor(Math.random()*16),v=c==="x"?r:(r&3|8);
+    return v.toString(16);
+   });
+  }
+  try{localStorage.setItem(INTEREST_VISITOR_KEY,id)}catch(e){}
+ }
+ return id;
+}
+async function setRemoteInterest(p,interested,quiet){
+ if(!p||p.demo)return null;
+ const res=await fetch(INTEREST_API,{
+  method:"POST",
+  headers:{"Content-Type":"application/json",apikey:SUPABASE_KEY},
+  body:JSON.stringify({
+   action:"set",
+   product_id:String(p.id),
+   visitor_id:interestVisitorId(),
+   interested:interested===true
+  })
+ });
+ const data=await res.json().catch(function(){return {}});
+ if(!res.ok){
+  if(!quiet)throw new Error(data.message||"No fue posible actualizar el interés.");
+  return null;
+ }
+ state.interestCounts.set(String(p.id),Number(data.interest_count||0));
+ return data;
+}
+async function syncSavedInterests(){
+ const saved=Array.from(state.favorites.values()).filter(function(p){return p&&!p.demo&&p.sale_status==="available"&&Number(p.stock_quantity)>0});
+ if(!saved.length)return;
+ await Promise.allSettled(saved.map(function(p){return setRemoteInterest(p,true,true)}));
+ render();
+}
+function initCatalogRealtime(){
+ if(state.realtimeClient||!window.supabase||typeof window.supabase.createClient!=="function")return;
+ try{
+  const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+  state.realtimeClient=client;
+  state.realtimeChannel=client.channel("cardnest-catalog-live")
+   .on("postgres_changes",{event:"*",schema:"public",table:"product_interest_counts"},function(payload){
+    const row=payload.new||payload.old||{};
+    const id=String(row.product_id||"");
+    if(!id)return;
+    state.interestCounts.set(id,Number(row.interest_count||0));
+    render();
+   })
+   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"products"},function(payload){
+    const row=payload.new||{};
+    const p=state.products.find(function(item){return String(item.id)===String(row.id)});
+    if(!p)return;
+    if(row.sale_status!=null)p.sale_status=row.sale_status;
+    if(row.stock_quantity!=null)p.stock_quantity=Number(row.stock_quantity);
+    if(row.validation_status!=null)p.validation_status=row.validation_status;
+    render();
+    updateFavorites();
+   })
+   .subscribe();
+ }catch(e){console.warn("Realtime no disponible",e)}
 }
 
 try{state.offerHistory=(JSON.parse(localStorage.getItem("cardnestOfferHistory")||localStorage.getItem("pokemonOfferHistory")||"[]")||[]).slice(0,3);localStorage.setItem("cardnestOfferHistory",JSON.stringify(state.offerHistory))}catch(e){}
@@ -293,7 +365,8 @@ async function loadProducts(){
   fetchSupabaseTable("electronics_details",headers,"","product_id"),
   fetchSupabaseTable("trading_card_details",headers,"","product_id"),
   fetchSupabaseTable("product_details",headers,"","id"),
-  fetchSupabaseTable("product_authenticity",headers,"","product_id")
+  fetchSupabaseTable("product_authenticity",headers,"","product_id"),
+  fetchSupabaseTable("product_interest_counts",headers,"","product_id")
  ]);
  const remoteCards=results[0].status==="fulfilled"&&Array.isArray(results[0].value)?results[0].value:[];
  const localCards=results[3].status==="fulfilled"&&Array.isArray(results[3].value)?results[3].value:[];
@@ -322,6 +395,8 @@ async function loadProducts(){
  const cardMap=mapByProduct(results[9].status==="fulfilled"?results[9].value:[]);
  const detailsMap=detailsByProduct(results[10].status==="fulfilled"?results[10].value:[]);
  const authenticityMap=mapByProduct(results[11].status==="fulfilled"?results[11].value:[]);
+ const interestRows=results[12].status==="fulfilled"&&Array.isArray(results[12].value)?results[12].value:[];
+ state.interestCounts=new Map(interestRows.map(function(row){return [String(row.product_id),Number(row.interest_count||0)]}));
  const master=masterRaw.map(function(p){return normalizeMasterProduct(p,mediaMap,miscMap,bookMap,electronicsMap,cardMap,detailsMap,authenticityMap)});
  const byId=new Map();
  // Un ID CardNest pertenece a una sola categoría. Si existe una versión maestra,
@@ -338,12 +413,15 @@ async function loadProducts(){
  if(results[5].status!=="fulfilled")partial.push("galerías de imágenes");
  if(results[10].status!=="fulfilled")partial.push("detalles de productos");
  if(results[11].status!=="fulfilled")partial.push("autenticidad");
+ if(results[12].status!=="fulfilled")partial.push("interés en productos");
  if(!remoteCards.length&&localCards.length)partial.push("inventario Pokémon local");
  if(results[1].status!=="fulfilled")partial.push("categorías de demostración");
  setCatalogStatus(partial.length?"Catálogo parcial: no fue posible actualizar "+partial.join(" y ")+".":"",partial.length?"warning":"");
  render();
  updateFavorites();
  updateQuote();
+ initCatalogRealtime();
+ syncSavedInterests();
 }
 function matches(p,q,language,rarity){
  const detailSearch=(Array.isArray(p.details)?p.details:[]).map(function(d){return [d.section,d.label,d.value].join(" ")}).join(" ");
@@ -552,6 +630,8 @@ function render(){
   const infoBtn=n.querySelector(".product-info-btn");
   if(infoBtn)infoBtn.onclick=function(){openProductInfo(card,p)};
 
+  const interestCount=n.querySelector(".interest-count");
+  if(interestCount)interestCount.textContent=String(state.interestCounts.get(String(p.id))||0);
   const fav=n.querySelector(".favorite-btn"),selected=state.favorites.has(productKey(p));
   if(sold){fav.disabled=true;fav.textContent="No disponible"}else{fav.textContent=selected?"♥ Seleccionado":"♡ Me interesa";fav.classList.toggle("selected",selected)}
   if(!sold)fav.onclick=function(){toggleFavorite(p)};
@@ -665,12 +745,25 @@ function setOfferStatus(message,type){
  const box=document.getElementById("offerStatus");
  box.hidden=!message;box.textContent=message||"";box.className="offer-status "+(type||"");
 }
-function toggleFavorite(p){
- const key=productKey(p);
- if(state.favorites.has(key))state.favorites.delete(key);else state.favorites.set(key,p);
+async function toggleFavorite(p){
+ if(!p||p.demo||p.sale_status!=="available"||Number(p.stock_quantity)<=0)return;
+ const key=productKey(p),wasSelected=state.favorites.has(key),next=!wasSelected;
+ if(next)state.favorites.set(key,p);else state.favorites.delete(key);
  persistFavorites();updateFavorites();render();
+ try{
+  const data=await setRemoteInterest(p,next,false);
+  if(data)render();
+ }catch(error){
+  if(wasSelected)state.favorites.set(key,p);else state.favorites.delete(key);
+  persistFavorites();updateFavorites();render();
+  setCatalogStatus(error.message||"No fue posible actualizar tu selección.","warning");
+ }
 }
-function selectedProducts(){return Array.from(state.favorites.values()).filter(Boolean)}
+function selectedProducts(){
+ return Array.from(state.favorites.values()).filter(function(p){
+  return !!p&&p.sale_status==="available"&&Number(p.stock_quantity)>0;
+ });
+}
 const panelTriggers=new WeakMap();
 function syncPanelLock(){
  document.body.classList.toggle("panel-open",!!document.querySelector(".shipping-modal.open,.cart-viewer.open"));
@@ -746,9 +839,11 @@ document.getElementById("closeFavorites").onclick=closeFavorites;
 document.getElementById("favoritesBackdrop").onclick=closeFavorites;
 document.getElementById("clearFavorites").onclick=function(){
  if(confirm("¿Quieres borrar todos los productos seleccionados?")){
+  const removed=Array.from(state.favorites.values()).filter(Boolean);
   state.favorites.clear();state.offers={};state.lotOffer=0;
   document.getElementById("lotOffer").value="";
   persistFavorites();persistOfferDraft();updateFavorites();render();closeFavorites();closeCartViewer();
+  Promise.allSettled(removed.map(function(p){return setRemoteInterest(p,false,true)})).then(function(){render()});
  }
 };
 
