@@ -25,7 +25,7 @@ const SHIPPING={
 const state={
  products:[],favorites:new Map(),offers:{},offerMode:"individual",
  offerHistory:[],category:"all",sort:"featured",visibleLimit:CATALOG_PAGE_SIZE,
- lotOffer:0,order:null,validatedCode:null,codeHandlingPrice:0,codeShippingWeightKg:1
+ lotOffer:0,order:null,validatedCodes:new Map(),codeHandlingPrice:0,codeShippingWeightKg:1
 };
 
 const normalize=function(v){
@@ -679,7 +679,7 @@ function renderToploaderConfigurator(){
 }
 function updateQuote(){
  const zone=document.getElementById("shippingZone")?.value||"N";
- const hasCode=!!state.validatedCode;
+ const hasCode=state.validatedCodes.size>0;
  const kg=Math.max(1,Math.min(5,Number(state.codeShippingWeightKg||1)));
  const topQty=topLoaderQty();
  const topCost=topLoaderPrice(topQty);
@@ -783,8 +783,29 @@ function setCheckoutStatus(message,type){
  const box=document.getElementById("checkoutStatus");
  box.hidden=!message;box.textContent=message||"";box.className="checkout-status "+(type||"");
 }
-function normalizedSaleCode(){return document.getElementById("saleCode").value.trim().toUpperCase()}
+
+function normalizeSaleCodeValue(value){return String(value||"").trim().toUpperCase()}
 function validSaleCodeFormat(code){return /^[A-Z0-9][A-Z0-9-]{5,39}$/.test(code)}
+function codeInputs(){return Array.from(document.querySelectorAll(".sale-code-input"))}
+function enteredSaleCodes(){return codeInputs().map(function(input){return normalizeSaleCodeValue(input.value)}).filter(Boolean)}
+function uniqueSaleCodes(){
+ const codes=enteredSaleCodes();
+ return new Set(codes).size===codes.length?codes:null;
+}
+function setRowCodeStatus(row,type,message){
+ const box=row.querySelector(".sale-code-row-status");
+ box.className="sale-code-row-status code-status "+(type||"");
+ box.textContent=message;
+}
+function setCodeStatus(type,message){
+ const box=document.getElementById("saleCodeStatus");
+ box.className="code-status code-summary "+(type||"");
+ box.textContent=message;
+}
+function setCheckoutStatus(message,type){
+ const box=document.getElementById("checkoutStatus");
+ box.hidden=!message;box.textContent=message||"";box.className="checkout-status "+(type||"");
+}
 function moveCheckoutInfoInitial(){
  const info=document.getElementById("checkoutInfo");
  const gate=document.querySelector(".checkout-gate");
@@ -796,8 +817,8 @@ function moveCheckoutInfoToEnd(){
  const unlocked=document.getElementById("checkoutUnlocked");
  if(info&&unlocked){unlocked.appendChild(info);info.classList.remove("checkout-info-initial")}
 }
-function clearValidatedCode(){
- state.validatedCode=null;
+function clearValidatedCodes(){
+ state.validatedCodes.clear();
  state.codeHandlingPrice=0;
  state.codeShippingWeightKg=1;
  document.getElementById("checkoutUnlocked").hidden=true;
@@ -806,64 +827,134 @@ function clearValidatedCode(){
  renderToploaderConfigurator();
  updateQuote();
 }
-function applyValidatedCode(code,data,prefix){
- state.validatedCode=code;
- state.codeHandlingPrice=Math.max(0,Number(data.handling_price)||0);
- state.codeShippingWeightKg=Math.max(1,Math.min(5,Math.floor(Number(data.shipping_weight_kg)||1)));
- if(!data.ready_for_shipping){
-  clearValidatedCode();
-  setCodeStatus("error","Este código no está listo para procesar el envío. Solicita un código nuevo al analista.");
-  return;
+function recomputeCodeGate(){
+ const rows=Array.from(document.querySelectorAll("[data-code-row]"));
+ let handling=0,weight=0,validCount=0,hasUnvalidated=false;
+ rows.forEach(function(row){
+  const input=row.querySelector(".sale-code-input");
+  const code=normalizeSaleCodeValue(input.value);
+  if(!code)return;
+  const data=state.validatedCodes.get(code);
+  if(data){validCount++;handling+=Number(data.handling_price||0);weight+=Math.max(1,Number(data.shipping_weight_kg||1))}
+  else hasUnvalidated=true;
+ });
+ state.codeHandlingPrice=Math.max(0,handling);
+ state.codeShippingWeightKg=Math.max(1,Math.min(5,Math.floor(weight||1)));
+ const ready=validCount>0&&!hasUnvalidated;
+ document.getElementById("checkoutUnlocked").hidden=!ready;
+ if(ready){
+  setCodeStatus("success",validCount+" código"+(validCount===1?"":"s")+" validado"+(validCount===1?"":"s")+". Ya puedes completar y pagar el envío.");
+  document.getElementById("deliveryDetails").open=true;
+  moveCheckoutInfoToEnd();
+ }else{
+  moveCheckoutInfoInitial();
+  if(validCount&&hasUnvalidated)setCodeStatus("warning","Valida o elimina los códigos pendientes antes de continuar.");
+  else if(!validCount)setCodeStatus("","Valida al menos un código para continuar. Puedes agregar hasta 3.");
  }
- setCodeStatus("success",(prefix?prefix+" ":"")+"Código válido. Ya puedes completar los datos y pagar el envío.");
- document.getElementById("checkoutUnlocked").hidden=false;
- document.getElementById("deliveryDetails").open=true;
- moveCheckoutInfoToEnd();
- renderToploaderConfigurator();
  updateQuote();
+ return ready;
 }
-document.getElementById("saleCode").addEventListener("input",function(){
- this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,"");
- setCheckoutStatus("");
- if(state.validatedCode&&normalizedSaleCode()!==state.validatedCode){
-  clearValidatedCode();
-  setCodeStatus("","El código cambió. Debes validarlo nuevamente.");
- }
-});
-const useDemoSaleCode=document.getElementById("useDemoSaleCode");
-async function findAvailableDemoCode(){
- const candidates=["CN-PRUEBA-001"].concat(Array.from({length:30},function(_,i){return "CN-TEST-"+String(i+1).padStart(3,"0")}));
- for(const code of candidates){
+async function validateCodeRow(row,prefix){
+ const input=row.querySelector(".sale-code-input");
+ const code=normalizeSaleCodeValue(input.value);
+ input.value=code;
+ if(!code){setRowCodeStatus(row,"error","Escribe un código.");recomputeCodeGate();return false}
+ if(!validSaleCodeFormat(code)){setRowCodeStatus(row,"error","Formato de código inválido.");recomputeCodeGate();return false}
+ const all=enteredSaleCodes();
+ if(all.filter(function(x){return x===code}).length>1){setRowCodeStatus(row,"error","Este código ya fue agregado.");recomputeCodeGate();return false}
+ const btn=row.querySelector(".validate-sale-code");
+ btn.disabled=true;btn.textContent="Validando…";
+ try{
   const data=await saleApi({action:"validate",code:code});
-  if(data.valid&&data.ready_for_shipping)return {code:code,data:data};
+  if(data.valid&&data.ready_for_shipping){
+   state.validatedCodes.set(code,data);
+   setRowCodeStatus(row,"success",(prefix?prefix+" ":"")+"Código válido.");
+   recomputeCodeGate();
+   return true;
+  }
+  state.validatedCodes.delete(code);
+  setRowCodeStatus(row,"error",data.message||"Código inválido, vencido o ya utilizado.");
+  recomputeCodeGate();return false;
+ }catch(e){
+  state.validatedCodes.delete(code);
+  setRowCodeStatus(row,"error",e.message||"No fue posible validar el código.");
+  recomputeCodeGate();return false;
+ }finally{
+  btn.disabled=false;btn.textContent="Validar";
  }
- return null;
+}
+function wireCodeRow(row){
+ const input=row.querySelector(".sale-code-input");
+ input.addEventListener("input",function(){
+  const oldCode=input.dataset.validatedCode||"";
+  input.value=input.value.toUpperCase().replace(/[^A-Z0-9-]/g,"");
+  if(oldCode&&normalizeSaleCodeValue(input.value)!==oldCode)state.validatedCodes.delete(oldCode);
+  input.dataset.validatedCode="";
+  setRowCodeStatus(row,"","Pendiente de validación.");
+  setCheckoutStatus("");
+  recomputeCodeGate();
+ });
+ row.querySelector(".validate-sale-code").addEventListener("click",async function(){
+  const ok=await validateCodeRow(row,"");
+  if(ok)input.dataset.validatedCode=normalizeSaleCodeValue(input.value);
+ });
+ const remove=row.querySelector(".remove-sale-code");
+ if(remove)remove.addEventListener("click",function(){
+  const code=normalizeSaleCodeValue(input.value);
+  if(code)state.validatedCodes.delete(code);
+  row.remove();
+  document.getElementById("addSaleCode").disabled=document.querySelectorAll("[data-code-row]").length>=3;
+  recomputeCodeGate();
+ });
+}
+function addSaleCodeRow(value){
+ const container=document.getElementById("saleCodeRows");
+ if(container.querySelectorAll("[data-code-row]").length>=3)return null;
+ const row=document.createElement("div");
+ row.className="sale-code-row";row.setAttribute("data-code-row","");
+ row.innerHTML='<div class="code-validator"><input class="sale-code-input" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" pattern="[A-Za-z0-9-]{6,40}" aria-label="Código de venta adicional" placeholder="Otro código de compra"><button class="validate-sale-code" type="button">Validar</button><button class="remove-sale-code" type="button" aria-label="Eliminar este código">×</button></div><div class="sale-code-row-status code-status" aria-live="polite">Código adicional.</div>';
+ container.appendChild(row);
+ if(value)row.querySelector(".sale-code-input").value=value;
+ wireCodeRow(row);
+ document.getElementById("addSaleCode").disabled=container.querySelectorAll("[data-code-row]").length>=3;
+ return row;
+}
+document.querySelectorAll("[data-code-row]").forEach(wireCodeRow);
+document.getElementById("addSaleCode").onclick=function(){addSaleCodeRow("")};
+
+const useDemoSaleCode=document.getElementById("useDemoSaleCode");
+async function findAvailableDemoCodes(limit){
+ const candidates=["CN-PRUEBA-001","CN-PRUEBA-002","CN-PRUEBA-003"].concat(Array.from({length:30},function(_,i){return "CN-TEST-"+String(i+1).padStart(3,"0")}));
+ const found=[];
+ for(const code of candidates){
+  if(found.length>=limit)break;
+  try{
+   const data=await saleApi({action:"validate",code:code});
+   if(data.valid&&data.ready_for_shipping)found.push({code:code,data:data});
+  }catch(e){}
+ }
+ return found;
 }
 if(useDemoSaleCode)useDemoSaleCode.onclick=async function(){
- const btn=this;btn.disabled=true;btn.textContent="Buscando…";setCodeStatus("","Buscando un código temporal disponible.");
+ const btn=this;btn.disabled=true;btn.textContent="Buscando…";clearValidatedCodes();
  try{
-  const found=await findAvailableDemoCode();
-  if(!found){clearValidatedCode();document.getElementById("saleCode").value="";setCodeStatus("error","Los códigos temporales de prueba ya fueron utilizados.");return}
-  document.getElementById("saleCode").value=found.code;
-  applyValidatedCode(found.code,found.data,"Modo prueba listo.");
- }catch(e){clearValidatedCode();setCodeStatus("error",e.message||"No fue posible preparar el modo de prueba.")}
+  document.querySelectorAll("[data-code-row]").forEach(function(row,i){if(i>0)row.remove()});
+  const first=document.querySelector("[data-code-row]");
+  first.querySelector(".sale-code-input").value="";
+  setRowCodeStatus(first,"","Buscando códigos temporales.");
+  const found=await findAvailableDemoCodes(3);
+  if(!found.length){setCodeStatus("error","No quedan códigos temporales disponibles.");return}
+  found.forEach(function(entry,i){
+   const row=i===0?first:addSaleCodeRow("");
+   const input=row.querySelector(".sale-code-input");
+   input.value=entry.code;input.dataset.validatedCode=entry.code;
+   state.validatedCodes.set(entry.code,entry.data);
+   setRowCodeStatus(row,"success","Código de prueba válido.");
+  });
+  document.getElementById("addSaleCode").disabled=found.length>=3;
+  recomputeCodeGate();
+ }catch(e){clearValidatedCodes();setCodeStatus("error","No fue posible preparar los códigos de prueba.")}
  finally{btn.disabled=false;btn.textContent="Preparar prueba"}
-};
-document.getElementById("validateSaleCode").onclick=async function(){
- const code=normalizedSaleCode();
- if(!code){setCodeStatus("error","Escribe el código que te entregó el analista.");return}
- if(!validSaleCodeFormat(code)){setCodeStatus("error","El código solo puede contener letras, números y guiones.");document.getElementById("saleCode").focus();return}
- document.getElementById("saleCode").value=code;
- const btn=this;btn.disabled=true;btn.textContent="Validando...";
- try{
-  const data=await saleApi({action:"validate",code:code});
-  if(data.valid)applyValidatedCode(code,data,"");
-  else{clearValidatedCode();setCodeStatus("error",data.message||"Código inválido, vencido o ya utilizado.")}
- }catch(e){
-  clearValidatedCode();setCodeStatus("error",e.message||"No fue posible validar el código. Intenta nuevamente.");
- }finally{
-  btn.disabled=false;btn.textContent="Validar código";
- }
 };
 
 document.getElementById("fillTestCheckout").onclick=function(){
@@ -942,7 +1033,8 @@ function validOrderResponse(order){
  if(!order||typeof order!=="object")return false;
  const expiresAt=new Date(order.expires_at).getTime();
  const values=[order.shipping_price,order.handling_price,order.protection_price,order.shipping_total].map(Number);
- if(!order.id||!validSaleCodeFormat(String(order.sale_code||""))||!Number.isFinite(expiresAt)||expiresAt<=Date.now())return false;
+ const responseCodes=Array.isArray(order.sale_codes)&&order.sale_codes.length?order.sale_codes:[order.sale_code];
+ if(!order.id||responseCodes.length<1||responseCodes.length>3||responseCodes.some(function(code){return !validSaleCodeFormat(String(code||""))})||!Number.isFinite(expiresAt)||expiresAt<=Date.now())return false;
  if(values.some(function(value){return !Number.isFinite(value)||value<0}))return false;
  if(!PAYMENT_METHODS.has(order.payment_method)||!String(order.payment_destination||"").trim())return false;
  const topLoaderQty=Number(order.top_loader_qty||0);
@@ -957,10 +1049,10 @@ function validStoredOrder(order){
 }
 document.getElementById("createOrder").onclick=async function(){
  setCheckoutStatus("");
- const code=normalizedSaleCode();
- if(!validSaleCodeFormat(code)||state.validatedCode!==code){
-  setCheckoutStatus("Debes validar primero el código de venta entregado por el analista.","error");
-  document.getElementById("saleCode").focus();return;
+ const codes=uniqueSaleCodes();
+ if(!codes||codes.length<1||codes.length>3||codes.some(function(code){return !validSaleCodeFormat(code)||!state.validatedCodes.has(code)})){
+  setCheckoutStatus("Valida todos los códigos ingresados antes de continuar. Puedes usar entre 1 y 3.","error");
+  document.querySelector(".sale-code-input")?.focus();return;
  }
  const b=buyerData();
  if(!validateBuyer(b)){setCheckoutStatus("Revisa los campos marcados antes de continuar.","error");return}
@@ -995,7 +1087,7 @@ document.getElementById("createOrder").onclick=async function(){
  try{
   const data=await saleApi({
    action:"create_order",
-   code:code,
+   codes:codes,
    buyer:b,
    customerNotes:b.notes,
    deliveryConsent:b.consent,
@@ -1018,7 +1110,7 @@ document.getElementById("createOrder").onclick=async function(){
   btn.textContent="Pedido generado";
  }catch(e){
   if(e.code==="INVALID_OR_EXPIRED_CODE"){
-   clearValidatedCode();setCodeStatus("error","El código ya no está disponible. Solicita uno nuevo al analista.");
+   clearValidatedCodes();setCodeStatus("error","Uno de los códigos ya no está disponible. Solicita uno nuevo al analista.");
   }
   setCheckoutStatus(e.message||"No fue posible generar el pedido.","error");
  }finally{
@@ -1034,7 +1126,7 @@ function makeOrderQRDataUrl(order){
   holder.style.position="fixed";holder.style.left="-9999px";holder.style.top="-9999px";
   document.body.appendChild(holder);
   const qrText="https://wa.me/"+WA+"?text="+encodeURIComponent(
-   "Hola CardNest. Consulta del pedido "+order.id+" / código "+order.sale_code
+   "Hola CardNest. Consulta del pedido "+order.id+" / códigos "+(Array.isArray(order.sale_codes)?order.sale_codes.join(", "):order.sale_code)
   );
   new QRCode(holder,{text:qrText,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
   const canvas=holder.querySelector("canvas");
@@ -1105,7 +1197,7 @@ function buildPdf(){
  setText([255,255,255],22,"bold");d.text("CardNest",14,16);
  setText([217,230,239],9,"normal");d.text("Orden y comprobante de pago del envío",14,23);
  setText([255,255,255],9,"bold");d.text("PEDIDO "+o.id,196,15,{align:"right"});
- setText([217,230,239],8,"normal");d.text("Código "+o.sale_code,196,22,{align:"right"});
+ setText([217,230,239],8,"normal");d.text("Código(s) "+(Array.isArray(o.sale_codes)?o.sale_codes.join(" · "):o.sale_code),196,22,{align:"right",maxWidth:85});
  y=49;
 
  // Status strip + QR
@@ -1185,7 +1277,7 @@ function downloadOrderPDF(){
  try{
   const d=buildPdf();
   if(!d)return false;
-  d.save("CardNest-envio-"+state.order.sale_code+".pdf");
+  d.save("CardNest-envio-"+state.order.id+".pdf");
   return true;
  }catch(error){console.error("PDF generation failed",error);return false}
 }
@@ -1209,7 +1301,7 @@ function resetCheckoutToCodeEntry(){
  const fab=document.getElementById("shippingFab"),fabCopy=fab.querySelector("span"),fabHint=fab.querySelector("small");
  if(fabCopy&&fabCopy.firstChild)fabCopy.firstChild.nodeValue="Programa tu envío";
  if(fabHint)fabHint.textContent="Paga los productos al recibir";
- clearValidatedCode();
+ clearValidatedCodes();
  moveCheckoutInfoInitial();
  const codeInput=document.getElementById("saleCode");
  codeInput.value="";
@@ -1223,7 +1315,7 @@ function refreshPendingOrderNotice(){
  const valid=validStoredOrder(state.order);
  notice.hidden=!valid;
  if(valid){
-  label.textContent=(state.order.sale_code||state.order.id)+" · vence "+new Date(state.order.expires_at).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
+  label.textContent=((Array.isArray(state.order.sale_codes)?state.order.sale_codes.join(" · "):state.order.sale_code)||state.order.id)+" · vence "+new Date(state.order.expires_at).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
  }
 }
 function showCompletedCheckout(){
@@ -1244,7 +1336,7 @@ function showReceipt(){
  const o=state.order;if(!o)return;
  showCompletedCheckout();
  document.getElementById("orderReceipt").hidden=false;
- document.getElementById("receiptId").textContent=o.sale_code||o.id;
+ document.getElementById("receiptId").textContent=(Array.isArray(o.sale_codes)&&o.sale_codes.length?o.sale_codes.join(" · "):o.sale_code)||o.id;
  document.getElementById("demoPaymentWarning").hidden=!o.payment_demo;
  const expiredMessage=document.getElementById("receiptExpiredMessage");
  if(expiredMessage)expiredMessage.hidden=true;
@@ -1262,7 +1354,7 @@ function showReceipt(){
  tick();receiptTimer=setInterval(tick,1000);
  const a=document.getElementById("shippingWhatsapp");
  a.href="https://wa.me/"+WA+"?text="+encodeURIComponent(
-  "Hola. Envío el comprobante del pago del envío para el código "+o.sale_code+
+  "Hola. Envío el comprobante del pago del envío para el/los código(s) "+(Array.isArray(o.sale_codes)?o.sale_codes.join(", "):o.sale_code)+
   " (pedido "+o.id+"). Nombre: "+o.buyer.name+". Ciudad: "+o.buyer.city+
   ". Total del envío: "+cop(o.shipping_total)+" COP. Adjunto el comprobante y el PDF."
  );
