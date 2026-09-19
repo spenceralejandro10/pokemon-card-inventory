@@ -2026,3 +2026,16 @@ button,a{transition:.18s ease}
  from{box-shadow:0 0 0 1px rgba(91,236,255,.14),0 0 25px rgba(60,222,255,.15),0 18px 42px rgba(4,10,30,.28)}
  to{box-shadow:0 0 0 1px rgba(154,93,255,.22),0 0 40px rgba(89,226,255,.22),0 0 56px rgba(143,79,255,.15),0 18px 48px rgba(4,10,30,.35)}
 }
+
+
+/* Operación logística */
+.ops-partner-logo{
+  display:block;
+  width:210px;
+  max-width:100%;
+  height:68px;
+  object-fit:contain;
+  object-position:left center;
+  margin:4px 0 10px;
+}
+.logistics-ops-card .status.ok{white-space:nowrap}

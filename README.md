@@ -16,6 +16,12 @@ Catálogo web de cartas coleccionables, accesorios, producto sellado y electrón
 - El enlace público directo a la tienda/perfil de Mercado Libre solo debe publicarse cuando la cuenta productiva esté autorizada y la URL del vendedor haya sido verificada.
 - Referencia técnica y comercial: `docs/integrations/mercadolibre.md`.
 
+## Operación logística
+- **Coordinadora:** aliado logístico y operador habitual de los envíos directos gestionados por CardNest.
+- Los pedidos directos usan Coordinadora para guía, transporte y seguimiento según cobertura y condiciones vigentes.
+- Las compras realizadas íntegramente dentro de Mercado Libre siguen el flujo logístico que corresponda a esa plataforma y no deben mezclarse con el despacho directo de CardNest.
+- Referencia operativa: `docs/operations/logistica-coordinadora.md`.
+
 ## Reglas de datos
 - Nunca inventar rarezas: usar `unknown/null` cuando no se vea o no esté verificada.
 - `name_original` conserva el nombre impreso.
@@ -35,6 +41,7 @@ Catálogo web de cartas coleccionables, accesorios, producto sellado y electrón
 - `docs/data-model.md`: esquema del modelo.
 - `docs/extraction-rules.md`: protocolo de extracción.
 - `docs/integrations/mercadolibre.md`: arquitectura, seguridad, operación y comunicación pública del canal Mercado Libre.
+- `docs/operations/logistica-coordinadora.md`: operación logística y reglas de comunicación de Coordinadora.
 
 ## Verificación local
 
