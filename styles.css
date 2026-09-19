@@ -3080,3 +3080,170 @@ body.product-info-open{overflow:hidden}
   padding:8px!important;
  }
 }
+
+
+/* Premium storefront header */
+.site-main-header{
+ position:sticky!important;
+ top:0!important;
+ z-index:1100!important;
+ padding:12px 24px!important;
+ background:linear-gradient(180deg,#0c1d2c 0%,#10283b 100%)!important;
+ border:0!important;
+ box-shadow:0 10px 30px rgba(12,29,44,.12)!important;
+ backdrop-filter:saturate(140%) blur(10px)!important;
+}
+.site-main-header-inner{
+ width:min(1380px,100%)!important;
+ min-height:84px!important;
+ margin:0 auto!important;
+ padding:12px 16px!important;
+ display:grid!important;
+ grid-template-columns:220px minmax(0,1fr) auto!important;
+ align-items:center!important;
+ gap:22px!important;
+ background:rgba(255,255,255,.985)!important;
+ border:1px solid rgba(214,225,233,.95)!important;
+ border-radius:18px!important;
+ box-shadow:
+  0 18px 42px rgba(6,24,38,.16),
+  inset 0 1px 0 rgba(255,255,255,.9)!important;
+}
+.site-main-header .brand-home.brand-home-logo{
+ width:210px!important;
+ min-width:0!important;
+ height:60px!important;
+ padding:0 8px!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:flex-start!important;
+ border:0!important;
+ border-radius:12px!important;
+ background:transparent!important;
+ box-shadow:none!important;
+ cursor:pointer!important;
+}
+.site-main-header .brand-home.brand-home-logo img{
+ width:188px!important;
+ height:58px!important;
+ object-fit:contain!important;
+ object-position:left center!important;
+ filter:drop-shadow(0 3px 6px rgba(13,37,54,.10))!important;
+}
+.header-corporate-nav{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ flex-wrap:wrap!important;
+ gap:8px!important;
+ min-width:0!important;
+ padding:4px!important;
+ border-radius:14px!important;
+ background:#f6f9fb!important;
+ border:1px solid #e7edf1!important;
+}
+.header-corporate-nav a{
+ min-height:40px!important;
+ display:inline-flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ padding:0 15px!important;
+ border-radius:10px!important;
+ border:1px solid transparent!important;
+ color:#173247!important;
+ background:transparent!important;
+ text-decoration:none!important;
+ font-size:12px!important;
+ font-weight:800!important;
+ letter-spacing:-.01em!important;
+ white-space:nowrap!important;
+ transition:
+  background .18s ease,
+  color .18s ease,
+  border-color .18s ease,
+  transform .18s ease,
+  box-shadow .18s ease!important;
+}
+.header-corporate-nav a:hover{
+ color:#0d2a40!important;
+ background:#fff!important;
+ border-color:#d8e3ea!important;
+ transform:translateY(-1px)!important;
+ box-shadow:0 6px 15px rgba(19,50,71,.08)!important;
+}
+.header-corporate-nav a[href="index.html"]{
+ color:#fff!important;
+ background:linear-gradient(135deg,#163a58 0%,#0d2840 100%)!important;
+ border-color:#0d2840!important;
+ box-shadow:0 7px 18px rgba(13,40,64,.18)!important;
+}
+.site-main-header .header-login{
+ min-height:46px!important;
+ padding:0 18px!important;
+ border:1px solid #d7ad47!important;
+ border-radius:12px!important;
+ color:#6d4900!important;
+ background:linear-gradient(135deg,#fff6d7 0%,#f8dfa0 100%)!important;
+ box-shadow:0 8px 20px rgba(184,136,28,.16)!important;
+ font-size:11.5px!important;
+ font-weight:900!important;
+ letter-spacing:.01em!important;
+ white-space:nowrap!important;
+ transition:transform .18s ease,box-shadow .18s ease,background .18s ease!important;
+}
+.site-main-header .header-login:hover{
+ background:linear-gradient(135deg,#ffefb8 0%,#f3d277 100%)!important;
+ transform:translateY(-1px)!important;
+ box-shadow:0 11px 24px rgba(184,136,28,.22)!important;
+}
+@media(max-width:1080px){
+ .site-main-header{padding:10px 14px!important}
+ .site-main-header-inner{
+  grid-template-columns:180px 1fr auto!important;
+  gap:12px!important;
+  padding:10px 12px!important;
+ }
+ .site-main-header .brand-home.brand-home-logo{width:175px!important;height:54px!important}
+ .site-main-header .brand-home.brand-home-logo img{width:165px!important;height:52px!important}
+ .header-corporate-nav{justify-content:flex-start!important;overflow-x:auto!important;flex-wrap:nowrap!important}
+ .header-corporate-nav a{font-size:11px!important;padding:0 12px!important}
+}
+@media(max-width:760px){
+ .site-main-header{
+  position:sticky!important;
+  padding:8px 10px!important;
+ }
+ .site-main-header-inner{
+  grid-template-columns:1fr auto!important;
+  min-height:auto!important;
+  gap:10px!important;
+  border-radius:14px!important;
+ }
+ .site-main-header .brand-home.brand-home-logo{
+  width:150px!important;
+  height:48px!important;
+ }
+ .site-main-header .brand-home.brand-home-logo img{
+  width:142px!important;
+  height:46px!important;
+ }
+ .site-main-header .header-login{
+  min-height:40px!important;
+  padding:0 12px!important;
+  font-size:10px!important;
+ }
+ .header-corporate-nav{
+  grid-column:1/-1!important;
+  grid-row:2!important;
+  width:100%!important;
+  justify-content:flex-start!important;
+  overflow-x:auto!important;
+  scrollbar-width:none!important;
+ }
+ .header-corporate-nav::-webkit-scrollbar{display:none!important}
+ .header-corporate-nav a{
+  min-height:36px!important;
+  padding:0 11px!important;
+  font-size:10.5px!important;
+ }
+}
