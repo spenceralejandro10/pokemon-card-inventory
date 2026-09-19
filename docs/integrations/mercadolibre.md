@@ -27,11 +27,11 @@ https://cnivcnexsqobipvqxero.supabase.co/functions/v1/mercadolibre-oauth
 - PKCE: **activado**
 - Skip PKCE: **no activar**
 
-## Topics / Notificaciones permitidos
+## Topics / Notificaciones preparados pero desactivados
 
-Aplicar principio de mínimo alcance: activar únicamente los topics que el webhook valida de forma explícita. Cualquier topic adicional debe implementarse, probarse y agregarse a la allowlist antes de activarlo en Mercado Libre Developers.
+Aplicar principio de mínimo alcance: **no activar topics mientras CardNest no utilice sus datos en un flujo productivo probado**. El webhook ya reconoce los siguientes topics para facilitar su implementación posterior, pero reconocerlos técnicamente no autoriza activarlos.
 
-### Activar
+### Dejar desactivados por ahora
 
 - Orders: `orders_v2`
 - Items: `items`
@@ -39,7 +39,7 @@ Aplicar principio de mínimo alcance: activar únicamente los topics que el webh
 - Messages: `messages`
 - Shipments: `shipments`
 
-### No activar por ahora
+### Tampoco activar
 
 - Item Price
 - Stock Locations
@@ -58,7 +58,7 @@ Aplicar principio de mínimo alcance: activar únicamente los topics que el webh
 - Invoices
 - Otros topics que CardNest todavía no utilice
 
-El webhook responde `200` a eventos ajenos o no soportados para evitar reintentos, pero no los almacena ni hace llamadas autenticadas con ellos. Antes de consultar un recurso verifica `application_id`, `user_id`, cuenta `MCO`, topic y prefijo de ruta.
+El webhook responde `200` a eventos ajenos o no soportados para evitar reintentos, pero no los almacena ni hace llamadas autenticadas con ellos. Antes de consultar un recurso verifica `application_id`, `user_id`, cuenta `MCO`, topic y prefijo de ruta. Cuando se implemente una función productiva concreta, activar únicamente el topic correspondiente después de probarla con usuarios de test.
 
 ## Callback de notificaciones
 
@@ -118,11 +118,12 @@ No copiar sus valores a este repositorio.
 En Mercado Libre Developers, verificar y marcar en el panel de CardNest:
 
 1. El **Redirect URI** coincide carácter por carácter con el indicado en este documento.
-2. El **callback de notificaciones** coincide carácter por carácter y solo están activos los cinco topics permitidos.
+2. El **callback de notificaciones** coincide carácter por carácter y todos los topics permanecen desactivados hasta implementar y probar el flujo productivo correspondiente.
 3. Mercado Libre está activado con Read y Write; Mercado Pago está desactivado.
 4. PKCE está activado y Skip PKCE está desactivado.
 5. Se usará la cuenta principal de Mercado Libre Colombia (`MCO`).
 6. La revisión técnica de CardNest muestra configuración, Vault, webhook y país en estado aprobado.
+7. Todas las pruebas de publicación, compra, preguntas y ventas se realizan únicamente entre usuarios de test; nunca con la cuenta personal o productiva.
 
 El backend vuelve a ejecutar el preflight justo antes de crear el `state` OAuth y rechaza llamadas que no incluyan las tres confirmaciones manuales.
 

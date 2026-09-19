@@ -166,7 +166,7 @@ function renderSummary(){
 }
 
 function mlManualChecks(){
- const values={redirect_uri:false,webhook_topics:false,permissions_account:false};
+ const values={redirect_uri:false,webhook_topics:false,permissions_account:false,test_users:false};
  $$('[data-ml-manual]').forEach(input=>{if(input.dataset.mlManual in values)values[input.dataset.mlManual]=input.checked===true});
  return values;
 }

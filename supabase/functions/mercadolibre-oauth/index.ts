@@ -436,7 +436,8 @@ Deno.serve(async (req: Request) => {
       ? body.manual_checks as Record<string, unknown>
       : {};
     const manualChecksOk = manualChecks.redirect_uri === true &&
-      manualChecks.webhook_topics === true && manualChecks.permissions_account === true;
+      manualChecks.webhook_topics === true && manualChecks.permissions_account === true &&
+      manualChecks.test_users === true;
     if (!manualChecksOk) {
       await audit(auth.user.id, "mercadolibre_oauth_manual_checks_failed");
       return json(req, {

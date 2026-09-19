@@ -310,8 +310,9 @@
                 <fieldset class="ml-manual-checks">
                   <legend>Confirma en Mercado Libre Developers</legend>
                   <label><input type="checkbox" data-ml-manual="redirect_uri"> Guardé exactamente el Redirect URI mostrado arriba.</label>
-                  <label><input type="checkbox" data-ml-manual="webhook_topics"> Guardé el callback y activé únicamente <code>orders_v2</code>, <code>items</code>, <code>questions</code>, <code>messages</code> y <code>shipments</code>.</label>
+                  <label><input type="checkbox" data-ml-manual="webhook_topics"> Guardé el callback y dejé los topics desactivados hasta que CardNest implemente y pruebe el flujo que los utilizará.</label>
                   <label><input type="checkbox" data-ml-manual="permissions_account"> Activé Read, Write y PKCE; dejé Skip PKCE y Mercado Pago desactivados; usaré la cuenta principal de Colombia.</label>
+                  <label><input type="checkbox" data-ml-manual="test_users"> Las pruebas de publicación, compra, preguntas y ventas se harán únicamente entre usuarios de test; la cuenta real no se usará para probar.</label>
                 </fieldset>
                 <p class="ml-preflight-note">La autorización permanece bloqueada hasta aprobar todas las comprobaciones. Usa únicamente la cuenta principal de Mercado Libre Colombia (MCO).</p>
               </div>
@@ -412,6 +413,6 @@
       </div>
     </section>
   </main>
-  <script src="admin-runtime-20260919-15.js?v=20260919-20"></script>
+  <script src="admin-runtime-20260919-15.js?v=20260919-21"></script>
 </body>
 </html>
