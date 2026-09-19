@@ -9,7 +9,9 @@ const html=read("index.html");
 const app=read("app.js");
 const css=read("styles.css");
 const adminHtml=read("admin.html");
-const adminScriptPath=adminHtml.match(/<script\s+src=["']([^"']+\.js(?:\?[^"']*)?)["']/i)?.[1]?.split("?")[0];
+const adminScriptPath=matches(adminHtml,/<script\s+src=["']([^"']+\.js(?:\?[^"']*)?)["']/gi)
+ .map(function(src){return src.split("?")[0]})
+ .find(function(src){return /^admin-runtime-[\w.-]+\.js$/.test(src)});
 const adminApp=adminScriptPath?read(adminScriptPath):"";
 const adminSource=read("admin.js");
 const adminCss=read("admin.css");
