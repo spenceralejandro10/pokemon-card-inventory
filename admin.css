@@ -452,3 +452,112 @@ button,a{transition:.18s ease}
  border:0;border-radius:10px;background:#17384d;color:#fff;padding:10px 16px;font-weight:850;cursor:pointer
 }
 @keyframes adminBootSpin{to{transform:rotate(360deg)}}
+
+
+/* Simplified profile + counterpart presence */
+.partner-presence{
+ display:flex;align-items:center;gap:10px;
+ padding:8px 10px;border-radius:14px;
+ background:#fff;border:1px solid #dfe7ec;
+ box-shadow:0 6px 18px rgba(23,56,77,.05);
+ min-width:170px
+}
+.partner-avatar,.partner-profile-avatar{
+ overflow:hidden;display:grid;place-items:center;
+ background:linear-gradient(145deg,#eef4f7,#dbe7ed);
+ color:#17384d;font-weight:900
+}
+.partner-avatar{
+ width:46px;height:46px;min-width:46px;border-radius:50%;
+ border:2px solid #fff;outline:2px solid #b9c9d2;
+ box-shadow:0 6px 14px rgba(23,56,77,.12)
+}
+.partner-avatar img,.partner-profile-avatar img{
+ width:100%;height:100%;object-fit:cover;display:block
+}
+.partner-copy{display:grid;gap:2px;min-width:0}
+.partner-copy strong{font-size:12px;color:#17384d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.partner-copy span,.profile-partner-status{
+ display:flex;align-items:center;gap:6px;
+ color:#71818c;font-size:10px;font-weight:800
+}
+.partner-copy span i,.profile-partner-status i{
+ width:8px;height:8px;border-radius:50%;background:#b9c3c9;
+ box-shadow:0 0 0 3px rgba(185,195,201,.16)
+}
+.partner-copy span.online,.profile-partner-status.online{color:#1d7957}
+.partner-copy span.online i,.profile-partner-status.online i{
+ background:#27a26f;box-shadow:0 0 0 3px rgba(39,162,111,.14)
+}
+
+.profile-page{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.6fr);gap:18px;align-items:start}
+.profile-main-card,.partner-profile-card{
+ background:#fff;border:1px solid #dfe7ec;border-radius:22px;
+ box-shadow:0 10px 30px rgba(23,56,77,.06)
+}
+.profile-main-card{
+ display:grid;grid-template-columns:180px minmax(0,1fr);
+ gap:26px;align-items:center;padding:28px
+}
+.profile-photo-wrap{position:relative;width:164px;height:164px}
+.profile-preview-large{
+ width:164px!important;height:164px!important;border-radius:34px!important;
+ border:5px solid #fff!important;outline:3px solid #d6b84b!important;
+ box-shadow:
+  0 0 0 7px rgba(23,56,77,.07),
+  0 20px 38px rgba(23,56,77,.18),
+  0 0 32px rgba(231,195,87,.20)!important;
+ background:linear-gradient(145deg,#eef4f7,#dce8ee)!important;
+ color:#17384d!important;font-size:30px!important
+}
+.profile-preview-large img{
+ width:100%;height:100%;object-fit:cover;display:block;border-radius:29px
+}
+.profile-photo-accent{
+ position:absolute;right:-8px;bottom:-8px;width:26px;height:26px;border-radius:50%;
+ background:linear-gradient(145deg,#e7c357,#b88f1d);
+ border:4px solid #fff;box-shadow:0 6px 14px rgba(130,94,0,.18)
+}
+.profile-main-copy{display:grid;justify-items:start;gap:4px}
+.profile-main-copy>small{font-size:10px;font-weight:950;letter-spacing:.13em;color:#8a6916}
+.profile-main-copy h2{font-size:30px;margin:3px 0 0;color:#102f46;letter-spacing:-.03em}
+.profile-main-copy>strong{font-size:15px;color:#17384d}
+.profile-main-copy>p{margin:0;color:#6c7d88;font-size:12px}
+.profile-photo-actions{
+ margin-top:14px;display:grid;grid-template-columns:auto auto;gap:9px;align-items:center
+}
+.profile-photo-actions>small{grid-column:1/-1;color:#83919a;font-size:10px}
+.primary-file-picker{background:#f8fafb!important}
+#saveAvatar{
+ min-height:39px!important;padding:0 14px!important
+}
+.partner-profile-card{
+ padding:24px;display:flex;align-items:center;gap:16px
+}
+.partner-profile-avatar{
+ width:96px;height:96px;min-width:96px;border-radius:26px;
+ border:4px solid #fff;outline:2px solid #c9d7df;
+ box-shadow:0 12px 24px rgba(23,56,77,.12);
+ font-size:22px
+}
+.partner-profile-card>div:last-child{display:grid;gap:5px}
+.partner-profile-card small{font-size:9px;font-weight:900;letter-spacing:.12em;color:#8898a2}
+.partner-profile-card h3{margin:0;color:#17384d;font-size:20px}
+
+/* Hide obsolete chat/presence styling surfaces */
+.nav-chat,.chat-shell,.team-presence-card{display:none!important}
+
+@media(max-width:1050px){
+ .partner-presence{min-width:0}
+ .partner-copy span{max-width:170px}
+ .profile-page{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+ .workspace-header{align-items:flex-start!important}
+ .header-actions{width:100%;justify-content:flex-start!important}
+ .partner-presence{order:2}
+ .profile-main-card{grid-template-columns:1fr;padding:22px}
+ .profile-photo-wrap{width:138px;height:138px}
+ .profile-preview-large{width:138px!important;height:138px!important}
+ .partner-profile-card{padding:18px}
+}
